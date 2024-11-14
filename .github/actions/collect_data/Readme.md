@@ -36,6 +36,8 @@ jobs:
           ssh-private-key: <SSH private key>
 ```
 
+Note: If `sftp_host` is empty, action will skip SFTP upload and it can be used for testing this way.
+
 # Generate Data Analytics File
 
 Scripts are used to automatically generate data for the analytics platform.
