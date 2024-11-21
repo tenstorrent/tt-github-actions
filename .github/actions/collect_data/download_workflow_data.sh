@@ -1,8 +1,8 @@
-# SPDX-FileCopyrightText: © 2023 Tenstorrent Inc.
-
-# SPDX-License-Identifier: Apache-2.0
-
 #!/bin/bash
+
+# SPDX-FileCopyrightText: (c) 2024 Tenstorrent AI ULC
+#
+# SPDX-License-Identifier: Apache-2.0
 
 # Ensure required tools are installed
 for tool in gh jq; do
