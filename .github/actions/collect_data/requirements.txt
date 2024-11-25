@@ -4,3 +4,4 @@ defusedxml
 toolz
 pytest
 pytest-cov
+xmltodict
