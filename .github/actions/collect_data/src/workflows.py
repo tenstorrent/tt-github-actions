@@ -12,6 +12,8 @@ from loguru import logger
 import junit_xml_utils
 import pydantic_models
 
+from unittest_parser import get_tests
+
 
 def get_github_job_id_to_test_reports(workflow_outputs_dir, workflow_run_id: int):
     """
@@ -127,23 +129,27 @@ def is_valid_testcase_(testcase):
 
 
 def get_tests_from_test_report_path(test_report_path):
+    try:
+        return _get_tests(test_report_path)
+    except Exception as e:
+        logger.error(f"Failed to get tests from {test_report_path}: {e}")
+        return []
+
+
+def _get_tests(test_report_path):
     report_root_tree = junit_xml_utils.get_xml_file_root_element_tree(test_report_path)
-
     report_root = report_root_tree.getroot()
-
     is_pytest = junit_xml_utils.is_pytest_junit_xml(report_root)
-
     if is_pytest:
+        # pytests report format
         testsuite = report_root[0]
         default_timestamp = datetime.strptime(testsuite.attrib["timestamp"], "%Y-%m-%dT%H:%M:%S.%f")
-
         get_pydantic_test = partial(get_pydantic_test_from_pytest_testcase_, default_timestamp=default_timestamp)
-
         tests = []
         for testcase in testsuite:
             if is_valid_testcase_(testcase):
                 tests.append(get_pydantic_test(testcase))
-
         return tests
     else:
-        raise Exception("We only support pytest junit xml outputs for now")
+        # handle unittest report format
+        return get_tests(test_report_path)

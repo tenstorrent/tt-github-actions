@@ -1,0 +1,5 @@
+.github/actions/collect_data/venv/*
+.vscode/*
+*.pyc
+.github/actions/collect_data/pipeline_*.json
+.env

@@ -1,0 +1,756 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+	<testsuite name="test.ttlens.pybind.test_bindings.TestBindings-20241125095110" tests="10" file="test/ttlens/pybind/test_bindings.py" time="0.008" timestamp="2024-11-25T09:51:10" failures="0" errors="0" skipped="0">
+		<testcase classname="test.ttlens.pybind.test_bindings.TestBindings" name="test_dma_buffer_read32" time="0.005" timestamp="2024-11-25T09:51:10" file="test/ttlens/pybind/test_bindings.py" line="57"/>
+		<testcase classname="test.ttlens.pybind.test_bindings.TestBindings" name="test_get_cluster_description" time="0.000" timestamp="2024-11-25T09:51:10" file="test/ttlens/pybind/test_bindings.py" line="65"/>
+		<testcase classname="test.ttlens.pybind.test_bindings.TestBindings" name="test_get_device_arch" time="0.000" timestamp="2024-11-25T09:51:10" file="test/ttlens/pybind/test_bindings.py" line="75"/>
+		<testcase classname="test.ttlens.pybind.test_bindings.TestBindings" name="test_get_device_ids" time="0.000" timestamp="2024-11-25T09:51:10" file="test/ttlens/pybind/test_bindings.py" line="72"/>
+		<testcase classname="test.ttlens.pybind.test_bindings.TestBindings" name="test_get_device_soc_description" time="0.000" timestamp="2024-11-25T09:51:10" file="test/ttlens/pybind/test_bindings.py" line="78"/>
+		<testcase classname="test.ttlens.pybind.test_bindings.TestBindings" name="test_get_harvester_coordinate_translation" time="0.000" timestamp="2024-11-25T09:51:10" file="test/ttlens/pybind/test_bindings.py" line="68"/>
+		<testcase classname="test.ttlens.pybind.test_bindings.TestBindings" name="test_pci_read_tile" time="0.000" timestamp="2024-11-25T09:51:10" file="test/ttlens/pybind/test_bindings.py" line="62"/>
+		<testcase classname="test.ttlens.pybind.test_bindings.TestBindings" name="test_pci_read_write" time="0.001" timestamp="2024-11-25T09:51:10" file="test/ttlens/pybind/test_bindings.py" line="42"/>
+		<testcase classname="test.ttlens.pybind.test_bindings.TestBindings" name="test_pci_read_write32" time="0.000" timestamp="2024-11-25T09:51:10" file="test/ttlens/pybind/test_bindings.py" line="32"/>
+		<testcase classname="test.ttlens.pybind.test_bindings.TestBindings" name="test_pci_read_write32_raw" time="0.000" timestamp="2024-11-25T09:51:10" file="test/ttlens/pybind/test_bindings.py" line="37"/>
+	</testsuite>
+	<testsuite name="test.ttlens.unit_tests.test_lib.TestARC-20241125095110" tests="2" file="test/ttlens/unit_tests/test_lib.py" time="0.003" timestamp="2024-11-25T09:51:10" failures="0" errors="0" skipped="1">
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestARC" name="test_arc_msg" time="0.002" timestamp="2024-11-25T09:51:10" file="test/ttlens/unit_tests/test_lib.py" line="442">
+			<!--Test getting AICLK from ARC.-->
+			<system-out><![CDATA[ARC message result=0, aiclk=250
+]]></system-out>
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestARC" name="test_load_arc_fw" time="0.001" timestamp="2024-11-25T09:51:10" file="test/ttlens/unit_tests/test_lib.py" line="462">
+			<skipped type="skip" message="Skipping the test on grayskull since the card on CI does not reset the ARC inbetween tests. We do not want to mess up the state of the card for other tests."/>
+		</testcase>
+	</testsuite>
+	<testsuite name="test.ttlens.unit_tests.test_lib.TestAutoContext-20241125095110" tests="3" file="test/ttlens/unit_tests/test_lib.py" time="0.151" timestamp="2024-11-25T09:51:10" failures="0" errors="0" skipped="0">
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestAutoContext" name="test_auto_context" time="0.050" timestamp="2024-11-25T09:51:10" file="test/ttlens/unit_tests/test_lib.py" line="39">
+			<!--Test auto context creation.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestAutoContext" name="test_existing_context" time="0.051" timestamp="2024-11-25T09:51:10" file="test/ttlens/unit_tests/test_lib.py" line="53">
+			<!--Test recognition of existing context.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestAutoContext" name="test_set_global_context" time="0.050" timestamp="2024-11-25T09:51:10" file="test/ttlens/unit_tests/test_lib.py" line="46">
+			<!--Test setting global context.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_continue" time="0.001" timestamp="2024-11-25T13:32:38" file="test/ttlens/unit_tests/test_risc_debug.py" line="333">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+			<failure type="AssertionError" message="2271559680 != 2271559681"><![CDATA[Traceback (most recent call last):
+  File "/localdev/vjovanovic/tt-debuda/test/ttlens/unit_tests/test_risc_debug.py", line 366, in test_continue
+    self.assertEqual(self.read_data(addr), 0x87654001)
+AssertionError: 2271559680 != 2271559681
+]]></failure>
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_halt_continue" time="0.001" timestamp="2024-11-25T13:32:38" file="test/ttlens/unit_tests/test_risc_debug.py" line="368">
+			<!--Test running 28 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+			<error type="Exception" message="bla bla bla"><![CDATA[Traceback (most recent call last):
+  File "/localdev/vjovanovic/tt-debuda/test/ttlens/unit_tests/test_risc_debug.py", line 383, in test_halt_continue
+    raise Exception("bla bla bla")
+Exception: bla bla bla
+]]></error>
+		</testcase>
+	</testsuite>
+	<testsuite name="test.ttlens.unit_tests.test_lib.TestReadWrite-20241125095110" tests="39" file="test/ttlens/unit_tests/test_lib.py" time="2.233" timestamp="2024-11-25T09:51:12" failures="0" errors="0" skipped="8">
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_invalid_inputs_read_0_abcd" time="0.066" timestamp="2024-11-25T09:51:10" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test invalid inputs for read functions [with core_loc='abcd', address=256, device_id=0, word_count=1].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_invalid_inputs_read_1__10" time="0.053" timestamp="2024-11-25T09:51:10" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test invalid inputs for read functions [with core_loc='-10', address=256, device_id=0, word_count=1].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_invalid_inputs_read_2_0_0" time="0.053" timestamp="2024-11-25T09:51:10" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test invalid inputs for read functions [with core_loc='0,0', address=-1, device_id=0, word_count=1].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_invalid_inputs_read_3_0_0" time="0.050" timestamp="2024-11-25T09:51:10" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test invalid inputs for read functions [with core_loc='0,0', address=256, device_id=-1, word_count=1].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_invalid_inputs_read_4_0_0" time="0.051" timestamp="2024-11-25T09:51:10" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test invalid inputs for read functions [with core_loc='0,0', address=256, device_id=112, word_count=1].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_invalid_inputs_read_5_0_0" time="0.050" timestamp="2024-11-25T09:51:10" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test invalid inputs for read functions [with core_loc='0,0', address=256, device_id=0, word_count=-1].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_invalid_inputs_read_6_0_0" time="0.051" timestamp="2024-11-25T09:51:10" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test invalid inputs for read functions [with core_loc='0,0', address=256, device_id=0, word_count=0].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_invalid_write_0_abcd" time="0.053" timestamp="2024-11-25T09:51:10" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test invalid inputs for write function [with core_loc='abcd', address=256, data=b'abcd', device_id=0].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_invalid_write_1__10" time="0.054" timestamp="2024-11-25T09:51:10" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test invalid inputs for write function [with core_loc='-10', address=256, data=b'abcd', device_id=0].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_invalid_write_2_0_0" time="0.054" timestamp="2024-11-25T09:51:10" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test invalid inputs for write function [with core_loc='0,0', address=-1, data=b'abcd', device_id=0].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_invalid_write_3_0_0" time="0.050" timestamp="2024-11-25T09:51:10" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test invalid inputs for write function [with core_loc='0,0', address=256, data=b'abcd', device_id=-1].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_invalid_write_4_0_0" time="0.051" timestamp="2024-11-25T09:51:10" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test invalid inputs for write function [with core_loc='0,0', address=256, data=b'abcd', device_id=112].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_invalid_write_5_0_0" time="0.050" timestamp="2024-11-25T09:51:11" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test invalid inputs for write function [with core_loc='0,0', address=256, data=[], device_id=0].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_invalid_write_6_0_0" time="0.051" timestamp="2024-11-25T09:51:11" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test invalid inputs for write function [with core_loc='0,0', address=256, data=b'', device_id=0].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_invalid_write_word_0_abcd" time="0.053" timestamp="2024-11-25T09:51:11" file="test/ttlens/unit_tests/test_lib.py" line="618"/>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_invalid_write_word_1__10" time="0.053" timestamp="2024-11-25T09:51:11" file="test/ttlens/unit_tests/test_lib.py" line="618"/>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_invalid_write_word_2_0_0" time="0.055" timestamp="2024-11-25T09:51:11" file="test/ttlens/unit_tests/test_lib.py" line="618"/>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_invalid_write_word_3_0_0" time="0.050" timestamp="2024-11-25T09:51:11" file="test/ttlens/unit_tests/test_lib.py" line="618"/>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_invalid_write_word_4_0_0" time="0.051" timestamp="2024-11-25T09:51:11" file="test/ttlens/unit_tests/test_lib.py" line="618"/>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_bytes_read_words" time="0.054" timestamp="2024-11-25T09:51:11" file="test/ttlens/unit_tests/test_lib.py" line="177">
+			<!--Test write bytes &#45;&#45; read words.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_read" time="0.054" timestamp="2024-11-25T09:51:11" file="test/ttlens/unit_tests/test_lib.py" line="75">
+			<!--Test write data &#45;&#45; read data.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_read_bytes" time="0.057" timestamp="2024-11-25T09:51:11" file="test/ttlens/unit_tests/test_lib.py" line="88">
+			<!--Test write bytes &#45;&#45; read bytes.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_read_bytes_buffer_00_1_1" time="0.063" timestamp="2024-11-25T09:51:11" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test write bytes &#45;&#45; read bytes but with bigger buffer [with core_loc='1,1', size=1024, address=256, device_id=0].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_read_bytes_buffer_01_1_1" time="0.063" timestamp="2024-11-25T09:51:11" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test write bytes &#45;&#45; read bytes but with bigger buffer [with core_loc='1,1', size=2048, address=260, device_id=0].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_read_bytes_buffer_02_1_1" time="0.066" timestamp="2024-11-25T09:51:11" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test write bytes &#45;&#45; read bytes but with bigger buffer [with core_loc='1,1', size=4096, address=264, device_id=0].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_read_bytes_buffer_03_1_1" time="0.076" timestamp="2024-11-25T09:51:11" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test write bytes &#45;&#45; read bytes but with bigger buffer [with core_loc='1,1', size=8192, address=268, device_id=0].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_read_bytes_buffer_08_ch0" time="0.062" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test write bytes &#45;&#45; read bytes but with bigger buffer [with core_loc='ch0', size=1024, address=256, device_id=0].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_read_bytes_buffer_09_ch0" time="0.064" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test write bytes &#45;&#45; read bytes but with bigger buffer [with core_loc='ch0', size=2048, address=260, device_id=0].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_read_bytes_buffer_10_ch0" time="0.067" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test write bytes &#45;&#45; read bytes but with bigger buffer [with core_loc='ch0', size=4096, address=264, device_id=0].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_read_bytes_buffer_11_ch0" time="0.080" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test write bytes &#45;&#45; read bytes but with bigger buffer [with core_loc='ch0', size=8192, address=268, device_id=0].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_read_words" time="0.061" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="144">
+			<!--Test write words &#45;&#45; read words.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_read_bytes_buffer_04_1_1" time="0.054" timestamp="2024-11-25T09:51:11" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test write bytes &#45;&#45; read bytes but with bigger buffer [with core_loc='1,1', size=1024, address=256, device_id=1].-->
+			<skipped type="skip" message="Device ID out of range."/>
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_read_bytes_buffer_05_1_1" time="0.061" timestamp="2024-11-25T09:51:11" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test write bytes &#45;&#45; read bytes but with bigger buffer [with core_loc='1,1', size=2048, address=260, device_id=1].-->
+			<skipped type="skip" message="Device ID out of range."/>
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_read_bytes_buffer_06_1_1" time="0.070" timestamp="2024-11-25T09:51:11" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test write bytes &#45;&#45; read bytes but with bigger buffer [with core_loc='1,1', size=4096, address=264, device_id=1].-->
+			<skipped type="skip" message="Device ID out of range."/>
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_read_bytes_buffer_07_1_1" time="0.054" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test write bytes &#45;&#45; read bytes but with bigger buffer [with core_loc='1,1', size=8192, address=268, device_id=1].-->
+			<skipped type="skip" message="Device ID out of range."/>
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_read_bytes_buffer_12_ch0" time="0.054" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test write bytes &#45;&#45; read bytes but with bigger buffer [with core_loc='ch0', size=1024, address=256, device_id=1].-->
+			<skipped type="skip" message="Device ID out of range."/>
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_read_bytes_buffer_13_ch0" time="0.055" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test write bytes &#45;&#45; read bytes but with bigger buffer [with core_loc='ch0', size=2048, address=260, device_id=1].-->
+			<skipped type="skip" message="Device ID out of range."/>
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_read_bytes_buffer_14_ch0" time="0.061" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test write bytes &#45;&#45; read bytes but with bigger buffer [with core_loc='ch0', size=4096, address=264, device_id=1].-->
+			<skipped type="skip" message="Device ID out of range."/>
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestReadWrite" name="test_write_read_bytes_buffer_15_ch0" time="0.060" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test write bytes &#45;&#45; read bytes but with bigger buffer [with core_loc='ch0', size=8192, address=268, device_id=1].-->
+			<skipped type="skip" message="Device ID out of range."/>
+		</testcase>
+	</testsuite>
+	<testsuite name="test.ttlens.unit_tests.test_lib.TestRunElf-20241125095110" tests="19" file="test/ttlens/unit_tests/test_lib.py" time="0.155" timestamp="2024-11-25T09:51:12" failures="0" errors="0" skipped="0">
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestRunElf" name="test_old_elf_test_0" time="0.038" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618"/>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestRunElf" name="test_old_elf_test_1" time="0.029" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618"/>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestRunElf" name="test_old_elf_test_2" time="0.030" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618"/>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestRunElf" name="test_old_elf_test_3" time="0.029" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618"/>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestRunElf" name="test_run_elf_0" time="0.005" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test running an ELF file [with risc_id=0].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestRunElf" name="test_run_elf_1" time="0.005" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test running an ELF file [with risc_id=1].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestRunElf" name="test_run_elf_2" time="0.005" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test running an ELF file [with risc_id=2].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestRunElf" name="test_run_elf_3" time="0.006" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test running an ELF file [with risc_id=3].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestRunElf" name="test_run_elf_4" time="0.006" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618">
+			<!--Test running an ELF file [with risc_id=4].-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestRunElf" name="test_run_elf_invalid_0_" time="0.000" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618"/>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestRunElf" name="test_run_elf_invalid_1__sbin_non_existing_elf" time="0.000" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618"/>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestRunElf" name="test_run_elf_invalid_2" time="0.000" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618"/>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestRunElf" name="test_run_elf_invalid_3" time="0.000" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618"/>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestRunElf" name="test_run_elf_invalid_4" time="0.000" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618"/>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestRunElf" name="test_run_elf_invalid_5" time="0.000" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618"/>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestRunElf" name="test_run_elf_invalid_6" time="0.000" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618"/>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestRunElf" name="test_run_elf_invalid_7" time="0.000" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618"/>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestRunElf" name="test_run_elf_invalid_8" time="0.000" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618"/>
+		<testcase classname="test.ttlens.unit_tests.test_lib.TestRunElf" name="test_run_elf_invalid_9" time="0.000" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_lib.py" line="618"/>
+	</testsuite>
+	<testsuite name="test.ttlens.unit_tests.test_parse_elf.TestParseElf-20241125095110" tests="4" file="test/ttlens/unit_tests/test_parse_elf.py" time="0.205" timestamp="2024-11-25T09:51:12" failures="0" errors="0" skipped="0">
+		<testcase classname="test.ttlens.unit_tests.test_parse_elf.TestParseElf" name="test_array" time="0.056" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_parse_elf.py" line="184">
+			<system-out><![CDATA[
+Compiling array...
+
+Compiling /__w/tt-lens/tt-lens/build/test/assets/array...
+]]></system-out>
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_parse_elf.TestParseElf" name="test_double_array" time="0.055" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_parse_elf.py" line="243">
+			<system-out><![CDATA[
+Compiling /__w/tt-lens/tt-lens/build/test/assets/double_array...
+
+Compiling double_array...
+]]></system-out>
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_parse_elf.TestParseElf" name="test_simple" time="0.068" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_parse_elf.py" line="71">
+			<system-out><![CDATA[
+Compiling simple...
+
+Compiling /__w/tt-lens/tt-lens/build/test/assets/simple...
+]]></system-out>
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_parse_elf.TestParseElf" name="test_union" time="0.027" timestamp="2024-11-25T09:51:12" file="test/ttlens/unit_tests/test_parse_elf.py" line="280">
+			<system-out><![CDATA[
+Compiling /__w/tt-lens/tt-lens/build/test/assets/union...
+]]></system-out>
+		</testcase>
+	</testsuite>
+	<testsuite name="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0-20241125095110" tests="20" file="test/ttlens/unit_tests/test_risc_debug.py" time="0.129" timestamp="2024-11-25T09:51:13" failures="0" errors="0" skipped="1">
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_bne_with_debug_fail" time="0.008" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="1096">
+			<!--Test running 48 bytes of generated code that confirms problem with BNE when debugging hardware is enabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_bne_with_debug_without_bp" time="0.004" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="1237">
+			<!--Test running 48 bytes of generated code that confirms that there is no problem with BNE when debugging hardware is enabled and branch prediction is disabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_bne_without_debug" time="0.004" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="1165">
+			<!--Test running 48 bytes of generated code that confirms that there is no problem with BNE when debugging hardware is disabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_continue" time="0.001" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="333">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_ebreak" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="243">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_ebreak_and_step" time="0.003" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="281">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_halt_continue" time="0.004" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="368">
+			<!--Test running 28 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_halt_status" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="428">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_invalidate_cache_with_nops_and_long_jump" time="0.034" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="593">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation by having NOPs block and jump back. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_invalidate_cache_with_reset" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="535">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation by reseting core. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_memory_watchpoint" time="0.007" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="966">
+			<!--Test running 64 bytes of generated code that just write data on memory and tests memory watchpoints. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_minimal_run_generated_code" time="0.001" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="214">
+			<!--Test running 16 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_read_write_gpr" time="0.013" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="120">
+			<!--Write then read value in all registers (except zero and pc).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_read_write_l1_memory" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="155">
+			<!--Testing read_memory and write_memory through debugging interface on L1 memory range.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_read_write_private_memory" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="186">
+			<!--Testing read_memory and write_memory through debugging interface on private core memory range.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_reset_all_functional_workers" time="0.013" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="111">
+			<!--Reset all functional workers.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_watchpoint_address" time="0.014" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="738">
+			<!--Test setting and reading watchpoint address (both memory and PC).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_watchpoint_on_pc_address" time="0.004" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="660">
+			<!--Test running 36 bytes of generated code that just write data on memory and does watchpoint on pc address. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_watchpoint_state" time="0.007" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="859">
+			<!--Test setting and disabling watchpoint state (both memory and PC).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_0_FW0" name="test_invalidate_cache" time="0.001" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="474">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation. All that is done on brisc.-->
+			<skipped type="skip" message="Invalidate cache is not reliable on wormhole and not working on blackhole at all..."/>
+		</testcase>
+	</testsuite>
+	<testsuite name="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0-20241125095110" tests="20" file="test/ttlens/unit_tests/test_risc_debug.py" time="0.143" timestamp="2024-11-25T09:51:13" failures="0" errors="0" skipped="1">
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_bne_with_debug_fail" time="0.009" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="1096">
+			<!--Test running 48 bytes of generated code that confirms problem with BNE when debugging hardware is enabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_bne_with_debug_without_bp" time="0.005" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="1237">
+			<!--Test running 48 bytes of generated code that confirms that there is no problem with BNE when debugging hardware is enabled and branch prediction is disabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_bne_without_debug" time="0.004" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="1165">
+			<!--Test running 48 bytes of generated code that confirms that there is no problem with BNE when debugging hardware is disabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_continue" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="333">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_ebreak" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="243">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_ebreak_and_step" time="0.004" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="281">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_halt_continue" time="0.005" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="368">
+			<!--Test running 28 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_halt_status" time="0.003" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="428">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_invalidate_cache_with_nops_and_long_jump" time="0.035" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="593">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation by having NOPs block and jump back. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_invalidate_cache_with_reset" time="0.003" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="535">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation by reseting core. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_memory_watchpoint" time="0.007" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="966">
+			<!--Test running 64 bytes of generated code that just write data on memory and tests memory watchpoints. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_minimal_run_generated_code" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="214">
+			<!--Test running 16 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_read_write_gpr" time="0.013" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="120">
+			<!--Write then read value in all registers (except zero and pc).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_read_write_l1_memory" time="0.003" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="155">
+			<!--Testing read_memory and write_memory through debugging interface on L1 memory range.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_read_write_private_memory" time="0.003" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="186">
+			<!--Testing read_memory and write_memory through debugging interface on private core memory range.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_reset_all_functional_workers" time="0.013" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="111">
+			<!--Reset all functional workers.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_watchpoint_address" time="0.016" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="738">
+			<!--Test setting and reading watchpoint address (both memory and PC).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_watchpoint_on_pc_address" time="0.005" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="660">
+			<!--Test running 36 bytes of generated code that just write data on memory and does watchpoint on pc address. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_watchpoint_state" time="0.008" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="859">
+			<!--Test setting and disabling watchpoint state (both memory and PC).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_1_FW0" name="test_invalidate_cache" time="0.001" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="474">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation. All that is done on brisc.-->
+			<skipped type="skip" message="Invalidate cache is not reliable on wormhole and not working on blackhole at all..."/>
+		</testcase>
+	</testsuite>
+	<testsuite name="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0-20241125095110" tests="20" file="test/ttlens/unit_tests/test_risc_debug.py" time="0.142" timestamp="2024-11-25T09:51:13" failures="0" errors="0" skipped="1">
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_bne_with_debug_fail" time="0.008" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="1096">
+			<!--Test running 48 bytes of generated code that confirms problem with BNE when debugging hardware is enabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_bne_with_debug_without_bp" time="0.005" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="1237">
+			<!--Test running 48 bytes of generated code that confirms that there is no problem with BNE when debugging hardware is enabled and branch prediction is disabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_bne_without_debug" time="0.004" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="1165">
+			<!--Test running 48 bytes of generated code that confirms that there is no problem with BNE when debugging hardware is disabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_continue" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="333">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_ebreak" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="243">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_ebreak_and_step" time="0.004" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="281">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_halt_continue" time="0.005" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="368">
+			<!--Test running 28 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_halt_status" time="0.003" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="428">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_invalidate_cache_with_nops_and_long_jump" time="0.035" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="593">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation by having NOPs block and jump back. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_invalidate_cache_with_reset" time="0.003" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="535">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation by reseting core. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_memory_watchpoint" time="0.007" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="966">
+			<!--Test running 64 bytes of generated code that just write data on memory and tests memory watchpoints. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_minimal_run_generated_code" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="214">
+			<!--Test running 16 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_read_write_gpr" time="0.014" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="120">
+			<!--Write then read value in all registers (except zero and pc).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_read_write_l1_memory" time="0.003" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="155">
+			<!--Testing read_memory and write_memory through debugging interface on L1 memory range.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_read_write_private_memory" time="0.003" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="186">
+			<!--Testing read_memory and write_memory through debugging interface on private core memory range.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_reset_all_functional_workers" time="0.013" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="111">
+			<!--Reset all functional workers.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_watchpoint_address" time="0.015" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="738">
+			<!--Test setting and reading watchpoint address (both memory and PC).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_watchpoint_on_pc_address" time="0.005" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="660">
+			<!--Test running 36 bytes of generated code that just write data on memory and does watchpoint on pc address. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_watchpoint_state" time="0.008" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="859">
+			<!--Test setting and disabling watchpoint state (both memory and PC).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_2_FW0" name="test_invalidate_cache" time="0.001" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="474">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation. All that is done on brisc.-->
+			<skipped type="skip" message="Invalidate cache is not reliable on wormhole and not working on blackhole at all..."/>
+		</testcase>
+	</testsuite>
+	<testsuite name="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0-20241125095110" tests="20" file="test/ttlens/unit_tests/test_risc_debug.py" time="0.143" timestamp="2024-11-25T09:51:13" failures="0" errors="0" skipped="1">
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_bne_with_debug_fail" time="0.009" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="1096">
+			<!--Test running 48 bytes of generated code that confirms problem with BNE when debugging hardware is enabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_bne_with_debug_without_bp" time="0.005" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="1237">
+			<!--Test running 48 bytes of generated code that confirms that there is no problem with BNE when debugging hardware is enabled and branch prediction is disabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_bne_without_debug" time="0.004" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="1165">
+			<!--Test running 48 bytes of generated code that confirms that there is no problem with BNE when debugging hardware is disabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_continue" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="333">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_ebreak" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="243">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_ebreak_and_step" time="0.004" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="281">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_halt_continue" time="0.005" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="368">
+			<!--Test running 28 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_halt_status" time="0.003" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="428">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_invalidate_cache_with_nops_and_long_jump" time="0.035" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="593">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation by having NOPs block and jump back. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_invalidate_cache_with_reset" time="0.003" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="535">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation by reseting core. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_memory_watchpoint" time="0.007" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="966">
+			<!--Test running 64 bytes of generated code that just write data on memory and tests memory watchpoints. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_minimal_run_generated_code" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="214">
+			<!--Test running 16 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_read_write_gpr" time="0.014" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="120">
+			<!--Write then read value in all registers (except zero and pc).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_read_write_l1_memory" time="0.003" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="155">
+			<!--Testing read_memory and write_memory through debugging interface on L1 memory range.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_read_write_private_memory" time="0.003" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="186">
+			<!--Testing read_memory and write_memory through debugging interface on private core memory range.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_reset_all_functional_workers" time="0.013" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="111">
+			<!--Reset all functional workers.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_watchpoint_address" time="0.015" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="738">
+			<!--Test setting and reading watchpoint address (both memory and PC).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_watchpoint_on_pc_address" time="0.005" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="660">
+			<!--Test running 36 bytes of generated code that just write data on memory and does watchpoint on pc address. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_watchpoint_state" time="0.008" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="859">
+			<!--Test setting and disabling watchpoint state (both memory and PC).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_3_FW0" name="test_invalidate_cache" time="0.001" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="474">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation. All that is done on brisc.-->
+			<skipped type="skip" message="Invalidate cache is not reliable on wormhole and not working on blackhole at all..."/>
+		</testcase>
+	</testsuite>
+	<testsuite name="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1-20241125095110" tests="20" file="test/ttlens/unit_tests/test_risc_debug.py" time="0.126" timestamp="2024-11-25T09:51:13" failures="0" errors="0" skipped="1">
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_bne_with_debug_fail" time="0.008" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="1096">
+			<!--Test running 48 bytes of generated code that confirms problem with BNE when debugging hardware is enabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_bne_with_debug_without_bp" time="0.004" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="1237">
+			<!--Test running 48 bytes of generated code that confirms that there is no problem with BNE when debugging hardware is enabled and branch prediction is disabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_bne_without_debug" time="0.004" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="1165">
+			<!--Test running 48 bytes of generated code that confirms that there is no problem with BNE when debugging hardware is disabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_continue" time="0.001" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="333">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_ebreak" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="243">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_ebreak_and_step" time="0.003" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="281">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_halt_continue" time="0.004" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="368">
+			<!--Test running 28 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_halt_status" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="428">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_invalidate_cache_with_nops_and_long_jump" time="0.034" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="593">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation by having NOPs block and jump back. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_invalidate_cache_with_reset" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="535">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation by reseting core. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_memory_watchpoint" time="0.006" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="966">
+			<!--Test running 64 bytes of generated code that just write data on memory and tests memory watchpoints. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_minimal_run_generated_code" time="0.001" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="214">
+			<!--Test running 16 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_read_write_gpr" time="0.013" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="120">
+			<!--Write then read value in all registers (except zero and pc).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_read_write_l1_memory" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="155">
+			<!--Testing read_memory and write_memory through debugging interface on L1 memory range.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_read_write_private_memory" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="186">
+			<!--Testing read_memory and write_memory through debugging interface on private core memory range.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_reset_all_functional_workers" time="0.012" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="111">
+			<!--Reset all functional workers.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_watchpoint_address" time="0.014" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="738">
+			<!--Test setting and reading watchpoint address (both memory and PC).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_watchpoint_on_pc_address" time="0.004" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="660">
+			<!--Test running 36 bytes of generated code that just write data on memory and does watchpoint on pc address. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_watchpoint_state" time="0.007" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="859">
+			<!--Test setting and disabling watchpoint state (both memory and PC).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_4_FW1" name="test_invalidate_cache" time="0.001" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="474">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation. All that is done on brisc.-->
+			<skipped type="skip" message="Invalidate cache is not reliable on wormhole and not working on blackhole at all..."/>
+		</testcase>
+	</testsuite>
+	<testsuite name="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1-20241125095110" tests="20" file="test/ttlens/unit_tests/test_risc_debug.py" time="0.144" timestamp="2024-11-25T09:51:14" failures="0" errors="0" skipped="1">
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_bne_with_debug_fail" time="0.010" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="1096">
+			<!--Test running 48 bytes of generated code that confirms problem with BNE when debugging hardware is enabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_bne_with_debug_without_bp" time="0.005" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="1237">
+			<!--Test running 48 bytes of generated code that confirms that there is no problem with BNE when debugging hardware is enabled and branch prediction is disabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_bne_without_debug" time="0.004" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="1165">
+			<!--Test running 48 bytes of generated code that confirms that there is no problem with BNE when debugging hardware is disabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_continue" time="0.002" timestamp="2024-11-25T09:51:13" file="test/ttlens/unit_tests/test_risc_debug.py" line="333">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_ebreak" time="0.002" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="243">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_ebreak_and_step" time="0.004" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="281">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_halt_continue" time="0.005" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="368">
+			<!--Test running 28 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_halt_status" time="0.003" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="428">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_invalidate_cache_with_nops_and_long_jump" time="0.035" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="593">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation by having NOPs block and jump back. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_invalidate_cache_with_reset" time="0.003" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="535">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation by reseting core. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_memory_watchpoint" time="0.007" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="966">
+			<!--Test running 64 bytes of generated code that just write data on memory and tests memory watchpoints. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_minimal_run_generated_code" time="0.002" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="214">
+			<!--Test running 16 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_read_write_gpr" time="0.013" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="120">
+			<!--Write then read value in all registers (except zero and pc).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_read_write_l1_memory" time="0.003" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="155">
+			<!--Testing read_memory and write_memory through debugging interface on L1 memory range.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_read_write_private_memory" time="0.004" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="186">
+			<!--Testing read_memory and write_memory through debugging interface on private core memory range.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_reset_all_functional_workers" time="0.012" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="111">
+			<!--Reset all functional workers.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_watchpoint_address" time="0.015" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="738">
+			<!--Test setting and reading watchpoint address (both memory and PC).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_watchpoint_on_pc_address" time="0.005" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="660">
+			<!--Test running 36 bytes of generated code that just write data on memory and does watchpoint on pc address. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_watchpoint_state" time="0.008" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="859">
+			<!--Test setting and disabling watchpoint state (both memory and PC).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_5_FW1" name="test_invalidate_cache" time="0.001" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="474">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation. All that is done on brisc.-->
+			<skipped type="skip" message="Invalidate cache is not reliable on wormhole and not working on blackhole at all..."/>
+		</testcase>
+	</testsuite>
+	<testsuite name="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1-20241125095110" tests="20" file="test/ttlens/unit_tests/test_risc_debug.py" time="0.144" timestamp="2024-11-25T09:51:14" failures="0" errors="0" skipped="1">
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_bne_with_debug_fail" time="0.010" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="1096">
+			<!--Test running 48 bytes of generated code that confirms problem with BNE when debugging hardware is enabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_bne_with_debug_without_bp" time="0.005" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="1237">
+			<!--Test running 48 bytes of generated code that confirms that there is no problem with BNE when debugging hardware is enabled and branch prediction is disabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_bne_without_debug" time="0.004" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="1165">
+			<!--Test running 48 bytes of generated code that confirms that there is no problem with BNE when debugging hardware is disabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_continue" time="0.002" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="333">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_ebreak" time="0.002" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="243">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_ebreak_and_step" time="0.004" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="281">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_halt_continue" time="0.005" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="368">
+			<!--Test running 28 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_halt_status" time="0.003" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="428">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_invalidate_cache_with_nops_and_long_jump" time="0.035" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="593">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation by having NOPs block and jump back. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_invalidate_cache_with_reset" time="0.003" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="535">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation by reseting core. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_memory_watchpoint" time="0.007" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="966">
+			<!--Test running 64 bytes of generated code that just write data on memory and tests memory watchpoints. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_minimal_run_generated_code" time="0.002" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="214">
+			<!--Test running 16 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_read_write_gpr" time="0.014" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="120">
+			<!--Write then read value in all registers (except zero and pc).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_read_write_l1_memory" time="0.003" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="155">
+			<!--Testing read_memory and write_memory through debugging interface on L1 memory range.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_read_write_private_memory" time="0.003" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="186">
+			<!--Testing read_memory and write_memory through debugging interface on private core memory range.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_reset_all_functional_workers" time="0.012" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="111">
+			<!--Reset all functional workers.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_watchpoint_address" time="0.015" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="738">
+			<!--Test setting and reading watchpoint address (both memory and PC).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_watchpoint_on_pc_address" time="0.005" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="660">
+			<!--Test running 36 bytes of generated code that just write data on memory and does watchpoint on pc address. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_watchpoint_state" time="0.008" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="859">
+			<!--Test setting and disabling watchpoint state (both memory and PC).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_6_FW1" name="test_invalidate_cache" time="0.001" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="474">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation. All that is done on brisc.-->
+			<skipped type="skip" message="Invalidate cache is not reliable on wormhole and not working on blackhole at all..."/>
+		</testcase>
+	</testsuite>
+	<testsuite name="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1-20241125095110" tests="20" file="test/ttlens/unit_tests/test_risc_debug.py" time="0.144" timestamp="2024-11-25T09:51:14" failures="0" errors="0" skipped="1">
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_bne_with_debug_fail" time="0.011" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="1096">
+			<!--Test running 48 bytes of generated code that confirms problem with BNE when debugging hardware is enabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_bne_with_debug_without_bp" time="0.005" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="1237">
+			<!--Test running 48 bytes of generated code that confirms that there is no problem with BNE when debugging hardware is enabled and branch prediction is disabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_bne_without_debug" time="0.004" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="1165">
+			<!--Test running 48 bytes of generated code that confirms that there is no problem with BNE when debugging hardware is disabled.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_continue" time="0.002" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="333">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_ebreak" time="0.002" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="243">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_ebreak_and_step" time="0.004" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="281">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_halt_continue" time="0.005" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="368">
+			<!--Test running 28 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_halt_status" time="0.003" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="428">
+			<!--Test running 20 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_invalidate_cache_with_nops_and_long_jump" time="0.035" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="593">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation by having NOPs block and jump back. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_invalidate_cache_with_reset" time="0.003" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="535">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation by reseting core. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_memory_watchpoint" time="0.007" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="966">
+			<!--Test running 64 bytes of generated code that just write data on memory and tests memory watchpoints. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_minimal_run_generated_code" time="0.002" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="214">
+			<!--Test running 16 bytes of generated code that just write data on memory and does infinite loop. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_read_write_gpr" time="0.014" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="120">
+			<!--Write then read value in all registers (except zero and pc).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_read_write_l1_memory" time="0.003" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="155">
+			<!--Testing read_memory and write_memory through debugging interface on L1 memory range.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_read_write_private_memory" time="0.003" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="186">
+			<!--Testing read_memory and write_memory through debugging interface on private core memory range.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_reset_all_functional_workers" time="0.012" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="111">
+			<!--Reset all functional workers.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_watchpoint_address" time="0.015" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="738">
+			<!--Test setting and reading watchpoint address (both memory and PC).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_watchpoint_on_pc_address" time="0.005" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="660">
+			<!--Test running 36 bytes of generated code that just write data on memory and does watchpoint on pc address. All that is done on brisc.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_watchpoint_state" time="0.008" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="859">
+			<!--Test setting and disabling watchpoint state (both memory and PC).-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_risc_debug.TestDebugging_7_FW1" name="test_invalidate_cache" time="0.001" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_risc_debug.py" line="474">
+			<!--Test running 16 bytes of generated code that just write data on memory and tries to reload it with instruction cache invalidation. All that is done on brisc.-->
+			<skipped type="skip" message="Invalidate cache is not reliable on wormhole and not working on blackhole at all..."/>
+		</testcase>
+	</testsuite>
+	<testsuite name="test.ttlens.unit_tests.test_ttlens_init.TestCachedTTLens-20241125095110" tests="1" file="test/ttlens/unit_tests/test_ttlens_init.py" time="0.001" timestamp="2024-11-25T09:51:14" failures="0" errors="0" skipped="0">
+		<testcase classname="test.ttlens.unit_tests.test_ttlens_init.TestCachedTTLens" name="test_cached_init" time="0.001" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_ttlens_init.py" line="72">
+			<!--Test TTLens initialization with cache.-->
+		</testcase>
+	</testsuite>
+	<testsuite name="test.ttlens.unit_tests.test_ttlens_init.TestLocalTTLensInit-20241125095110" tests="3" file="test/ttlens/unit_tests/test_ttlens_init.py" time="0.160" timestamp="2024-11-25T09:51:14" failures="0" errors="0" skipped="0">
+		<testcase classname="test.ttlens.unit_tests.test_ttlens_init.TestLocalTTLensInit" name="test_local_init" time="0.060" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_ttlens_init.py" line="21">
+			<!--Test local TTLens initialization.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_ttlens_init.TestLocalTTLensInit" name="test_local_wanted_devices" time="0.050" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_ttlens_init.py" line="33">
+			<!--Test local TTLens initialization with specification of wanted devices.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_ttlens_init.TestLocalTTLensInit" name="test_local_with_cache" time="0.051" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_ttlens_init.py" line="27">
+			<!--Test local TTLens initialization with cache.-->
+		</testcase>
+	</testsuite>
+	<testsuite name="test.ttlens.unit_tests.test_ttlens_init.TestRemoteTTLens-20241125095110" tests="2" file="test/ttlens/unit_tests/test_ttlens_init.py" time="0.130" timestamp="2024-11-25T09:51:14" failures="0" errors="0" skipped="0">
+		<testcase classname="test.ttlens.unit_tests.test_ttlens_init.TestRemoteTTLens" name="test_remote_init" time="0.128" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_ttlens_init.py" line="50">
+			<!--Test remote TTLens initialization.-->
+		</testcase>
+		<testcase classname="test.ttlens.unit_tests.test_ttlens_init.TestRemoteTTLens" name="test_remote_with_cache" time="0.002" timestamp="2024-11-25T09:51:14" file="test/ttlens/unit_tests/test_ttlens_init.py" line="56">
+			<!--Test remote TTLens initialization with cache.-->
+		</testcase>
+	</testsuite>
+</testsuites>
