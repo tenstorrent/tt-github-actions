@@ -82,13 +82,6 @@ def get_pipeline_row_from_github_info(github_runner_environment, github_pipeline
     }
 
 
-def return_first_string_starts_with(starting_string, strings):
-    for string in strings:
-        if string.startswith(starting_string):
-            return string
-    raise Exception(f"{strings} do not have any that match {starting_string}")
-
-
 def get_job_failure_signature_(github_job) -> Optional[Union[InfraErrorV1]]:
     if github_job["conclusion"] == "success":
         return None
@@ -122,23 +115,17 @@ def get_job_row_from_github_job(github_job):
     else:
         location = "tt_cloud"
 
+    os = None
     if location == "github":
-        try:
-            ubuntu_version = return_first_string_starts_with("ubuntu-", labels)
-        except Exception as e:
-            logger.error(e)
-            logger.error(f"{labels} for a GitHub runner seem to not specify an ubuntu version")
-            raise e
-        if ubuntu_version == "ubuntu-latest":
+        os_variants = ["ubuntu", "windows", "macos"]
+        os = [label for label in labels if any(variant in label for variant in os_variants)][0]
+        if os == "ubuntu-latest":
             logger.warning("Found ubuntu-latest, replacing with ubuntu-24.04 but may not be case for long")
-            ubuntu_version = "ubuntu-24.04"
-    elif location == "tt_cloud":
-        logger.warning("Assuming ubuntu-20.04 for tt cloud, but may not be the case soon")
-        ubuntu_version = "ubuntu-20.04"
-    else:
-        ubuntu_version = None
+            os = "ubuntu-24.04"
 
-    os = ubuntu_version
+    if location == "tt_cloud":
+        logger.warning("Assuming ubuntu-20.04 for tt cloud, but may not be the case soon")
+        os = "ubuntu-20.04"
 
     name = github_job["name"]
 
