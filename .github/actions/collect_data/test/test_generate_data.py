@@ -27,3 +27,26 @@ def test_create_pipeline_json(run_id):
     with open(filename, "r") as file:
         data = json.load(file)
         assert data["jobs"][0]["card_type"] in ["N300", "N150", "E150"]
+
+    # validate constrains
+    assert check_constraint(pipeline)
+
+
+def check_constraint(pipeline):
+    # check if the pipeline has the correct constraints
+    # unique cicd_job_id, full_test_name, test_start_ts
+    unique_tests = set()
+    for job in pipeline.jobs:
+        for test in job.tests:
+            key = (job.github_job_id, test.full_test_name, test.test_start_ts)
+            if key in unique_tests:
+                raise ValueError("Job already exists: ", key)
+            unique_tests.add(key)
+    # unique cicd_pipeline_id, name, job_submission_ts, job_start_ts, job_end_ts
+    unique_jobs = set()
+    for job in pipeline.jobs:
+        key = (pipeline.github_pipeline_id, job.name, job.job_submission_ts, job.job_start_ts, job.job_end_ts)
+        if key in unique_jobs:
+            raise ValueError("Job already exists: ", key)
+        unique_jobs.add(key)
+    return True

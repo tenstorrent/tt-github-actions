@@ -11,6 +11,7 @@ def get_tests(test_report_path):
     with open(test_report_path) as f:
         data = f.read()
         dict_data = xmltodict.parse(data)
+        previous_test_end_ts = None
         for testsuite in dict_data["testsuites"]["testsuite"]:
 
             # testcases can be dict or list
@@ -22,7 +23,6 @@ def get_tests(test_report_path):
                 message = None
                 test_start_ts = testcase["@timestamp"]
                 duration = testcase["@time"]
-                test_end_ts = add_time(test_start_ts, duration)
                 skipped = testcase.get("skipped", False)
                 error = testcase.get("error", False)
                 failure = testcase.get("failure", False)
@@ -36,6 +36,11 @@ def get_tests(test_report_path):
                     message = testcase["failure"]["@type"]
                     message += "\n" + testcase["failure"]["@message"]
                     message += "\n" + testcase["failure"]["#text"]
+
+                # Workaround: Data team requres unique test_start_ts
+                if previous_test_end_ts:
+                    test_start_ts = max(test_start_ts, previous_test_end_ts)
+                test_end_ts = add_time(test_start_ts, duration)
 
                 test = Test(
                     test_start_ts=test_start_ts,
@@ -53,6 +58,7 @@ def get_tests(test_report_path):
                     tags=None,
                 )
                 tests.append(test)
+                previous_test_end_ts = test_end_ts
     return tests
 
 
