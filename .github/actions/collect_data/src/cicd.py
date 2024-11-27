@@ -3,11 +3,14 @@
 # SPDX-License-Identifier: Apache-2.0
 import json
 from loguru import logger
+from datetime import datetime, timedelta
+import random
 
 from utils import (
     get_pipeline_row_from_github_info,
     get_job_rows_from_github_info,
     get_data_pipeline_datetime_from_datetime,
+    get_datetime_from_github_datetime,
 )
 from workflows import (
     get_github_job_id_to_test_reports,
@@ -54,6 +57,16 @@ def create_cicd_json_for_data_analysis(
                 logger.info(f"Found {len(tests_in_report)} tests in report {test_report_path}")
                 tests.extend(tests_in_report)
             logger.info(f"Found {len(tests)} tests total for job {github_job_id}")
+        raw_job["job_start_ts"] = alter_time(raw_job["job_start_ts"])
         jobs.append(pydantic_models.Job(**raw_job, tests=tests))
 
     return pydantic_models.Pipeline(**raw_pipeline, jobs=jobs)
+
+
+def alter_time(timestamp):
+    # Workarpound for the fact that we don't have milliseconds in the timestamp
+    # Add a random number of milliseconds to the timestamp to make it unique
+    original_timestamp = get_datetime_from_github_datetime(timestamp)
+    altered_time = original_timestamp + timedelta(milliseconds=random.randint(0, 999))
+    altered_time_str = altered_time.isoformat(sep=" ", timespec="milliseconds")
+    return altered_time_str
