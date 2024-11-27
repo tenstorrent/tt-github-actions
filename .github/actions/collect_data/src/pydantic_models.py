@@ -7,9 +7,10 @@ Definition of the pydantic models used for data production.
 """
 
 from datetime import datetime
-from typing import List, Optional
+from typing import List
 
 from pydantic import BaseModel, Field
+from pydantic.typing import Optional
 
 
 class Test(BaseModel):
