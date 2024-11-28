@@ -4,6 +4,17 @@
 import xmltodict
 from pydantic_models import Test
 from datetime import datetime, timedelta
+from .parser import Parser
+
+
+class PythonUnittestParser(Parser):
+    """Parser for python unitest report files."""
+
+    def can_parse(self, filepath: str):
+        return filepath.endswith(".xml")
+
+    def parse(self, filepath: str):
+        return get_tests(filepath)
 
 
 def get_tests(test_report_path):
@@ -50,6 +61,11 @@ def get_tests(test_report_path):
                     category=testcase["@classname"],
                     group="unittest",
                     owner=None,
+                    frontend=None,
+                    model_name=None,
+                    op_name=None,
+                    framework_op_name=None,
+                    op_kind=None,
                     error_message=message,
                     success=not (error or failure),
                     skipped=bool(skipped),

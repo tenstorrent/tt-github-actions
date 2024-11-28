@@ -1,9 +1,12 @@
 # SPDX-FileCopyrightText: (c) 2024 Tenstorrent AI ULC
 #
 # SPDX-License-Identifier: Apache-2.0
+
+import os
 import json
+import pathlib
 from loguru import logger
-from datetime import datetime, timedelta
+from datetime import timedelta
 import random
 
 from utils import (
@@ -12,11 +15,8 @@ from utils import (
     get_data_pipeline_datetime_from_datetime,
     get_datetime_from_github_datetime,
 )
-from workflows import (
-    get_github_job_id_to_test_reports,
-    get_tests_from_test_report_path,
-)
 import pydantic_models
+from test_parser import parse_file
 
 
 def get_cicd_json_filename(pipeline):
@@ -53,7 +53,7 @@ def create_cicd_json_for_data_analysis(
         if github_job_id in github_job_id_to_test_reports:
             for test_report_path in github_job_id_to_test_reports[github_job_id]:
                 logger.info(f"Processing test report {test_report_path}")
-                tests_in_report = get_tests_from_test_report_path(test_report_path)
+                tests_in_report = parse_file(test_report_path)
                 logger.info(f"Found {len(tests_in_report)} tests in report {test_report_path}")
                 tests.extend(tests_in_report)
             logger.info(f"Found {len(tests)} tests total for job {github_job_id}")
@@ -61,6 +61,34 @@ def create_cicd_json_for_data_analysis(
         jobs.append(pydantic_models.Job(**raw_job, tests=tests))
 
     return pydantic_models.Pipeline(**raw_pipeline, jobs=jobs)
+
+
+def get_github_job_id_to_test_reports(workflow_outputs_dir, workflow_run_id: int):
+    """
+    This function searches for test reports in the artifacts directory
+    and returns a mapping of job IDs to the paths of the test reports.
+    We expect that report filename is in format `<report_name>_<job_id>.xml`.
+    """
+    job_paths_map = {}
+    artifacts_dir = f"{workflow_outputs_dir}/{workflow_run_id}/artifacts"
+
+    logger.info(f"Searching for test reports in {artifacts_dir}")
+
+    for root, _, files in os.walk(artifacts_dir):
+        for file in files:
+            if file.endswith(".xml"):
+                logger.debug(f"Found test report {file}")
+                file_path = pathlib.Path(root) / file
+                filename = file_path.name
+                try:
+                    job_id = int(filename.split(".")[-2].split("_")[-1])
+                except ValueError:
+                    logger.warning(f"Could not extract job ID from {filename}")
+                    continue
+                report_paths = job_paths_map.get(job_id, [])
+                report_paths.append(file_path)
+                job_paths_map[job_id] = report_paths
+    return job_paths_map
 
 
 def alter_time(timestamp):

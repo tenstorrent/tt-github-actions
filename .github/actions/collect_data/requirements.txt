@@ -1,5 +1,5 @@
 loguru
-pydantic
+pydantic==2.10.2
 defusedxml
 toolz
 pytest
