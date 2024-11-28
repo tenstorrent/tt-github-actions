@@ -24,9 +24,6 @@ def parse_file(filepath: str) -> List[Test]:
     filepath = str(filepath)
     for parser in parsers:
         if parser.can_parse(filepath):
-            try:
-                return parser.parse(filepath)
-            except Exception as e:
-                logger.error(f"Erro in parsing with {parser}: {e}")
+            return parser.parse(filepath)
     logger.error(f"No parser available for file: {filepath}")
     return []

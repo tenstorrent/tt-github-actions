@@ -22,7 +22,7 @@ def create_pipeline_json(workflow_filename: str, jobs_filename: str, workflow_ou
     logger.info(f"Writing pipeline JSON to {report_filename}")
 
     with open(report_filename, "w") as f:
-        f.write(pipeline.json())
+        f.write(pipeline.model_dump_json())
 
     return pipeline, report_filename
 
