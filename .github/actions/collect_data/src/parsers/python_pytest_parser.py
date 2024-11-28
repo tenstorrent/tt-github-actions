@@ -53,9 +53,14 @@ def get_pydantic_test_from_pytest_testcase_(testcase, default_timestamp=datetime
     if error:
         error_message = junit_xml_utils.get_pytest_error_message(testcase)
 
+    properties = {}
+    try:
+        properties = junit_xml_utils.get_pytest_testcase_properties(testcase)
+    except:
+        pass
+
     # Error at the beginning of a test can prevent pytest from recording timestamps at all
     if not (skipped or error):
-        properties = junit_xml_utils.get_pytest_testcase_properties(testcase)
         test_start_ts = datetime.strptime(properties["start_timestamp"], "%Y-%m-%dT%H:%M:%S")
         test_end_ts = datetime.strptime(properties["end_timestamp"], "%Y-%m-%dT%H:%M:%S")
     else:
@@ -98,11 +103,11 @@ def get_pydantic_test_from_pytest_testcase_(testcase, default_timestamp=datetime
         category=category,
         group=group,
         owner=owner,
-        frontend=None,
-        model_name=None,
-        op_name=None,
-        framework_op_name=None,
-        op_kind=None,
+        frontend=properties.get("frontend"),
+        model_name=properties.get("model_name"),
+        op_name=properties.get("op_name"),
+        framework_op_name=properties.get("framework_op_name"),
+        op_kind=properties.get("op_kind"),
         error_message=error_message,
         success=success,
         skipped=skipped,

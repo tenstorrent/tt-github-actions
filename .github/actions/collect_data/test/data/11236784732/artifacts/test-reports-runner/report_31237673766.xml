@@ -11,12 +11,22 @@
             <properties>
                 <property name="start_timestamp" value="2024-10-08T14:05:30" />
                 <property name="end_timestamp" value="2024-10-08T14:05:31" />
+                <property name="frontend" value="tt-froge-fe"/>
+				<property name="model_name" value="resnet"/>
+				<property name="op_name" value="matmul"/>
+				<property name="framework_op_name" value="tt-matmul"/>
+				<property name="op_kind" value="mul"/>
             </properties>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_transpose[params1]" time="0.339">
             <properties>
                 <property name="start_timestamp" value="2024-10-08T14:05:31" />
                 <property name="end_timestamp" value="2024-10-08T14:05:32" />
+                <property name="frontend" value="tt-froge-fe"/>
+				<property name="model_name" value=""/>
+				<property name="op_name" value=""/>
+				<property name="framework_op_name" value=""/>
+				<property name="op_kind" value=""/>
             </properties>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_transpose[params2]" time="0.378">
