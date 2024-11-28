@@ -2,45 +2,40 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import pathlib
-import os
-from datetime import datetime
-from functools import partial
-
 from loguru import logger
+from functools import partial
+from pydantic_models import Test
+from datetime import datetime
+from .parser import Parser
+from . import junit_xml_utils
 
-import junit_xml_utils
-import pydantic_models
 
-from unittest_parser import get_tests
+class PythonPytestParser(Parser):
+    """Parser for python unitest report files."""
+
+    def can_parse(self, filepath: str):
+        if not filepath.endswith(".xml"):
+            return False
+        report_root_tree = junit_xml_utils.get_xml_file_root_element_tree(filepath)
+        report_root = report_root_tree.getroot()
+        is_pytest = junit_xml_utils.is_pytest_junit_xml(report_root)
+        return is_pytest
+
+    def parse(self, filepath: str):
+        return get_tests(filepath)
 
 
-def get_github_job_id_to_test_reports(workflow_outputs_dir, workflow_run_id: int):
-    """
-    This function searches for test reports in the artifacts directory
-    and returns a mapping of job IDs to the paths of the test reports.
-    We expect that report filename is in format `<report_name>_<job_id>.xml`.
-    """
-    job_paths_map = {}
-    artifacts_dir = f"{workflow_outputs_dir}/{workflow_run_id}/artifacts"
-
-    logger.info(f"Searching for test reports in {artifacts_dir}")
-
-    for root, _, files in os.walk(artifacts_dir):
-        for file in files:
-            if file.endswith(".xml"):
-                logger.debug(f"Found test report {file}")
-                file_path = pathlib.Path(root) / file
-                filename = file_path.name
-                try:
-                    job_id = int(filename.split(".")[-2].split("_")[-1])
-                except ValueError:
-                    logger.warning(f"Could not extract job ID from {filename}")
-                    continue
-                report_paths = job_paths_map.get(job_id, [])
-                report_paths.append(file_path)
-                job_paths_map[job_id] = report_paths
-    return job_paths_map
+def get_tests(filepath):
+    report_root_tree = junit_xml_utils.get_xml_file_root_element_tree(filepath)
+    report_root = report_root_tree.getroot()
+    testsuite = report_root[0]
+    default_timestamp = datetime.strptime(testsuite.attrib["timestamp"], "%Y-%m-%dT%H:%M:%S.%f")
+    get_pydantic_test = partial(get_pydantic_test_from_pytest_testcase_, default_timestamp=default_timestamp)
+    tests = []
+    for testcase in testsuite:
+        if is_valid_testcase_(testcase):
+            tests.append(get_pydantic_test(testcase))
+    return tests
 
 
 def get_pydantic_test_from_pytest_testcase_(testcase, default_timestamp=datetime.now()):
@@ -95,7 +90,7 @@ def get_pydantic_test_from_pytest_testcase_(testcase, default_timestamp=datetime
 
     tags = None
 
-    return pydantic_models.Test(
+    return Test(
         test_start_ts=test_start_ts,
         test_end_ts=test_end_ts,
         test_case_name=test_case_name,
@@ -126,30 +121,3 @@ def is_valid_testcase_(testcase):
         return False
     else:
         return True
-
-
-def get_tests_from_test_report_path(test_report_path):
-    try:
-        return _get_tests(test_report_path)
-    except Exception as e:
-        logger.error(f"Failed to get tests from {test_report_path}: {e}")
-        return []
-
-
-def _get_tests(test_report_path):
-    report_root_tree = junit_xml_utils.get_xml_file_root_element_tree(test_report_path)
-    report_root = report_root_tree.getroot()
-    is_pytest = junit_xml_utils.is_pytest_junit_xml(report_root)
-    if is_pytest:
-        # pytests report format
-        testsuite = report_root[0]
-        default_timestamp = datetime.strptime(testsuite.attrib["timestamp"], "%Y-%m-%dT%H:%M:%S.%f")
-        get_pydantic_test = partial(get_pydantic_test_from_pytest_testcase_, default_timestamp=default_timestamp)
-        tests = []
-        for testcase in testsuite:
-            if is_valid_testcase_(testcase):
-                tests.append(get_pydantic_test(testcase))
-        return tests
-    else:
-        # handle unittest report format
-        return get_tests(test_report_path)

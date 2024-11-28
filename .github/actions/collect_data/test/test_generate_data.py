@@ -8,8 +8,11 @@ import json
 import pytest
 
 
-@pytest.mark.parametrize("run_id", ["11236784732", "12007373278"])
-def test_create_pipeline_json(run_id):
+@pytest.mark.parametrize(
+    "run_id, expected",
+    [("11236784732", {"jobs_cnt": 2, "tests_cnt": 583}), ("12007373278", {"jobs_cnt": 9, "tests_cnt": 245})],
+)
+def test_create_pipeline_json(run_id, expected):
     """
     End-to-end test for create_pipeline_json function
     Calling this will generate a pipeline json file
@@ -23,12 +26,22 @@ def test_create_pipeline_json(run_id):
 
     assert os.path.exists(filename)
 
-    # assert pipeline json file has the correct
     with open(filename, "r") as file:
-        data = json.load(file)
-        assert data["jobs"][0]["card_type"] in ["N300", "N150", "E150"]
+        pipeline_json = json.load(file)
 
-    # validate constrains
+        # assert pipeline json has the correct card types
+        expected_card_types = ["N300", "N150", "E150", None]
+        for job in pipeline_json["jobs"]:
+            assert job["card_type"] in expected_card_types
+
+        # assert pipeline json has the correct number of jobs and tests
+        assert len(pipeline_json["jobs"]) == expected["jobs_cnt"]
+        tests_cnt = 0
+        for job in pipeline_json["jobs"]:
+            tests_cnt += len(job["tests"])
+        assert tests_cnt == expected["tests_cnt"]
+
+    # validate constraints
     assert check_constraint(pipeline)
 
 
