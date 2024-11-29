@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 import xmltodict
+from loguru import logger
 from pydantic_models import Test
 from datetime import datetime, timedelta
 from .parser import Parser
@@ -23,6 +24,15 @@ def get_tests(test_report_path):
         data = f.read()
         dict_data = xmltodict.parse(data)
         previous_test_end_ts = None
+
+        # Workaround: If test info does not have timestamp, use current time
+        if "@timestamp" not in dict_data["testsuites"]["testsuite"][0]["testcase"][0]:
+            previous_test_end_ts = datetime.now().isoformat()
+            logger.warning("Timestamp not found in test report. Using current time.")
+
+        if "@file" not in dict_data["testsuites"]["testsuite"][0]["testcase"][0]:
+            logger.warning("Filepath not found in test report.")
+
         for testsuite in dict_data["testsuites"]["testsuite"]:
 
             # testcases can be dict or list
@@ -32,11 +42,12 @@ def get_tests(test_report_path):
 
             for testcase in testcases:
                 message = None
-                test_start_ts = testcase["@timestamp"]
+                test_start_ts = testcase.get("@timestamp", previous_test_end_ts)
                 duration = testcase["@time"]
                 skipped = testcase.get("skipped", False)
                 error = testcase.get("error", False)
                 failure = testcase.get("failure", False)
+                file = testcase.get("@file", "")
                 if skipped:
                     message = testcase["skipped"]["@message"]
                 if error:
@@ -57,7 +68,7 @@ def get_tests(test_report_path):
                     test_start_ts=test_start_ts,
                     test_end_ts=test_end_ts,
                     test_case_name=testcase["@name"],
-                    filepath=testcase["@file"],
+                    filepath=file,
                     category=testcase["@classname"],
                     group="unittest",
                     owner=None,
@@ -69,7 +80,7 @@ def get_tests(test_report_path):
                     error_message=message,
                     success=not (error or failure),
                     skipped=bool(skipped),
-                    full_test_name=f"{testcase['@file']}::{testcase['@name']}",
+                    full_test_name=f"{file}::{testcase['@name']}",
                     config=None,
                     tags=None,
                 )
