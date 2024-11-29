@@ -1,0 +1,511 @@
+{
+  "total_count": 4,
+  "jobs": [
+    {
+      "id": 33705919829,
+      "run_id": 12084081698,
+      "workflow_name": "On PR",
+      "head_branch": "vmilosevic/test_reports",
+      "run_url": "https://api.github.com/repos/tenstorrent/tt-torch/actions/runs/12084081698",
+      "run_attempt": 2,
+      "node_id": "CR_kwDONDtnV88AAAAH2QeFVQ",
+      "head_sha": "d07b79eff38dd213ed122a83573de68819c87ce2",
+      "url": "https://api.github.com/repos/tenstorrent/tt-torch/actions/jobs/33705919829",
+      "html_url": "https://github.com/tenstorrent/tt-torch/actions/runs/12084081698/job/33705919829",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2024-11-29T14:30:03Z",
+      "started_at": "2024-11-29T14:30:10Z",
+      "completed_at": "2024-11-29T14:30:15Z",
+      "name": "spdx / check-spdx-headers",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2024-11-29T14:30:09Z",
+          "completed_at": "2024-11-29T14:30:10Z"
+        },
+        {
+          "name": "checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2024-11-29T14:30:10Z",
+          "completed_at": "2024-11-29T14:30:12Z"
+        },
+        {
+          "name": "Run enarx/spdx@master",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2024-11-29T14:30:12Z",
+          "completed_at": "2024-11-29T14:30:12Z"
+        },
+        {
+          "name": "Post checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2024-11-29T14:30:15Z",
+          "completed_at": "2024-11-29T14:30:15Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2024-11-29T14:30:12Z",
+          "completed_at": "2024-11-29T14:30:12Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-torch/check-runs/33705919829",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 18,
+      "runner_name": "GitHub Actions 18",
+      "runner_group_id": 2,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 33705920152,
+      "run_id": 12084081698,
+      "workflow_name": "On PR",
+      "head_branch": "vmilosevic/test_reports",
+      "run_url": "https://api.github.com/repos/tenstorrent/tt-torch/actions/runs/12084081698",
+      "run_attempt": 2,
+      "node_id": "CR_kwDONDtnV88AAAAH2QeGmA",
+      "head_sha": "d07b79eff38dd213ed122a83573de68819c87ce2",
+      "url": "https://api.github.com/repos/tenstorrent/tt-torch/actions/jobs/33705920152",
+      "html_url": "https://github.com/tenstorrent/tt-torch/actions/runs/12084081698/job/33705920152",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2024-11-29T14:30:03Z",
+      "started_at": "2024-11-29T14:30:09Z",
+      "completed_at": "2024-11-29T14:30:20Z",
+      "name": "pre-commit / pre-commit",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2024-11-29T14:30:08Z",
+          "completed_at": "2024-11-29T14:30:09Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2024-11-29T14:30:09Z",
+          "completed_at": "2024-11-29T14:30:10Z"
+        },
+        {
+          "name": "Set up Python",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2024-11-29T14:30:11Z",
+          "completed_at": "2024-11-29T14:30:11Z"
+        },
+        {
+          "name": "Run pre-commit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2024-11-29T14:30:11Z",
+          "completed_at": "2024-11-29T14:30:18Z"
+        },
+        {
+          "name": "Post Run pre-commit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2024-11-29T14:30:18Z",
+          "completed_at": "2024-11-29T14:30:18Z"
+        },
+        {
+          "name": "Post Set up Python",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2024-11-29T14:30:18Z",
+          "completed_at": "2024-11-29T14:30:18Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2024-11-29T14:30:20Z",
+          "completed_at": "2024-11-29T14:30:20Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2024-11-29T14:30:18Z",
+          "completed_at": "2024-11-29T14:30:18Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-torch/check-runs/33705920152",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 10,
+      "runner_name": "GitHub Actions 10",
+      "runner_group_id": 2,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 33705933184,
+      "run_id": 12084081698,
+      "workflow_name": "On PR",
+      "head_branch": "vmilosevic/test_reports",
+      "run_url": "https://api.github.com/repos/tenstorrent/tt-torch/actions/runs/12084081698",
+      "run_attempt": 2,
+      "node_id": "CR_kwDONDtnV88AAAAH2Qe5gA",
+      "head_sha": "d07b79eff38dd213ed122a83573de68819c87ce2",
+      "url": "https://api.github.com/repos/tenstorrent/tt-torch/actions/jobs/33705933184",
+      "html_url": "https://github.com/tenstorrent/tt-torch/actions/runs/12084081698/job/33705933184",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2024-11-29T14:30:21Z",
+      "started_at": "2024-11-29T14:30:25Z",
+      "completed_at": "2024-11-29T14:46:30Z",
+      "name": "build / build (n150, run)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2024-11-29T14:30:25Z",
+          "completed_at": "2024-11-29T14:30:33Z"
+        },
+        {
+          "name": "Set up runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2024-11-29T14:30:33Z",
+          "completed_at": "2024-11-29T14:31:17Z"
+        },
+        {
+          "name": "Initialize containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2024-11-29T14:31:18Z",
+          "completed_at": "2024-11-29T14:32:44Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2024-11-29T14:32:45Z",
+          "completed_at": "2024-11-29T14:32:46Z"
+        },
+        {
+          "name": "Set reusable strings",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2024-11-29T14:32:46Z",
+          "completed_at": "2024-11-29T14:32:46Z"
+        },
+        {
+          "name": "Git safe dir",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2024-11-29T14:32:46Z",
+          "completed_at": "2024-11-29T14:32:46Z"
+        },
+        {
+          "name": "ccache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2024-11-29T14:32:46Z",
+          "completed_at": "2024-11-29T14:32:51Z"
+        },
+        {
+          "name": "Configure CMake",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2024-11-29T14:32:51Z",
+          "completed_at": "2024-11-29T14:35:15Z"
+        },
+        {
+          "name": "Build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2024-11-29T14:35:15Z",
+          "completed_at": "2024-11-29T14:45:37Z"
+        },
+        {
+          "name": "Copy tt-metal binaries",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2024-11-29T14:45:37Z",
+          "completed_at": "2024-11-29T14:45:37Z"
+        },
+        {
+          "name": "Copy tt-metal directories",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2024-11-29T14:45:37Z",
+          "completed_at": "2024-11-29T14:45:38Z"
+        },
+        {
+          "name": "Tar install directory",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2024-11-29T14:45:38Z",
+          "completed_at": "2024-11-29T14:45:39Z"
+        },
+        {
+          "name": "Upload install folder to archive",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2024-11-29T14:45:39Z",
+          "completed_at": "2024-11-29T14:46:12Z"
+        },
+        {
+          "name": "Post ccache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23,
+          "started_at": "2024-11-29T14:46:12Z",
+          "completed_at": "2024-11-29T14:46:27Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 24,
+          "started_at": "2024-11-29T14:46:27Z",
+          "completed_at": "2024-11-29T14:46:27Z"
+        },
+        {
+          "name": "Stop containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25,
+          "started_at": "2024-11-29T14:46:27Z",
+          "completed_at": "2024-11-29T14:46:27Z"
+        },
+        {
+          "name": "Complete runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 26,
+          "started_at": "2024-11-29T14:46:30Z",
+          "completed_at": "2024-11-29T14:46:30Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 27,
+          "started_at": "2024-11-29T14:46:27Z",
+          "completed_at": "2024-11-29T14:46:27Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-torch/check-runs/33705933184",
+      "labels": [
+        "in-service",
+        "n150"
+      ],
+      "runner_id": 3,
+      "runner_name": "torch-n150-2",
+      "runner_group_id": 1,
+      "runner_group_name": "Default"
+    },
+    {
+      "id": 33706643326,
+      "run_id": 12084081698,
+      "workflow_name": "On PR",
+      "head_branch": "vmilosevic/test_reports",
+      "run_url": "https://api.github.com/repos/tenstorrent/tt-torch/actions/runs/12084081698",
+      "run_attempt": 2,
+      "node_id": "CR_kwDONDtnV88AAAAH2RKPfg",
+      "head_sha": "d07b79eff38dd213ed122a83573de68819c87ce2",
+      "url": "https://api.github.com/repos/tenstorrent/tt-torch/actions/jobs/33706643326",
+      "html_url": "https://github.com/tenstorrent/tt-torch/actions/runs/12084081698/job/33706643326",
+      "status": "completed",
+      "conclusion": "failure",
+      "created_at": "2024-11-29T14:46:32Z",
+      "started_at": "2024-11-29T14:46:37Z",
+      "completed_at": "2024-11-29T14:52:58Z",
+      "name": "test / tests (n150, run)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2024-11-29T14:46:37Z",
+          "completed_at": "2024-11-29T14:46:39Z"
+        },
+        {
+          "name": "Set up runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2024-11-29T14:46:39Z",
+          "completed_at": "2024-11-29T14:47:23Z"
+        },
+        {
+          "name": "Initialize containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2024-11-29T14:47:23Z",
+          "completed_at": "2024-11-29T14:47:25Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2024-11-29T14:47:25Z",
+          "completed_at": "2024-11-29T14:47:29Z"
+        },
+        {
+          "name": "Set reusable strings",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2024-11-29T14:47:30Z",
+          "completed_at": "2024-11-29T14:47:30Z"
+        },
+        {
+          "name": "Git safe dir",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2024-11-29T14:47:30Z",
+          "completed_at": "2024-11-29T14:47:30Z"
+        },
+        {
+          "name": "Use build artifacts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2024-11-29T14:47:30Z",
+          "completed_at": "2024-11-29T14:47:41Z"
+        },
+        {
+          "name": "Untar install directory",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2024-11-29T14:47:41Z",
+          "completed_at": "2024-11-29T14:47:42Z"
+        },
+        {
+          "name": "make tt-metal directory",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2024-11-29T14:47:42Z",
+          "completed_at": "2024-11-29T14:47:42Z"
+        },
+        {
+          "name": "copy tt-metal dirs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2024-11-29T14:47:43Z",
+          "completed_at": "2024-11-29T14:47:43Z"
+        },
+        {
+          "name": "Run PyTorch tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2024-11-29T14:47:43Z",
+          "completed_at": "2024-11-29T14:52:42Z"
+        },
+        {
+          "name": "Upload Test Report Torch",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2024-11-29T14:52:42Z",
+          "completed_at": "2024-11-29T14:52:43Z"
+        },
+        {
+          "name": "Run ONNX tests",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 13,
+          "started_at": "2024-11-29T14:52:43Z",
+          "completed_at": "2024-11-29T14:52:50Z"
+        },
+        {
+          "name": "Upload Test Report Onnx",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2024-11-29T14:52:50Z",
+          "completed_at": "2024-11-29T14:52:50Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 26,
+          "started_at": "2024-11-29T14:52:50Z",
+          "completed_at": "2024-11-29T14:52:50Z"
+        },
+        {
+          "name": "Stop containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 27,
+          "started_at": "2024-11-29T14:52:51Z",
+          "completed_at": "2024-11-29T14:52:51Z"
+        },
+        {
+          "name": "Complete runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 28,
+          "started_at": "2024-11-29T14:52:51Z",
+          "completed_at": "2024-11-29T14:52:51Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 29,
+          "started_at": "2024-11-29T14:52:51Z",
+          "completed_at": "2024-11-29T14:52:51Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-torch/check-runs/33706643326",
+      "labels": [
+        "in-service",
+        "n150"
+      ],
+      "runner_id": 3,
+      "runner_name": "torch-n150-2",
+      "runner_group_id": 1,
+      "runner_group_name": "Default"
+    }
+  ]
+}

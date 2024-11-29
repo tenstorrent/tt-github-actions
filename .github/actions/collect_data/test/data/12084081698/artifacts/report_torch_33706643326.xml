@@ -1,0 +1,681 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+    <testsuite name="pytest" errors="0" failures="0" skipped="213" tests="250" time="46.321" timestamp="2024-11-29T14:51:54.464026+00:00" hostname="f775ec012985">
+        <testcase classname="tests.torch.test_basic" name="test_abs" time="2.283" />
+        <testcase classname="tests.torch.test_basic" name="test_add" time="0.638" />
+        <testcase classname="tests.torch.test_basic" name="test_concat_dim0" time="0.434" />
+        <testcase classname="tests.torch.test_basic" name="test_concat_dim1" time="0.052" />
+        <testcase classname="tests.torch.test_basic" name="test_concat_dim2" time="0.058" />
+        <testcase classname="tests.torch.test_basic" name="test_concat_dim3" time="0.176" />
+        <testcase classname="tests.torch.test_basic" name="test_constant_ones" time="0.000">
+            <skipped type="pytest.skip" message="Torch keeps the 'value' as dialect resource which are not processed.">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:79: Torch keeps the 'value' as dialect resource which are not processed.</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_convert" time="1.365" />
+        <testcase classname="tests.torch.test_basic" name="test_div" time="0.784" />
+        <testcase classname="tests.torch.test_basic" name="test_exp" time="0.567" />
+        <testcase classname="tests.torch.test_basic" name="test_linear" time="1.659" />
+        <testcase classname="tests.torch.test_basic" name="test_linear_with_bias" time="0.002">
+            <skipped type="pytest.xfail" message="" />
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_maximum" time="2.186" />
+        <testcase classname="tests.torch.test_basic" name="test_multiply" time="0.056" />
+        <testcase classname="tests.torch.test_basic" name="test_negate" time="0.540" />
+        <testcase classname="tests.torch.test_basic" name="test_reduce_max" time="0.000">
+            <skipped type="pytest.skip" message="keepdim=False is not supported">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:212: keepdim=False is not supported</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_reduce_sum" time="0.000">
+            <skipped type="pytest.skip" message="keepdim=False is not supported">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:224: keepdim=False is not supported</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_relu" time="0.001">
+            <skipped type="pytest.xfail" message="" />
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_rsqrt" time="0.672" />
+        <testcase classname="tests.torch.test_basic" name="test_sqrt" time="0.584" />
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-64-2]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-96-2]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[32-64-2]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[32-96-2]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-64-3]" time="0.437" />
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-96-3]" time="0.060" />
+        <testcase classname="tests.torch.test_basic" name="test_slice[32-64-3]" time="0.057" />
+        <testcase classname="tests.torch.test_basic" name="test_slice[32-96-3]" time="0.057" />
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-90-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-91-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-92-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-93-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-94-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-95-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-96-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-97-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-98-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-99-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-90-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-91-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-92-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-93-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-94-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-95-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-96-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-97-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-98-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-99-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-90-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-91-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-92-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-93-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-94-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-95-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-96-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-97-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-98-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-99-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-90-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-91-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-92-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-93-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-94-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-95-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-96-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-97-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-98-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-99-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-90-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-91-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-92-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-93-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-94-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-95-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-96-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-97-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-98-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-99-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-90-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-91-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-92-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-93-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-94-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-95-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-96-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-97-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-98-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-99-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-90-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-91-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-92-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-93-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-94-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-95-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-96-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-97-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-98-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-99-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-90-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-91-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-92-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-93-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-94-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-95-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-96-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-97-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-98-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-99-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-90-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-91-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-92-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-93-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-94-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-95-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-96-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-97-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-98-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-99-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-90-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-91-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-92-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-93-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-94-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-95-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-96-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-97-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-98-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-99-0]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-90-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-91-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-92-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-93-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-94-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-95-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-96-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-97-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-98-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[0-99-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-90-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-91-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-92-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-93-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-94-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-95-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-96-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-97-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-98-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[1-99-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-90-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-91-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-92-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-93-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-94-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-95-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-96-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-97-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-98-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[2-99-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-90-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-91-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-92-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-93-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-94-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-95-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-96-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-97-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-98-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[3-99-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-90-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-91-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-92-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-93-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-94-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-95-1]" time="0.105">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-96-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-97-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-98-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[4-99-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-90-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-91-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-92-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-93-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-94-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-95-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-96-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-97-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-98-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[5-99-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-90-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-91-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-92-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-93-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-94-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-95-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-96-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-97-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-98-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[6-99-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-90-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-91-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-92-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-93-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-94-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-95-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-96-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-97-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-98-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[7-99-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-90-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-91-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-92-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-93-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-94-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-95-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-96-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-97-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-98-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[8-99-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-90-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-91-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-92-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-93-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-94-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-95-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-96-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-97-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-98-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_slice[9-99-1]" time="0.001">
+            <skipped type="pytest.skip" message="Skipped">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:302: Skipped</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_subtract" time="0.050" />
+        <testcase classname="tests.torch.test_basic" name="test_transpose_2d" time="0.048" />
+        <testcase classname="tests.torch.test_basic" name="test_transpose_3d" time="0.000">
+            <skipped type="pytest.skip" message="TTNN does not support transpose for higher ranks/dimensions.">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:345: TTNN does not support transpose for higher ranks/dimensions.</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_multiple_ops" time="5.202" />
+        <testcase classname="tests.torch.test_basic" name="test_remainder_op[input_range0-input_shapes0]" time="4.616" />
+        <testcase classname="tests.torch.test_basic" name="test_remainder_op[input_range1-input_shapes1]" time="0.000">
+            <skipped type="pytest.skip" message="Fails due to https://github.com/tenstorrent/tt-metal/issues/15131">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:375: Fails due to https://github.com/tenstorrent/tt-metal/issues/15131</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_remainder_op[input_range2-input_shapes2]" time="0.000">
+            <skipped type="pytest.skip" message="Fails due to https://github.com/tenstorrent/tt-metal/issues/15130">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:375: Fails due to https://github.com/tenstorrent/tt-metal/issues/15130</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_basic" name="test_remainder_op[input_range3-input_shapes3]" time="0.000">
+            <skipped type="pytest.skip" message="Fails due to https://github.com/tenstorrent/tt-metal/issues/15130">/__w/tt-torch/tt-torch/tests/torch/test_basic.py:375: Fails due to https://github.com/tenstorrent/tt-metal/issues/15130</skipped>
+        </testcase>
+        <testcase classname="tests.torch.test_compare" name="test_equal" time="0.705" />
+        <testcase classname="tests.torch.test_compare" name="test_notEqual" time="0.677" />
+        <testcase classname="tests.torch.test_compare" name="test_greaterThan" time="0.663" />
+        <testcase classname="tests.torch.test_compare" name="test_greaterEqual" time="0.666" />
+        <testcase classname="tests.torch.test_compare" name="test_lessThan" time="0.688" />
+        <testcase classname="tests.torch.test_compare" name="test_lessEqual" time="0.669" />
+        <testcase classname="tests.torch.test_conv2d" name="test_conv2d[dtype0-1-64-3-256-256-7-7-2-2-3]" time="5.336" />
+        <testcase classname="tests.torch.test_conv2d" name="test_conv2d[dtype0-1-128-64-128-128-2-2-2-2-0]" time="4.346" />
+        <testcase classname="tests.torch.test_conv2d" name="test_conv2d[dtype1-1-64-3-256-256-7-7-2-2-3]" time="3.355" />
+        <testcase classname="tests.torch.test_conv2d" name="test_conv2d[dtype1-1-128-64-128-128-2-2-2-2-0]" time="2.433" />
+        <testcase classname="tests.torch.test_logical" name="test_and" time="0.696" />
+        <testcase classname="tests.torch.test_logical" name="test_not" time="0.557" />
+        <testcase classname="tests.torch.test_logical" name="test_or" time="0.780" />
+        <testcase classname="tests.torch.test_logical" name="test_xor" time="0.731" />
+    </testsuite>
+</testsuites>

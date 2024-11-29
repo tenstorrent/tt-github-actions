@@ -14,6 +14,7 @@ import pytest
         ("11236784732", {"jobs_cnt": 2, "tests_cnt": 583}),
         ("12007373278", {"jobs_cnt": 9, "tests_cnt": 245}),
         ("12083382635", {"jobs_cnt": 21, "tests_cnt": 322}),
+        ("12084081698", {"jobs_cnt": 4, "tests_cnt": 250}),
     ],
 )
 def test_create_pipeline_json(run_id, expected):
