@@ -25,15 +25,23 @@ def get_tests(test_report_path):
         dict_data = xmltodict.parse(data)
         previous_test_end_ts = None
 
-        # Workaround: If test info does not have timestamp, use current time
-        if "@timestamp" not in dict_data["testsuites"]["testsuite"][0]["testcase"][0]:
-            previous_test_end_ts = datetime.now().isoformat()
-            logger.warning("Timestamp not found in test report. Using current time.")
+        testsuites = dict_data["testsuites"]["testsuite"]
+        if not isinstance(testsuites, list):
+            testsuites = [testsuites]
 
-        if "@file" not in dict_data["testsuites"]["testsuite"][0]["testcase"][0]:
+        # Workaround: If testcases does not have timestamp, try using timestamp from testsuite and add duration
+        if "@timestamp" not in testsuites[0]["testcase"][0]:
+            logger.warning("Timestamp not found in test report, using testsuite timestamp")
+            previous_test_end_ts = testsuites[0].get("@timestamp", None)
+            # if testsuites does not have timestamp, use current time
+            if not previous_test_end_ts:
+                logger.warning("Timestamp not found in testsuite, using current time")
+                previous_test_end_ts = datetime.now().isoformat()
+
+        if "@file" not in testsuites[0]["testcase"][0]:
             logger.warning("Filepath not found in test report.")
 
-        for testsuite in dict_data["testsuites"]["testsuite"]:
+        for testsuite in testsuites:
 
             # testcases can be dict or list
             testcases = testsuite["testcase"]
