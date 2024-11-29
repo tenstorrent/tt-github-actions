@@ -30,13 +30,14 @@ set_up_dirs() {
     mkdir -p generated/cicd/$workflow_run_id/logs
 }
 
+# Download artifacts for the given run id
+# Test report artfacts must include "report" in their name
 download_artifacts() {
-    if gh api --paginate /repos/$REPOSITORY/actions/runs/$RUN_ID/artifacts | jq '.artifacts[] | .name' | grep -q "test-reports-*"; then
-        echo "[Info] Downloading artifacts $attempt_number"
-        gh run download --repo $REPOSITORY -D generated/cicd/$RUN_ID/artifacts --pattern "test-reports-*" $RUN_ID
-    else
-        echo "[Warning] Test reports not found for workflow run $RUN_ID"
-    fi
+    for artifact in $(gh api --paginate /repos/$REPOSITORY/actions/runs/$RUN_ID/artifacts | jq '.artifacts[] | .name' | grep report); do
+        artifact=${artifact//\"/} # strip quotes
+        echo "[Info] Downloading artifacts $artifact"
+        gh run download --repo $REPOSITORY -D generated/cicd/$RUN_ID/artifacts --name $artifact $RUN_ID
+    done
 }
 
 download_logs_for_all_jobs() {
@@ -55,7 +56,8 @@ download_logs_for_all_jobs() {
 
 set_up_dirs "$RUN_ID"
 download_artifacts "$REPOSITORY" "$RUN_ID"
-download_logs_for_all_jobs "$REPOSITORY" "$RUN_ID" "$ATTEMPT_NUMBER"
+# Note: we don't need information from logs yet
+# download_logs_for_all_jobs "$REPOSITORY" "$RUN_ID" "$ATTEMPT_NUMBER"
 gh api /repos/$REPOSITORY/actions/runs/$RUN_ID/attempts/$ATTEMPT_NUMBER > generated/cicd/$RUN_ID/workflow.json
 gh api /repos/$REPOSITORY/actions/runs/$RUN_ID/attempts/$ATTEMPT_NUMBER/jobs --paginate  | jq -s '{total_count: .[0].total_count, jobs: map(.jobs) | add}' > generated/cicd/$RUN_ID/workflow_jobs.json
 
