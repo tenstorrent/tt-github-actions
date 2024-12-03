@@ -29,16 +29,16 @@ def parse_file(filepath: str) -> List[Test]:
             try:
                 return parser.parse(filepath)
             except Exception as e:
-                logger.error(
-                    f"Error parsing file: {filepath} using parser: {type(parser).__name__}"
-                )
+                logger.error(f"Error parsing file: {filepath} using parser: {type(parser).__name__}")
                 logger.error(f"Exception: {e}")
                 logger.error("Trying next parser")
     logger.error(f"No parser available for file: {filepath}")
     return []
 
+
 if __name__ == "__main__":
     import sys
+
     if len(sys.argv) != 2:
         print("Usage: python test_parser.py <file>")
         sys.exit(1)
