@@ -6,12 +6,10 @@ import tarfile
 import os
 import json
 from loguru import logger
-from functools import partial
 from datetime import datetime
 from pydantic_models import Test
 from .parser import Parser
-from . import junit_xml_utils
-from enum import Enum, IntEnum
+from enum import IntEnum
 
 
 class OpCompilationStatus(IntEnum):
@@ -47,7 +45,7 @@ def untar(filepath):
 def all_json_files(filepath):
     for root, dirs, files in os.walk(filepath):
         for file in files:
-            if file.endswith(".json"):
+            if file.endswith(".json") and not file.startswith("."):
                 yield os.path.join(root, file)
 
 
