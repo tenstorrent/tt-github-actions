@@ -76,7 +76,7 @@ def get_github_job_id_to_test_reports(workflow_outputs_dir, workflow_run_id: int
 
     for root, _, files in os.walk(artifacts_dir):
         for file in files:
-            if file.endswith(".xml"):
+            if file.endswith(".xml") or file.endswith(".tar"):
                 logger.debug(f"Found test report {file}")
                 file_path = pathlib.Path(root) / file
                 filename = file_path.name
