@@ -35,3 +35,4 @@ jobs:
           with:
             pytest-coverage-path: .github/actions/collect_data/pytest-coverage.txt
             junitxml-path: .github/actions/collect_data/pytest.xml
+          continue-on-error: true
