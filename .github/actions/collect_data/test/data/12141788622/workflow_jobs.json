@@ -1,0 +1,43 @@
+{
+  "total_count": 8,
+  "jobs": [
+    {
+      "id": 33854708624,
+      "run_id": 12141788622,
+      "workflow_name": "On PR",
+      "head_branch": "vmilosevic/upload_perf_report",
+      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12141788622",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOMYlQT88AAAAH4eXbkA",
+      "head_sha": "470c66d36e9392947e0e336923e67de5c8ce5b83",
+      "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/jobs/33854708624",
+      "html_url": "https://github.com/tenstorrent/tt-forge-fe/actions/runs/12141788622/job/33854708624",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2024-12-03T14:30:09Z",
+      "started_at": "2024-12-03T14:30:15Z",
+      "completed_at": "2024-12-03T14:39:31Z",
+      "name": "perf-benchmark / build-and-run-perf",
+      "steps": [
+        {
+          "name": "Run Perf Benchmark",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2024-12-03T14:38:42Z",
+          "completed_at": "2024-12-03T14:38:57Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/check-runs/33854708624",
+      "labels": [
+        "in-service",
+        "n150",
+        "performance"
+      ],
+      "runner_id": 33,
+      "runner_name": "f10cs11-n150",
+      "runner_group_id": 1,
+      "runner_group_name": "Default"
+    }
+  ]
+}

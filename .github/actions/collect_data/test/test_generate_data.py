@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from generate_data import create_pipeline_json
+from generate_data import create_pipeline_json, create_benchmark_jsons
 import os
 import json
 import pytest
@@ -48,6 +48,33 @@ def test_create_pipeline_json(run_id, expected):
 
     # validate constraints
     assert check_constraint(pipeline)
+
+
+@pytest.mark.parametrize(
+    "run_id, expected",
+    [
+        ("12141788622", {"ml_model_name": "MNIST Linear", "measurements_cnt": 2}),
+    ],
+)
+def test_create_benchmark_json(run_id, expected):
+    """
+    End-to-end test for create_pipeline_json function
+    Calling this will generate a pipeline json file
+    """
+    os.environ["GITHUB_EVENT_NAME"] = "test"
+
+    pipeline, filename = create_pipeline_json(
+        workflow_filename=f"test/data/{run_id}/workflow.json",
+        jobs_filename=f"test/data/{run_id}/workflow_jobs.json",
+        workflow_outputs_dir="test/data",
+    )
+    reports = create_benchmark_jsons(pipeline, "test/data")
+    for report, report_filename in reports:
+        assert os.path.exists(report_filename)
+        with open(report_filename, "r") as file:
+            report_json = json.load(file)
+            assert report_json["ml_model_name"] == expected["ml_model_name"]
+            assert len(report_json["measurements"]) == expected["measurements_cnt"]
 
 
 def check_constraint(pipeline):

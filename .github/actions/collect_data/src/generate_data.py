@@ -2,10 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import os
 import argparse
 from loguru import logger
 from utils import get_github_runner_environment
 from cicd import create_cicd_json_for_data_analysis, get_cicd_json_filename
+from benchmark import create_json_from_report, get_benchmark_filename
 
 
 def create_pipeline_json(workflow_filename: str, jobs_filename: str, workflow_outputs_dir):
@@ -27,6 +29,20 @@ def create_pipeline_json(workflow_filename: str, jobs_filename: str, workflow_ou
     return pipeline, report_filename
 
 
+def create_benchmark_jsons(pipeline, workflow_outputs_dir):
+    results = []
+    reports = create_json_from_report(pipeline, workflow_outputs_dir)
+    for report in reports:
+        report_filename = get_benchmark_filename(
+            report
+        )  # f"benchmark_{report.github_job_id}_{report.run_start_ts}.json"
+        logger.info(f"Writing benchmark JSON to {report_filename}")
+        with open(report_filename, "w") as f:
+            f.write(report.model_dump_json())
+        results.append((report, report_filename))
+    return results
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -41,8 +57,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     logger.info(f"Creating pipeline JSON for workflow run ID {args.run_id}")
-    create_pipeline_json(
+    pipeline, _ = create_pipeline_json(
         workflow_filename=f"{args.output_dir}/{args.run_id}/workflow.json",
         jobs_filename=f"{args.output_dir}/{args.run_id}/workflow_jobs.json",
+        workflow_outputs_dir=args.output_dir,
+    )
+
+    create_benchmark_jsons(
+        pipeline=pipeline,
         workflow_outputs_dir=args.output_dir,
     )
