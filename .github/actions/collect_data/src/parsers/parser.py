@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from abc import ABC, abstractmethod
+from typing import Optional
 
 
 class ParserError(Exception):
@@ -23,7 +24,12 @@ class Parser(ABC):
         pass
 
     @abstractmethod
-    def parse(self, filepath: str):
+    def parse(
+        self,
+        filepath: str,
+        project: Optional[str] = None,
+        github_job_id: Optional[int] = None,
+    ):
         """
         Parse a file and return a list of tests.
         :param filepath: Path to the file to parse.

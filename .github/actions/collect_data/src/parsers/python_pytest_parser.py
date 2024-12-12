@@ -6,6 +6,7 @@ from loguru import logger
 from functools import partial
 from pydantic_models import Test
 from datetime import datetime
+from typing import Optional
 from .parser import Parser
 from . import junit_xml_utils
 
@@ -21,7 +22,12 @@ class PythonPytestParser(Parser):
         is_pytest = junit_xml_utils.is_pytest_junit_xml(report_root)
         return is_pytest
 
-    def parse(self, filepath: str):
+    def parse(
+        self,
+        filepath: str,
+        project: Optional[str] = None,
+        github_job_id: Optional[int] = None,
+    ):
         return get_tests(filepath)
 
 

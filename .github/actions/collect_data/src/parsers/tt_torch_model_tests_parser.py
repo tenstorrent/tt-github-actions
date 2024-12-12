@@ -5,11 +5,13 @@
 import tarfile
 import os
 import json
+from functools import partial
 from loguru import logger
 from datetime import datetime
-from pydantic_models import Test
+from pydantic_models import OpTest
 from .parser import Parser
 from enum import IntEnum
+from typing import Optional
 
 
 class OpCompilationStatus(IntEnum):
@@ -30,8 +32,13 @@ class TTTorchModelTestsParser(Parser):
         basename = os.path.basename(filepath)
         return basename.startswith("run") and basename.endswith(".tar")
 
-    def parse(self, filepath: str):
-        return get_tests(filepath)
+    def parse(
+        self,
+        filepath: str,
+        project: Optional[str] = None,
+        github_job_id: Optional[int] = None,
+    ):
+        return get_tests(filepath, project, github_job_id)
 
 
 def untar(filepath):
@@ -49,15 +56,15 @@ def all_json_files(filepath):
                 yield os.path.join(root, file)
 
 
-def get_tests_from_json(filepath):
+def get_tests_from_json(project, github_job_id, filepath):
     with open(filepath, "r") as fd:
         data = json.load(fd)
 
     for name, test in data.items():
-        yield get_pydantic_test(filepath, name, test)
+        yield get_pydantic_test(filepath, name, test, project, github_job_id)
 
 
-def get_pydantic_test(filepath, name, test, default_timestamp=datetime.now()):
+def get_pydantic_test(filepath, name, test, project, github_job_id, default_timestamp=datetime.now()):
     status = OpCompilationStatus(test["compilation_status"])
 
     skipped = False
@@ -84,25 +91,25 @@ def get_pydantic_test(filepath, name, test, default_timestamp=datetime.now()):
 
     tags = None
 
-    return Test(
+    return OpTest(
+        github_job_id=github_job_id,
+        full_test_name=full_test_name,
         test_start_ts=test_start_ts,
         test_end_ts=test_end_ts,
         test_case_name=name,
         filepath=filepath,
-        category="models",
-        group=None,
-        owner=None,
-        frontend="tt-torch",
-        model_name=model_name,
-        op_name=None,
-        framework_op_name=test["torch_name"],
-        op_kind=None,
-        error_message=error_message,
         success=success,
         skipped=skipped,
-        full_test_name=full_test_name,
+        error_message=error_message,
         config=config,
-        tags=tags,
+        frontend=project,
+        model_name=model_name,
+        op_kind="",
+        op_name="",
+        framework_op_name=test["torch_name"],
+        inputs=[],
+        outputs=[],
+        op_params=None,
     )
 
 
@@ -110,7 +117,7 @@ def flatten(list_of_lists):
     return [item for sublist in list_of_lists for item in sublist]
 
 
-def get_tests(filepath):
+def get_tests(filepath, project, github_job_id):
     untar_path = untar(filepath)
-    tests = map(get_tests_from_json, all_json_files(untar_path))
+    tests = map(partial(get_tests_from_json, project, github_job_id), all_json_files(untar_path))
     return flatten(tests)
