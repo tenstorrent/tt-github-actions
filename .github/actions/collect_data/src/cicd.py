@@ -44,6 +44,7 @@ def create_cicd_json_for_data_analysis(
     raw_jobs = get_job_rows_from_github_info(github_pipeline_json, github_jobs_json)
     github_pipeline_id = raw_pipeline["github_pipeline_id"]
     github_job_id_to_test_reports = get_github_job_id_to_test_reports(workflow_outputs_dir, github_pipeline_id)
+    project = raw_pipeline["project"]
 
     jobs = []
     for raw_job in raw_jobs:
@@ -53,7 +54,7 @@ def create_cicd_json_for_data_analysis(
         if github_job_id in github_job_id_to_test_reports:
             for test_report_path in github_job_id_to_test_reports[github_job_id]:
                 logger.info(f"Processing test report {test_report_path}")
-                tests_in_report = parse_file(test_report_path)
+                tests_in_report = parse_file(test_report_path, project=project, github_job_id=github_job_id)
                 logger.info(f"Found {len(tests_in_report)} tests in report {test_report_path}")
                 tests.extend(tests_in_report)
             logger.info(f"Found {len(tests)} tests total for job {github_job_id}")
