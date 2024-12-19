@@ -52,7 +52,8 @@ runs:
     run: |
       python3 ${GITHUB_ACTION_PATH}/src/generate_data.py --run_id ${{ inputs.run_id }}
       # Workaround: Copy file to avoid GH upload filename limitations
-      cp pipeline_${{ inputs.run_id }}*.json pipelinecopy_${{ inputs.run_id }}.json
+      cp pipeline_*.json pipelinecopy_${{ inputs.run_id }}.json
+      cp benchmark_*.json benchmarkcopy_${{ inputs.run_id }}.json
 
   - name: Create key file
     if: ${{ inputs.ssh-private-key != '' }}
@@ -74,6 +75,7 @@ runs:
       path: |
         if-no-files-found: warn
         path: |
+          benchmarkcopy_${{ inputs.run_id }}.json
           pipelinecopy_${{ inputs.run_id }}.json
           generated/cicd/${{ inputs.run_id }}/workflow.json
           generated/cicd/${{ inputs.run_id }}/workflow_jobs.json
