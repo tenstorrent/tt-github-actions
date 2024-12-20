@@ -6,27 +6,27 @@ inputs:
   repository:
     description: "Repository name"
     required: true
-    type: string
   run_id:
     description: "Pipeline ID to use for data"
     required: true
-    type: string
   run_attempt:
     description: "Run attempt of the workflow run"
     required: true
-    type: string
   sftp_host:
-    description: "SFTP server hostname"
+    description: "SFTP server hostname (for cicd reports)"
     required: false
-    type: string
   sftp_user:
-    description: "SFTP server username"
+    description: "SFTP server username (for cicd reports)"
     required: false
-    type: string
+  sftp_perf_host:
+    description: "SFTP server hostname (for perf reports)"
+    required: false
+  sftp_perf_user:
+    description: "SFTP server username (for perf reports)"
+    required: false
   ssh-private-key:
     description: "SSH private key"
     required: false
-    type: string
 
 runs:
   using: "composite"
@@ -62,10 +62,17 @@ runs:
       echo "${{ inputs.ssh-private-key }}" > id_key
       chmod go-rwx id_key
 
-  - name: Upload files
+  - name: Upload CICD reports
     if: ${{ inputs.sftp_host != '' }}
     shell: bash
-    run: sftp  -oStrictHostKeyChecking=no -i id_key -b ${GITHUB_ACTION_PATH}/sftp-json.txt ${{ inputs.sftp_user }}@${{ inputs.sftp_host }}
+    run: |
+      sftp -oStrictHostKeyChecking=no -i id_key -b ${GITHUB_ACTION_PATH}/sftp-cicd.txt ${{ inputs.sftp_user }}@${{ inputs.sftp_host }}
+
+  - name: Upload Perf reports
+    if: ${{ inputs.sftp_perf_host != '' }}
+    shell: bash
+    run: |
+      sftp -oStrictHostKeyChecking=no -i id_key -b ${GITHUB_ACTION_PATH}/sftp-perf.txt ${{ inputs.sftp_perf_user }}@${{ inputs.sftp_perf_host }}
 
   - name: Upload workflow run data, even on failure
     if: ${{ !cancelled() }}
