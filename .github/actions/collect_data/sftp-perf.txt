@@ -1,3 +1,2 @@
-put -r pipeline_*.json
 put -r benchmark_*.json
 ls -hal
