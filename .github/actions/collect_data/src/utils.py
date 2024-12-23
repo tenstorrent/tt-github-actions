@@ -14,8 +14,34 @@ class InfraErrorV1(enum.Enum):
     GENERIC_SET_UP_FAILURE = enum.auto()
 
 
-def get_datetime_from_github_datetime(github_datetime):
-    return datetime.strptime(github_datetime, "%Y-%m-%dT%H:%M:%SZ")
+def parse_timestamp(timestamp):
+    """
+    Parse a timestamp string into a datetime object.
+    Supports multiple formats with and without timezone and milliseconds.
+
+    Supported formats:
+    - "2024-12-23T02:56:37.036690+00:00"
+    - "2024-12-23T02:56:37.036690"
+    - "2024-12-23T02:56:37+00:00"
+    - "2024-12-23T02:56:37"
+
+    :param timestamp: Timestamp string to parse.
+    :return: Parsed datetime object or None if parsing fails.
+    """
+    formats = [
+        "%Y-%m-%dT%H:%M:%S.%f%z",  # With microseconds and timezone
+        "%Y-%m-%dT%H:%M:%S.%f",  # With microseconds, no timezone
+        "%Y-%m-%dT%H:%M:%S%z",  # No microseconds, with timezone
+        "%Y-%m-%dT%H:%M:%S",  # No microseconds, no timezone
+    ]
+
+    for fmt in formats:
+        try:
+            return datetime.strptime(timestamp, fmt)
+        except ValueError:
+            continue  # Try the next format
+
+    return None  # Return None if no format matches
 
 
 def get_data_pipeline_datetime_from_datetime(requested_datetime):
@@ -29,11 +55,11 @@ def get_pipeline_row_from_github_info(github_runner_environment, github_pipeline
     repository_url = github_pipeline_json["repository"]["html_url"]
 
     jobs = github_jobs_json["jobs"]
-    jobs_start_times = list(map(lambda job_: get_datetime_from_github_datetime(job_["started_at"]), jobs))
+    jobs_start_times = list(map(lambda job_: parse_timestamp(job_["started_at"]), jobs))
     # We filter out jobs that started before because that means they're from a previous attempt for that pipeline
     eligible_jobs_start_times = list(
         filter(
-            lambda job_start_time_: job_start_time_ >= get_datetime_from_github_datetime(pipeline_submission_ts),
+            lambda job_start_time_: job_start_time_ >= parse_timestamp(pipeline_submission_ts),
             jobs_start_times,
         )
     )
@@ -143,8 +169,8 @@ def get_job_row_from_github_job(github_job):
 
     job_start_ts = github_job["started_at"]
 
-    job_submission_ts_dt = get_datetime_from_github_datetime(job_submission_ts)
-    job_start_ts_dt = get_datetime_from_github_datetime(job_start_ts)
+    job_submission_ts_dt = parse_timestamp(job_submission_ts)
+    job_start_ts_dt = parse_timestamp(job_start_ts)
 
     if job_submission_ts_dt > job_start_ts_dt:
         logger.warning(
