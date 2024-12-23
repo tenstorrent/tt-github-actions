@@ -13,7 +13,7 @@ from utils import (
     get_pipeline_row_from_github_info,
     get_job_rows_from_github_info,
     get_data_pipeline_datetime_from_datetime,
-    get_datetime_from_github_datetime,
+    parse_timestamp,
 )
 import pydantic_models
 from test_parser import parse_file
@@ -94,7 +94,7 @@ def get_github_job_id_to_test_reports(workflow_outputs_dir, workflow_run_id: int
 def alter_time(timestamp):
     # Workarpound for the fact that we don't have milliseconds in the timestamp
     # Add a random number of milliseconds to the timestamp to make it unique
-    original_timestamp = get_datetime_from_github_datetime(timestamp)
+    original_timestamp = parse_timestamp(timestamp)
     altered_time = original_timestamp + timedelta(milliseconds=random.randint(0, 999))
     altered_time_str = altered_time.isoformat(sep=" ", timespec="milliseconds")
     return altered_time_str

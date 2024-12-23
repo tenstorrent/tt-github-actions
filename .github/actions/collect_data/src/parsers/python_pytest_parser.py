@@ -8,6 +8,7 @@ from pydantic_models import Test
 from datetime import datetime
 from .parser import Parser
 from . import junit_xml_utils
+from utils import parse_timestamp
 
 
 class PythonPytestParser(Parser):
@@ -29,7 +30,7 @@ def get_tests(filepath):
     report_root_tree = junit_xml_utils.get_xml_file_root_element_tree(filepath)
     report_root = report_root_tree.getroot()
     testsuite = report_root[0]
-    default_timestamp = datetime.strptime(testsuite.attrib["timestamp"], "%Y-%m-%dT%H:%M:%S.%f")
+    default_timestamp = parse_timestamp(testsuite.attrib["timestamp"])
     get_pydantic_test = partial(get_pydantic_test_from_pytest_testcase_, default_timestamp=default_timestamp)
     tests = []
     for testcase in testsuite:
@@ -60,9 +61,9 @@ def get_pydantic_test_from_pytest_testcase_(testcase, default_timestamp=datetime
         pass
 
     # Error at the beginning of a test can prevent pytest from recording timestamps at all
-    if not (skipped or error):
-        test_start_ts = datetime.strptime(properties["start_timestamp"], "%Y-%m-%dT%H:%M:%S")
-        test_end_ts = datetime.strptime(properties["end_timestamp"], "%Y-%m-%dT%H:%M:%S")
+    if not (skipped or error) and "start_timestamp" in properties and "end_timestamp" in properties:
+        test_start_ts = parse_timestamp(properties["start_timestamp"])
+        test_end_ts = parse_timestamp(properties["end_timestamp"])
     else:
         test_start_ts = default_timestamp
         test_end_ts = default_timestamp
