@@ -1,11 +1,16 @@
 # SPDX-FileCopyrightText: (c) 2024 Tenstorrent AI ULC
 #
 # SPDX-License-Identifier: Apache-2.0
+
 import os
 import pathlib
 import json
 from loguru import logger
 from pydantic_models import BenchmarkMeasurement, CompleteBenchmarkRun
+
+"""
+Generate benchmark data from perf reports.
+"""
 
 
 def create_json_from_report(pipeline, workflow_outputs_dir):
@@ -62,7 +67,7 @@ def _map_benchmark_data(pipeline, job_id, report_data):
     return CompleteBenchmarkRun(
         run_start_ts=pipeline.pipeline_start_ts,
         run_end_ts=pipeline.pipeline_end_ts,
-        run_type="",
+        run_type=report_data["model"],
         git_repo_name=None,
         git_commit_hash=pipeline.git_commit_hash,
         git_commit_ts=None,
@@ -79,7 +84,7 @@ def _map_benchmark_data(pipeline, job_id, report_data):
         ml_model_type=None,
         num_layers=None,
         batch_size=report_data.get("batch_size", None),
-        config_params={},
+        config_params=None,
         precision=None,
         dataset_name=None,
         profiler_name=None,
@@ -93,7 +98,7 @@ def _map_benchmark_data(pipeline, job_id, report_data):
                 step_start_ts=job.job_start_ts,
                 step_end_ts=job.job_end_ts,
                 iteration=0,
-                step_name="",
+                step_name=report_data["model"],
                 step_warm_up_num_iterations=None,
                 name="samples_per_sec",
                 value=report_data["samples_per_sec"],
