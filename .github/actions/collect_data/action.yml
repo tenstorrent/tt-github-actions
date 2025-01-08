@@ -53,10 +53,7 @@ runs:
       python3 ${GITHUB_ACTION_PATH}/src/generate_data.py --run_id ${{ inputs.run_id }}
       # Workaround: Copy file to avoid GH upload filename limitations
       cp pipeline_*.json pipelinecopy_${{ inputs.run_id }}.json
-      if compgen -G "benchmark_*.json" > /dev/null; then
-        cp benchmark_*.json benchmarkcopy_${{ inputs.run_id }}.json
-        echo "has_perf_report=true" >> $GITHUB_ENV
-      else
+      cp benchmark_*.json benchmarkcopy_${{ inputs.run_id }}.json || true
 
   - name: Create key file
     if: ${{ inputs.ssh-private-key != '' }}
@@ -72,7 +69,7 @@ runs:
       sftp -oStrictHostKeyChecking=no -i id_key -b ${GITHUB_ACTION_PATH}/sftp-cicd.txt ${{ inputs.sftp_user }}@${{ inputs.sftp_host }}
 
   - name: Upload Perf reports
-    if: ${{ inputs.sftp_perf_host != '' && env.has_perf_report == 'true' }}
+    if: ${{ inputs.sftp_perf_host != '' }}
     shell: bash
     run: |
       sftp -oStrictHostKeyChecking=no -i id_key -b ${GITHUB_ACTION_PATH}/sftp-perf.txt ${{ inputs.sftp_perf_user }}@${{ inputs.sftp_perf_host }}
