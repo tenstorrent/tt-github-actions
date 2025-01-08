@@ -72,7 +72,11 @@ runs:
     if: ${{ inputs.sftp_perf_host != '' }}
     shell: bash
     run: |
-      sftp -oStrictHostKeyChecking=no -i id_key -b ${GITHUB_ACTION_PATH}/sftp-perf.txt ${{ inputs.sftp_perf_user }}@${{ inputs.sftp_perf_host }}
+      if compgen -G "benchmark_*.json" > /dev/null; then
+        sftp -oStrictHostKeyChecking=no -i id_key -b ${GITHUB_ACTION_PATH}/sftp-perf.txt ${{ inputs.sftp_perf_user }}@${{ inputs.sftp_perf_host }}
+      else
+        echo "No benchmark_*.json files found. Skipping upload."
+      fi
 
   - name: Upload workflow run data, even on failure
     if: ${{ !cancelled() }}
