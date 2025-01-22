@@ -1,28 +1,28 @@
 {
-    "id": 12141788622,
+    "id": 12890516473,
     "name": "On PR",
-    "node_id": "WFR_kwLOMYlQT88AAAAC07T9zg",
-    "head_branch": "vmilosevic/upload_perf_report",
-    "head_sha": "470c66d36e9392947e0e336923e67de5c8ce5b83",
+    "node_id": "WFR_kwLOMYlQT88AAAADAFWr-Q",
+    "head_branch": "vcanic/upload_download_artifacts",
+    "head_sha": "f4660ec96ae842071e0bf2774bcee16c2ccb25f4",
     "path": ".github/workflows/on-pr.yml",
-    "display_title": "Upload perf report",
-    "run_number": 1402,
+    "display_title": "Restructuring Benchmark Models Data",
+    "run_number": 2094,
     "event": "pull_request",
-    "status": "in_progress",
-    "conclusion": null,
+    "status": "completed",
+    "conclusion": "success",
     "workflow_id": 112131564,
-    "check_suite_id": 31606539821,
-    "check_suite_node_id": "CS_kwDOMYlQT88AAAAHW-WGLQ",
-    "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12141788622",
-    "html_url": "https://github.com/tenstorrent/tt-forge-fe/actions/runs/12141788622",
+    "check_suite_id": 33328360168,
+    "check_suite_node_id": "CS_kwDOMYlQT88AAAAHwoZq6A",
+    "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516473",
+    "html_url": "https://github.com/tenstorrent/tt-forge-fe/actions/runs/12890516473",
     "pull_requests": [
         {
-            "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/pulls/569",
-            "id": 2154682397,
-            "number": 569,
+            "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/pulls/1078",
+            "id": 2290298250,
+            "number": 1078,
             "head": {
-                "ref": "vmilosevic/upload_perf_report",
-                "sha": "470c66d36e9392947e0e336923e67de5c8ce5b83",
+                "ref": "vcanic/upload_download_artifacts",
+                "sha": "f4660ec96ae842071e0bf2774bcee16c2ccb25f4",
                 "repo": {
                     "id": 831082575,
                     "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe",
@@ -31,7 +31,7 @@
             },
             "base": {
                 "ref": "main",
-                "sha": "85d8575678cd0fc899d1de1895cd14c86b9068ac",
+                "sha": "9895fdee000945c3c43bcf88dbca6d76106bcebc",
                 "repo": {
                     "id": 831082575,
                     "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe",
@@ -40,25 +40,25 @@
             }
         }
     ],
-    "created_at": "2024-12-03T14:29:46Z",
-    "updated_at": "2024-12-03T14:30:20Z",
+    "created_at": "2025-01-21T15:42:17Z",
+    "updated_at": "2025-01-21T16:28:29Z",
     "actor": {
-        "login": "vmilosevic",
-        "id": 157983820,
-        "node_id": "U_kgDOCWqkTA",
-        "avatar_url": "https://avatars.githubusercontent.com/u/157983820?v=4",
+        "login": "vcanicTT",
+        "id": 133228576,
+        "node_id": "U_kgDOB_DoIA",
+        "avatar_url": "https://avatars.githubusercontent.com/u/133228576?v=4",
         "gravatar_id": "",
-        "url": "https://api.github.com/users/vmilosevic",
-        "html_url": "https://github.com/vmilosevic",
-        "followers_url": "https://api.github.com/users/vmilosevic/followers",
-        "following_url": "https://api.github.com/users/vmilosevic/following{/other_user}",
-        "gists_url": "https://api.github.com/users/vmilosevic/gists{/gist_id}",
-        "starred_url": "https://api.github.com/users/vmilosevic/starred{/owner}{/repo}",
-        "subscriptions_url": "https://api.github.com/users/vmilosevic/subscriptions",
-        "organizations_url": "https://api.github.com/users/vmilosevic/orgs",
-        "repos_url": "https://api.github.com/users/vmilosevic/repos",
-        "events_url": "https://api.github.com/users/vmilosevic/events{/privacy}",
-        "received_events_url": "https://api.github.com/users/vmilosevic/received_events",
+        "url": "https://api.github.com/users/vcanicTT",
+        "html_url": "https://github.com/vcanicTT",
+        "followers_url": "https://api.github.com/users/vcanicTT/followers",
+        "following_url": "https://api.github.com/users/vcanicTT/following{/other_user}",
+        "gists_url": "https://api.github.com/users/vcanicTT/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/vcanicTT/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/vcanicTT/subscriptions",
+        "organizations_url": "https://api.github.com/users/vcanicTT/orgs",
+        "repos_url": "https://api.github.com/users/vcanicTT/repos",
+        "events_url": "https://api.github.com/users/vcanicTT/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/vcanicTT/received_events",
         "type": "User",
         "user_view_type": "public",
         "site_admin": false
@@ -66,68 +66,73 @@
     "run_attempt": 1,
     "referenced_workflows": [
         {
-            "path": "tenstorrent/tt-forge-fe/.github/workflows/build-and-test.yml@c47f41abf6fd9eb51f218bc9d04215421edc46c2",
-            "sha": "c47f41abf6fd9eb51f218bc9d04215421edc46c2",
-            "ref": "refs/pull/569/merge"
+            "path": "tenstorrent/tt-forge-fe/.github/workflows/spdx.yml@dcee53e959d1d71299967b3610f501263b5c36bc",
+            "sha": "dcee53e959d1d71299967b3610f501263b5c36bc",
+            "ref": "refs/pull/1078/merge"
         },
         {
-            "path": "tenstorrent/tt-forge-fe/.github/workflows/spdx.yml@c47f41abf6fd9eb51f218bc9d04215421edc46c2",
-            "sha": "c47f41abf6fd9eb51f218bc9d04215421edc46c2",
-            "ref": "refs/pull/569/merge"
+            "path": "tenstorrent/tt-forge-fe/.github/workflows/build-and-test.yml@dcee53e959d1d71299967b3610f501263b5c36bc",
+            "sha": "dcee53e959d1d71299967b3610f501263b5c36bc",
+            "ref": "refs/pull/1078/merge"
         },
         {
-            "path": "tenstorrent/tt-forge-fe/.github/workflows/perf-benchmark.yml@c47f41abf6fd9eb51f218bc9d04215421edc46c2",
-            "sha": "c47f41abf6fd9eb51f218bc9d04215421edc46c2",
-            "ref": "refs/pull/569/merge"
+            "path": "tenstorrent/tt-forge-fe/.github/workflows/build-image.yml@dcee53e959d1d71299967b3610f501263b5c36bc",
+            "sha": "dcee53e959d1d71299967b3610f501263b5c36bc",
+            "ref": "refs/pull/1078/merge"
         },
         {
-            "path": "tenstorrent/tt-forge-fe/.github/workflows/pre-commit.yml@c47f41abf6fd9eb51f218bc9d04215421edc46c2",
-            "sha": "c47f41abf6fd9eb51f218bc9d04215421edc46c2",
-            "ref": "refs/pull/569/merge"
+            "path": "tenstorrent/tt-forge-fe/.github/workflows/perf-benchmark.yml@dcee53e959d1d71299967b3610f501263b5c36bc",
+            "sha": "dcee53e959d1d71299967b3610f501263b5c36bc",
+            "ref": "refs/pull/1078/merge"
+        },
+        {
+            "path": "tenstorrent/tt-forge-fe/.github/workflows/pre-commit.yml@dcee53e959d1d71299967b3610f501263b5c36bc",
+            "sha": "dcee53e959d1d71299967b3610f501263b5c36bc",
+            "ref": "refs/pull/1078/merge"
         }
     ],
-    "run_started_at": "2024-12-03T14:29:46Z",
+    "run_started_at": "2025-01-21T15:42:17Z",
     "triggering_actor": {
-        "login": "vmilosevic",
-        "id": 157983820,
-        "node_id": "U_kgDOCWqkTA",
-        "avatar_url": "https://avatars.githubusercontent.com/u/157983820?v=4",
+        "login": "vcanicTT",
+        "id": 133228576,
+        "node_id": "U_kgDOB_DoIA",
+        "avatar_url": "https://avatars.githubusercontent.com/u/133228576?v=4",
         "gravatar_id": "",
-        "url": "https://api.github.com/users/vmilosevic",
-        "html_url": "https://github.com/vmilosevic",
-        "followers_url": "https://api.github.com/users/vmilosevic/followers",
-        "following_url": "https://api.github.com/users/vmilosevic/following{/other_user}",
-        "gists_url": "https://api.github.com/users/vmilosevic/gists{/gist_id}",
-        "starred_url": "https://api.github.com/users/vmilosevic/starred{/owner}{/repo}",
-        "subscriptions_url": "https://api.github.com/users/vmilosevic/subscriptions",
-        "organizations_url": "https://api.github.com/users/vmilosevic/orgs",
-        "repos_url": "https://api.github.com/users/vmilosevic/repos",
-        "events_url": "https://api.github.com/users/vmilosevic/events{/privacy}",
-        "received_events_url": "https://api.github.com/users/vmilosevic/received_events",
+        "url": "https://api.github.com/users/vcanicTT",
+        "html_url": "https://github.com/vcanicTT",
+        "followers_url": "https://api.github.com/users/vcanicTT/followers",
+        "following_url": "https://api.github.com/users/vcanicTT/following{/other_user}",
+        "gists_url": "https://api.github.com/users/vcanicTT/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/vcanicTT/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/vcanicTT/subscriptions",
+        "organizations_url": "https://api.github.com/users/vcanicTT/orgs",
+        "repos_url": "https://api.github.com/users/vcanicTT/repos",
+        "events_url": "https://api.github.com/users/vcanicTT/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/vcanicTT/received_events",
         "type": "User",
         "user_view_type": "public",
         "site_admin": false
     },
-    "jobs_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12141788622/attempts/1/jobs",
-    "logs_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12141788622/attempts/1/logs",
-    "check_suite_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/check-suites/31606539821",
-    "artifacts_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12141788622/artifacts",
-    "cancel_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12141788622/cancel",
-    "rerun_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12141788622/rerun",
+    "jobs_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516473/attempts/1/jobs",
+    "logs_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516473/attempts/1/logs",
+    "check_suite_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/check-suites/33328360168",
+    "artifacts_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516473/artifacts",
+    "cancel_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516473/cancel",
+    "rerun_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516473/rerun",
     "previous_attempt_url": null,
     "workflow_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/workflows/112131564",
     "head_commit": {
-        "id": "470c66d36e9392947e0e336923e67de5c8ce5b83",
-        "tree_id": "681fa454c02bcf9c49aee9d9820fa13ffcee262f",
-        "message": "Fix file path",
-        "timestamp": "2024-12-03T14:29:38Z",
+        "id": "f4660ec96ae842071e0bf2774bcee16c2ccb25f4",
+        "tree_id": "09275d45bc4379560c8dab824614d29895f809e0",
+        "message": "Reorganizing benchmark data regarding the database structure.",
+        "timestamp": "2025-01-21T15:33:26Z",
         "author": {
-            "name": "Vladimir Milosevic",
-            "email": "vmilosevic@tenstorrent.com"
+            "name": "Vladimir Canic",
+            "email": "vcanic@tenstorrent.com"
         },
         "committer": {
-            "name": "Vladimir Milosevic",
-            "email": "vmilosevic@tenstorrent.com"
+            "name": "Vladimir Canic",
+            "email": "vcanic@tenstorrent.com"
         }
     },
     "repository": {

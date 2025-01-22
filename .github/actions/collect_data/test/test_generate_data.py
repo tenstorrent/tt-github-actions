@@ -51,30 +51,60 @@ def test_create_pipeline_json(run_id, expected):
 
 
 @pytest.mark.parametrize(
-    "run_id, expected",
+    "run_id, expected_file",
     [
-        ("12141788622", {"ml_model_name": "MNIST Linear", "measurements_cnt": 2}),
+        ("12890516473", "test/data/12890516473/artifacts/forge-benchmark-e2e-mnist_35942438708.json"),
     ],
 )
-def test_create_benchmark_json(run_id, expected):
+def test_create_benchmark_json(run_id, expected_file):
     """
     End-to-end test for create_pipeline_json function
     Calling this will generate a pipeline json file
     """
     os.environ["GITHUB_EVENT_NAME"] = "test"
 
-    pipeline, filename = create_pipeline_json(
+    pipeline, _ = create_pipeline_json(
         workflow_filename=f"test/data/{run_id}/workflow.json",
         jobs_filename=f"test/data/{run_id}/workflow_jobs.json",
         workflow_outputs_dir="test/data",
     )
     reports = create_benchmark_jsons(pipeline, "test/data")
-    for report, report_filename in reports:
+    for _, report_filename in reports:
         assert os.path.exists(report_filename)
         with open(report_filename, "r") as file:
             report_json = json.load(file)
-            assert report_json["ml_model_name"] == expected["ml_model_name"]
-            assert len(report_json["measurements"]) == expected["measurements_cnt"]
+            # load results json file and compare with report
+            expected = json.load(open(f"{expected_file}", "r"))
+            compare_benchmark(report_json, expected)
+
+
+def compare_benchmark(reported, expected):
+
+    # Compare manually reported data with expected data
+    assert expected["model"] == reported["ml_model_name"]
+    assert expected["model_type"] == reported["ml_model_type"]
+    assert expected["run_type"] == reported["run_type"]
+    assert expected["config"] == reported["config_params"]
+    assert expected["num_layers"] == reported["num_layers"]
+    assert expected["batch_size"] == reported["batch_size"]
+    assert expected["precision"] == reported["precision"]
+    assert expected["dataset_name"] == reported["dataset_name"]
+    assert expected["profile_name"] == reported["profiler_name"]
+    assert expected["input_sequence_length"] == reported["input_sequence_length"]
+    assert expected["output_sequence_length"] == reported["output_sequence_length"]
+    assert expected["image_dimension"] == reported["image_dimension"]
+    assert expected["perf_analysis"] == reported["perf_analysis"]
+    assert expected["training"] == reported["training"]
+    assert expected["device_ip"] == reported["device_ip"]
+    for i, measurement in enumerate(expected["measurements"]):
+        assert measurement["iteration"] == reported["measurements"][i]["iteration"]
+        assert measurement["step_name"] == reported["measurements"][i]["step_name"]
+        assert measurement["step_warm_up_num_iterations"] == reported["measurements"][i]["step_warm_up_num_iterations"]
+        assert measurement["measurement_name"] == reported["measurements"][i]["name"]
+        assert measurement["value"] == reported["measurements"][i]["value"]
+        assert measurement["target"] == reported["measurements"][i]["target"]
+        assert measurement["device_power"] == reported["measurements"][i]["device_power"]
+        assert measurement["device_temperature"] == reported["measurements"][i]["device_temperature"]
 
 
 def check_constraint(pipeline):
