@@ -54,6 +54,9 @@ def get_pydantic_test_from_pytest_testcase_(testcase, default_timestamp=datetime
     if error:
         error_message = junit_xml_utils.get_pytest_error_message(testcase)
 
+    if skipped:
+        error_message = junit_xml_utils.get_pytest_skipped_message(testcase)
+
     properties = {}
     try:
         properties = junit_xml_utils.get_pytest_testcase_properties(testcase)
