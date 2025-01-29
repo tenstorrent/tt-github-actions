@@ -46,6 +46,12 @@ def test_create_pipeline_json(run_id, expected):
             tests_cnt += len(job["tests"])
         assert tests_cnt == expected["tests_cnt"]
 
+        # asset skip_tests have error message set
+        for job in pipeline_json["jobs"]:
+            for test in job["tests"]:
+                if test["skipped"]:
+                    assert test["error_message"] is not None
+
     # validate constraints
     assert check_constraint(pipeline)
 

@@ -95,3 +95,11 @@ def get_pytest_error_message(testcase_element):
     error_element = get_at_most_one_single_child_element_(testcase_element, "error")
 
     return error_element.attrib["message"]
+
+
+def get_pytest_skipped_message(testcase_element):
+    assert get_pytest_testcase_is_skipped(testcase_element)
+    skipped_element = get_at_most_one_single_child_element_(testcase_element, "skipped")
+    message = skipped_element.attrib["message"]
+    type = skipped_element.attrib["type"]
+    return f"[{type}] {message}"
