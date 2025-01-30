@@ -13,12 +13,15 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-        - name: Show reports
+        - uses: actions/checkout@v4
+        - name: Fetch job id
           id: fetch-job-id
           uses: ./.github/actions/job_id
           with:
             gh_token: ${{ secrets.GITHUB_TOKEN }}
-            job_name: .github/actions/collect_data/pytest-coverage.txt
-        - name: Print
+            job_name: "Test Job Id"
+        - name: Debug print
           run: |
+            echo ${{ toJSON(github) }}
+            echo ${{ toJSON(github.job) }}
             echo JOB_ID: ${{ steps.fetch-job-id.outputs.job_id }}
