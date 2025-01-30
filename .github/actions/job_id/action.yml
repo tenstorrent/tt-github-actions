@@ -19,18 +19,11 @@ runs:
   using: 'composite'
   steps:
 
-  - name: Debug
-    id: debug
-    shell: bash
-    run: |
-      echo "github.job ${{ toJSON(github.job) }}"
-      echo "github ${{ toJSON(github) }}"
-
   - name: Fetch Job ID
     id: fetch-job-id
     shell: bash
     run: |
-      job_name="${{ github.job }}"
+      job_name="${{ inputs.job_name }}"
       workflow_id="${{ github.run_id }}"
       attempt_id="${{ github.run_attempt }}"
       response=$(curl -s -H "Authorization: token ${{ inputs.gh_token }}" \
