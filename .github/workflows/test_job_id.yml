@@ -12,6 +12,9 @@ jobs:
   use-actions:
 
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test_group_id: [1,2,3]
     steps:
         - uses: actions/checkout@v4
         - name: Fetch job id
@@ -22,5 +25,5 @@ jobs:
             job_name: "Test Job Id"
         - name: Debug print
           run: |
-            echo github.job "{{ github.job }}" pipeline "{{ github.pipeline }}" attempt "{{ github.attempt }}"
+            echo github.job "${{ github.job }}" pipeline "${{ github.run_id }}" attempt "${{ github.run_attempt }}"
             echo JOB_ID: "${{ steps.fetch-job-id.outputs.job_id }}"
