@@ -22,8 +22,8 @@ runs:
     id: debug
     shell: bash
     run: |
-      echo ${{ toJSON(github) }}
-      echo ${{ toJSON(github.job) }}
+      echo "github ${{ toJSON(github) }}"
+      echo "github.job ${{ toJSON(github.job) }}"
 
   - name: Fetch Job ID
     id: fetch-job-id
