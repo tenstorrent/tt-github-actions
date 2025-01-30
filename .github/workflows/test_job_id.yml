@@ -22,6 +22,6 @@ jobs:
             job_name: "Test Job Id"
         - name: Debug print
           run: |
-            echo "github ${{ toJSON(github) }}"
-            echo "github.job ${{ toJSON(github.job) }}"
+            # echo "github ${{ toJSON(github) }}"
+            # echo "github.job ${{ toJSON(github.job) }}"
             echo JOB_ID: "${{ steps.fetch-job-id.outputs.job_id }}
