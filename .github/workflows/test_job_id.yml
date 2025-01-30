@@ -1,0 +1,28 @@
+name: Test Job Id
+on:
+  workflow_dispatch:
+  workflow_call:
+  pull_request:
+    branches: [ "main" ]
+    paths:
+        - '.github/actions/job_id/**'
+
+jobs:
+
+  use-actions:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test_group_id: [1,2,3]
+    steps:
+        - uses: actions/checkout@v4
+        - name: Fetch job id
+          id: fetch-job-id
+          uses: ./.github/actions/job_id
+          with:
+            job_name: "${{ github.job }} (${{ matrix.test_group_id }})"
+        - name: Debug print
+          run: |
+            echo github.job "${{ github.job }}" pipeline "${{ github.run_id }}" attempt "${{ github.run_attempt }}"
+            echo JOB_ID: "${{ steps.fetch-job-id.outputs.job_id }}"
