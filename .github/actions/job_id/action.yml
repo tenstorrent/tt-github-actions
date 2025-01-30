@@ -20,6 +20,7 @@ runs:
 
   - name: Debug
     id: debug
+    shell: bash
     run: |
       echo ${{ toJSON(github) }}
       echo ${{ toJSON(github.job) }}
