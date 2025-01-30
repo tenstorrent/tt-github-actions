@@ -22,4 +22,5 @@ jobs:
             job_name: "Test Job Id"
         - name: Debug print
           run: |
-            echo JOB_ID: "${{ steps.fetch-job-id.outputs.job_id }}
+            echo github.job "{{ github.job }}" pipeline "{{ github.pipeline }}" attempt "{{ github.attempt }}"
+            echo JOB_ID: "${{ steps.fetch-job-id.outputs.job_id }}"
