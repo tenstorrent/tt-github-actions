@@ -12,7 +12,7 @@ Fetching is done based on pipeline run_id and job name, which must be exact, tak
   id: fetch-job-id
   uses: tenstorrent/tt-github-actions/.github/actions/job_id
   with:
-    job_name: "use-actions (${{ matrix.test_group_id }})"
+    job_name: "${{ github.job }} (${{ matrix.test_group_id }})"
 - name: Debug print
   run: |
     echo github.job "${{ github.job }}" pipeline "${{ github.run_id }}" attempt "${{ github.run_attempt }}"
