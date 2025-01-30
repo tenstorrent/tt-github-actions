@@ -1,0 +1,24 @@
+name: Test Job Id
+on:
+  workflow_dispatch:
+  workflow_call:
+  pull_request:
+    branches: [ "main" ]
+    paths:
+        - '.github/actions/job_id/**'
+
+jobs:
+
+  use-actions:
+
+    runs-on: ubuntu-latest
+    steps:
+        - name: Show reports
+          id: fetch-job-id
+          uses: ./.github/actions/job_id
+          with:
+            gh_token: ${{ secrets.GITHUB_TOKEN }}
+            job_name: .github/actions/collect_data/pytest-coverage.txt
+        - name: Print
+          run: |
+            echo JOB_ID: ${{ steps.fetch-job-id.outputs.job_id }}
