@@ -32,7 +32,8 @@ runs:
       echo $job_id
       if ! [[ "$job_id" =~ ^[0-9]+$ ]]; then
         echo "Error: Job ID not found" >&2
-        echo "$response"
+        echo "JOB NAMES"
+        echo "$response" | jq -r '.jobs[] | .name '
         exit 1
       fi
       echo "job_id=$job_id" >> $GITHUB_OUTPUT
