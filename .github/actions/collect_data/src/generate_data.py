@@ -9,7 +9,7 @@ from loguru import logger
 from utils import get_github_runner_environment
 from cicd import create_cicd_json_for_data_analysis, get_cicd_json_filename
 from benchmark import create_json_from_report, get_benchmark_filename
-from optests import create_optest_report, get_optest_filename
+from optests import create_optest_reports, get_optest_filename
 
 
 def create_pipeline_json(workflow_filename: str, jobs_filename: str, workflow_outputs_dir):
@@ -46,17 +46,18 @@ def create_benchmark_jsons(pipeline, workflow_outputs_dir):
 
 
 def create_optest_json(pipeline, workflow_outputs_dir):
-    optests = create_optest_report(pipeline, workflow_outputs_dir)
-    report_filename = get_optest_filename(pipeline)
-    logger.info(f"Writing OpTest JSON to {report_filename}")
-    with open(report_filename, "w") as f:
-        f.write("[")
-        for i, optest in enumerate(optests):
-            if i > 0:
-                f.write(",")
-            f.write(optest.model_dump_json())
-        f.write("]")
-    return optests, report_filename
+    reports = create_optest_reports(pipeline, workflow_outputs_dir)
+    for job_id, optests in reports:
+        report_filename = get_optest_filename(pipeline, job_id)
+        logger.info(f"Writing OpTest JSON to {report_filename}")
+        with open(report_filename, "w") as f:
+            f.write("[")
+            for i, optest in enumerate(optests):
+                if i > 0:
+                    f.write(",")
+                f.write(optest.model_dump_json())
+            f.write("]")
+    return reports
 
 
 if __name__ == "__main__":

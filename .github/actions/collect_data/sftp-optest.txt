@@ -1,2 +1,2 @@
-put -r optest_*.json
+put -r github_job_*.json
 ls -hal

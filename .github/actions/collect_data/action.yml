@@ -60,7 +60,7 @@ runs:
       # Workaround: Copy file to avoid GH upload filename limitations
       cp pipeline_*.json pipelinecopy_${{ inputs.run_id }}.json
       cp benchmark_*.json benchmarkcopy_${{ inputs.run_id }}.json || true
-      cp optest_*.json optestcopy_${{ inputs.run_id }}.json || true
+      cp github_job_*.json optestcopy_${{ inputs.run_id }}.json || true
 
   - name: Create key file
     if: ${{ inputs.ssh-private-key != '' }}
@@ -89,10 +89,10 @@ runs:
     if: ${{ inputs.sftp_optest_host != '' }}
     shell: bash
     run: |
-      if compgen -G "optest_*.json" > /dev/null; then
+      if compgen -G "github_job_*.json" > /dev/null; then
         sftp -oStrictHostKeyChecking=no -i id_key -b ${GITHUB_ACTION_PATH}/sftp-optest.txt ${{ inputs.sftp_optest_user }}@${{ inputs.sftp_optest_host }}
       else
-        echo "No optest_*.json files found. Skipping upload."
+        echo "No github_job_*.json files found. Skipping upload."
       fi
 
   - name: Upload workflow run data, even on failure
