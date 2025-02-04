@@ -24,6 +24,12 @@ inputs:
   sftp_perf_user:
     description: "SFTP server username (for perf reports)"
     required: false
+  sftp_optest_host:
+    description: "SFTP server hostname (for optest reports)"
+    required: false
+  sftp_optest_user:
+    description: "SFTP server username (for optest reports)"
+    required: false
   ssh-private-key:
     description: "SSH private key"
     required: false
@@ -54,6 +60,7 @@ runs:
       # Workaround: Copy file to avoid GH upload filename limitations
       cp pipeline_*.json pipelinecopy_${{ inputs.run_id }}.json
       cp benchmark_*.json benchmarkcopy_${{ inputs.run_id }}.json || true
+      cp github_job_*.json optestcopy_${{ inputs.run_id }}.json || true
 
   - name: Create key file
     if: ${{ inputs.ssh-private-key != '' }}
@@ -76,6 +83,16 @@ runs:
         sftp -oStrictHostKeyChecking=no -i id_key -b ${GITHUB_ACTION_PATH}/sftp-perf.txt ${{ inputs.sftp_perf_user }}@${{ inputs.sftp_perf_host }}
       else
         echo "No benchmark_*.json files found. Skipping upload."
+      fi
+
+  - name: Upload OpTest reports
+    if: ${{ inputs.sftp_optest_host != '' }}
+    shell: bash
+    run: |
+      if compgen -G "github_job_*.json" > /dev/null; then
+        sftp -oStrictHostKeyChecking=no -i id_key -b ${GITHUB_ACTION_PATH}/sftp-optest.txt ${{ inputs.sftp_optest_user }}@${{ inputs.sftp_optest_host }}
+      else
+        echo "No github_job_*.json files found. Skipping upload."
       fi
 
   - name: Upload workflow run data, even on failure

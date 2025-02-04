@@ -1,0 +1,2 @@
+put -r github_job_*.json
+ls -hal

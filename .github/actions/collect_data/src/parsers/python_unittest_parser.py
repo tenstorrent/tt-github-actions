@@ -5,6 +5,7 @@ import xmltodict
 from loguru import logger
 from pydantic_models import Test
 from datetime import datetime, timedelta
+from typing import Optional
 from .parser import Parser
 
 
@@ -14,7 +15,12 @@ class PythonUnittestParser(Parser):
     def can_parse(self, filepath: str):
         return filepath.endswith(".xml")
 
-    def parse(self, filepath: str):
+    def parse(
+        self,
+        filepath: str,
+        project: Optional[str] = None,
+        github_job_id: Optional[int] = None,
+    ):
         return get_tests(filepath)
 
 
