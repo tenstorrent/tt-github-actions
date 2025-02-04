@@ -2,4 +2,6 @@
 .vscode/*
 *.pyc
 .github/actions/collect_data/pipeline_*.json
+.github/actions/collect_data/test/data/tt_torch_models/models/**
+.github/actions/collect_data/generated/**
 .env

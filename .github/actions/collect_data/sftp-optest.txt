@@ -1,0 +1,2 @@
+put -r optest_*.json
+ls -hal

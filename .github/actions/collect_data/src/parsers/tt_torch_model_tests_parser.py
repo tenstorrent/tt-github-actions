@@ -8,7 +8,7 @@ import json
 from functools import partial
 from loguru import logger
 from datetime import datetime
-from pydantic_models import OpTest
+from pydantic_models import OpTest, TensorDesc
 from .parser import Parser
 from enum import IntEnum
 from typing import Optional
@@ -38,10 +38,10 @@ class TTTorchModelTestsParser(Parser):
         project: Optional[str] = None,
         github_job_id: Optional[int] = None,
     ):
-        return get_tests(filepath, project, github_job_id)
+        return _get_tests(filepath, project, github_job_id)
 
 
-def untar(filepath):
+def _untar(filepath):
     basename = os.path.basename(filepath)
     path = f"/tmp/{basename}"
     with tarfile.open(filepath, "r") as fd:
@@ -49,22 +49,22 @@ def untar(filepath):
     return path
 
 
-def all_json_files(filepath):
+def _all_json_files(filepath):
     for root, dirs, files in os.walk(filepath):
         for file in files:
             if file.endswith(".json") and not file.startswith("."):
                 yield os.path.join(root, file)
 
 
-def get_tests_from_json(project, github_job_id, filepath):
+def _get_tests_from_json(project, github_job_id, filepath):
     with open(filepath, "r") as fd:
         data = json.load(fd)
 
     for name, test in data.items():
-        yield get_pydantic_test(filepath, name, test, project, github_job_id)
+        yield _get_pydantic_test(filepath, name, test, project, github_job_id)
 
 
-def get_pydantic_test(filepath, name, test, project, github_job_id, default_timestamp=datetime.now()):
+def _get_pydantic_test(filepath, name, test, project, github_job_id, default_timestamp=datetime.now()):
     status = OpCompilationStatus(test["compilation_status"])
 
     skipped = False
@@ -103,21 +103,34 @@ def get_pydantic_test(filepath, name, test, project, github_job_id, default_time
         error_message=error_message,
         config=config,
         frontend=project,
-        model_name=model_name,
+        model_name=test.get("model_name", model_name),
         op_kind="",
-        op_name="",
-        framework_op_name=test["torch_name"],
-        inputs=[],
-        outputs=[],
+        op_name=test.get("framework_op_name", ""),
+        framework_op_name=test.get("framework_op_name", ""),
+        inputs=_map_tensor_desc(test.get("input_tensors")),
+        outputs=_map_tensor_desc(test.get("output_tensors")),
         op_params=None,
     )
 
 
-def flatten(list_of_lists):
+def _map_tensor_desc(tensors):
+    if not tensors:
+        return []
+    for tensor in tensors:
+        yield TensorDesc(
+            shape=tensor.get("shape"),
+            data_type=tensor.get("data_type"),
+            buffer_type=tensor.get("buffer_type"),
+            layout=tensor.get("layout"),
+            grid_shape=tensor.get("grid_shape"),
+        )
+
+
+def _flatten(list_of_lists):
     return [item for sublist in list_of_lists for item in sublist]
 
 
-def get_tests(filepath, project, github_job_id):
-    untar_path = untar(filepath)
-    tests = map(partial(get_tests_from_json, project, github_job_id), all_json_files(untar_path))
-    return flatten(tests)
+def _get_tests(filepath, project, github_job_id):
+    untar_path = _untar(filepath)
+    tests = map(partial(_get_tests_from_json, project, github_job_id), _all_json_files(untar_path))
+    return _flatten(tests)

@@ -64,7 +64,7 @@ def create_cicd_json_for_data_analysis(
     return pydantic_models.Pipeline(**raw_pipeline, jobs=jobs)
 
 
-def get_github_job_id_to_test_reports(workflow_outputs_dir, workflow_run_id: int):
+def get_github_job_id_to_test_reports(workflow_outputs_dir, workflow_run_id: int, extension=".xml"):
     """
     This function searches for test reports in the artifacts directory
     and returns a mapping of job IDs to the paths of the test reports.
@@ -77,7 +77,7 @@ def get_github_job_id_to_test_reports(workflow_outputs_dir, workflow_run_id: int
 
     for root, _, files in os.walk(artifacts_dir):
         for file in files:
-            if file.endswith(".xml") or file.endswith(".tar"):
+            if file.endswith(extension):
                 logger.debug(f"Found test report {file}")
                 file_path = pathlib.Path(root) / file
                 filename = file_path.name
