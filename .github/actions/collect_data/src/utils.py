@@ -144,7 +144,7 @@ def get_job_row_from_github_job(github_job):
     os = None
     if location == "github":
         os_variants = ["ubuntu", "windows", "macos"]
-        os = [label for label in labels if any(variant in label for variant in os_variants)][0]
+        os = [label for label in labels if any(variant in label.lower() for variant in os_variants)][0]
         if os == "ubuntu-latest":
             logger.warning("Found ubuntu-latest, replacing with ubuntu-24.04 but may not be case for long")
             os = "ubuntu-24.04"

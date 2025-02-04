@@ -342,7 +342,7 @@
       ],
       "check_run_url": "https://api.github.com/repos/tenstorrent/tt-mlir/check-runs/33696388512",
       "labels": [
-        "ubuntu-latest"
+        "Ubuntu-latest"
       ],
       "runner_id": 141,
       "runner_name": "GitHub Actions 60",
