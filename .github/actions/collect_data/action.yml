@@ -58,7 +58,7 @@ runs:
     run: |
       python3 ${GITHUB_ACTION_PATH}/src/generate_data.py --run_id ${{ inputs.run_id }}
       # Workaround: Copy file to avoid GH upload filename limitations
-      cp *.json reports_json || true
+      mkdir -p reports_json && cp *.json reports_json || true
 
   - name: Create key file
     if: ${{ inputs.ssh-private-key != '' }}
@@ -102,4 +102,5 @@ runs:
         if-no-files-found: warn
         path: |
           reports_json
-          generated/cicd
+          generated/cicd/${{ inputs.run_id }}/workflow.json
+          generated/cicd/${{ inputs.run_id }}/workflow_jobs.json
