@@ -57,7 +57,9 @@ def get_tests(test_report_path):
             for testcase in testcases:
                 message = None
                 test_start_ts = testcase.get("@timestamp", previous_test_end_ts)
-                duration = testcase["@time"]
+                duration = float(testcase["@time"])
+                if duration == 0:
+                    duration = 0.01
                 skipped = testcase.get("skipped", False)
                 error = testcase.get("error", False)
                 failure = testcase.get("failure", False)
