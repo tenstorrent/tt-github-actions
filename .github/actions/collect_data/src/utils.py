@@ -45,7 +45,7 @@ def parse_timestamp(timestamp):
 
 
 def get_data_pipeline_datetime_from_datetime(requested_datetime):
-    return requested_datetime.strftime("%Y-%m-%dT%H:%M:%S%z")
+    return requested_datetime.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
 
 
 def get_pipeline_row_from_github_info(github_runner_environment, github_pipeline_json, github_jobs_json):
