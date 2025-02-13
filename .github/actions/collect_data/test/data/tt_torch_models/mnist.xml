@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testsuite name="pytest" errors="0" failures="0" skipped="1" tests="2" time="14.073" timestamp="2025-02-07T20:40:32.211846+00:00" hostname="yyz-lab-72-special-jameszianxu-for-reservation-19509">
+		<testcase classname="tests.models.mnist.test_mnist" name="test_mnist_train[full-train]" time="0.002">
+			<properties>
+				<property name="start_timestamp" value="2025-02-07T20:40:32.763501+00:00" />
+				<property name="end_timestamp" value="2025-02-07T20:40:32.767367+00:00" />
+			</properties>
+			<skipped type="pytest.skip" message="Skipped">
+				/localdev/jameszianxu/tt-torch/tests/models/mnist/test_mnist.py:66: Skipped
+			</skipped>
+		</testcase>
+		<testcase classname="tests.models.mnist.test_mnist" name="test_mnist_train[full-eval]" time="13.517">
+			<properties>
+				<property name="start_timestamp" value="2025-02-07T20:40:32.767729+00:00" />
+				<property name="model_name" value="Mnist" />
+				<property name="frontend" value="tt-torch" />
+				<property name="config" value="{'compiler_config': {'compile_depth': 'CompileDepth.EXECUTE', 'profile_ops': True, 'torch_mlir_module': None, 'stablehlo_mlir_module': None, 'unique_ops': {}, 'stable_hlo_ops': [], 'model_name': 'Mnist', 'results_path': 'results/models/', 'single_op_timeout': 30, 'enable_consteval': True, 'remove_embedded_constants': False, '_consteval_parameters': True, '_enable_intermediate_verification': False, '_verify_op_by_op': False}}" />
+				<property name="tags" value="{'pccs': [0.9967075672249393], 'atols': [0.015625]}" />
+				<property name="end_timestamp" value="2025-02-07T20:40:46.284660+00:00" />
+			</properties>
+		</testcase>
+	</testsuite>
+</testsuites>
