@@ -181,7 +181,7 @@ def get_job_row_from_github_job(github_job):
     job_end_ts = github_job["completed_at"]
 
     job_success = github_job["conclusion"] == "success"
-    job_status = github_job["conclusion"] == "N/A"
+    job_status = str(github_job.get("conclusion", "unknown"))
 
     is_build_job = "build" in name or "build" in labels
 
