@@ -38,6 +38,7 @@ def test_create_pipeline_json(run_id, expected):
         expected_card_types = ["N300", "N150", "E150", None]
         for job in pipeline_json["jobs"]:
             assert job["card_type"] in expected_card_types
+            assert "job_status" in job
 
         # assert pipeline json has the correct number of jobs and tests
         assert len(pipeline_json["jobs"]) == expected["jobs_cnt"]
