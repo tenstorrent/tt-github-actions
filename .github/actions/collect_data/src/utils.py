@@ -181,6 +181,7 @@ def get_job_row_from_github_job(github_job):
     job_end_ts = github_job["completed_at"]
 
     job_success = github_job["conclusion"] == "success"
+    job_status = github_job["conclusion"] == "N/A"
 
     is_build_job = "build" in name or "build" in labels
 
@@ -205,6 +206,7 @@ def get_job_row_from_github_job(github_job):
         "job_start_ts": job_start_ts,
         "job_end_ts": job_end_ts,
         "job_success": job_success,
+        "job_status": job_status,
         "is_build_job": is_build_job,
         "job_matrix_config": job_matrix_config,
         "docker_image": docker_image,
