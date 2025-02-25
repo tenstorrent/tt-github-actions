@@ -21,8 +21,10 @@ def create_json_from_report(pipeline, workflow_outputs_dir):
         for report_path in report_paths:
             with open(report_path) as report_file:
                 report_data = json.load(report_file)
-                results.append(_map_benchmark_data(pipeline, job_id, report_data))
-                logger.info(f"Created benchmark data for job: {job_id} model: {report_data['model']}")
+                benchmark_data = _map_benchmark_data(pipeline, job_id, report_data)
+                if benchmark_data is not None:
+                    results.append(benchmark_data)
+                    logger.info(f"Created benchmark data for job: {job_id} model: {report_data['model']}")
     return results
 
 
@@ -62,7 +64,10 @@ def _get_model_reports(workflow_outputs_dir, workflow_run_id: int):
 def _map_benchmark_data(pipeline, job_id, report_data):
 
     # get job information from pipeline
-    job = next(job for job in pipeline.jobs if job.github_job_id == job_id)
+    job = next((job for job in pipeline.jobs if job.github_job_id == job_id), None)
+    if job is None:
+        logger.error(f"No job found with github_job_id: {job_id}")
+        return None
 
     return CompleteBenchmarkRun(
         run_start_ts=pipeline.pipeline_start_ts,
