@@ -65,6 +65,8 @@ class Job(BaseModel):
         "criteria. Failure mechanisms that are only descriptive of the "
         "job itself."
     )
+    job_status: str = Field(description="Status of the job, e.g. success, failure, cancelled, etc.")
+
     docker_image: Optional[str] = Field(None, description="Name of the Docker image used for the CI job.")
     is_build_job: bool = Field(description="Flag identifying if the job is a software build.")
     job_matrix_config: Optional[dict] = Field(

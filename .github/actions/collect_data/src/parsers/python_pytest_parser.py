@@ -10,6 +10,8 @@ from typing import Optional
 from .parser import Parser
 from . import junit_xml_utils
 from utils import parse_timestamp
+import ast
+import html
 
 
 class PythonPytestParser(Parser):
@@ -102,8 +104,21 @@ def get_pydantic_test_from_pytest_testcase_(testcase, default_timestamp=datetime
 
     # to be populated with [] if available
     config = None
-
     tags = None
+
+    try:
+        tag_string = properties.get("tags")
+        if tag_string is not None:
+            tags = ast.literal_eval(html.unescape(tag_string))
+    except (ValueError, SyntaxError, TypeError) as e:
+        print(f"Error parsing tags: {e}")
+
+    try:
+        config_string = properties.get("config")
+        if config_string is not None:
+            config = ast.literal_eval(html.unescape(config_string))
+    except (ValueError, SyntaxError, TypeError) as e:
+        print(f"Error parsing config: {e}")
 
     return Test(
         test_start_ts=test_start_ts,
