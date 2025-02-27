@@ -1,4 +1,4 @@
-name: Test Job Id
+name: Test maximize_space action
 on:
   workflow_dispatch:
   workflow_call:
@@ -17,7 +17,7 @@ jobs:
     steps:
         - uses: actions/checkout@v4
         - name: Maximize space
-            uses: ./.github/actions/maximize_space
+          uses: ./.github/actions/maximize_space
         - uses: actions/checkout@v4
         - name: Check space
           shell: bash
