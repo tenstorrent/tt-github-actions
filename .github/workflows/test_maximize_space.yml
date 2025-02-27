@@ -1,0 +1,25 @@
+name: Test Job Id
+on:
+  workflow_dispatch:
+  workflow_call:
+  pull_request:
+    branches: [ "main" ]
+    paths:
+        - '.github/actions/maximize_space/**'
+
+jobs:
+
+  use-actions:
+
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/tenstorrent/tt-mlir/tt-mlir-ci-ubuntu-22-04:latest
+    steps:
+        - uses: actions/checkout@v4
+        - name: Maximize space
+            uses: ./.github/actions/maximize_space
+        - uses: actions/checkout@v4
+        - name: Check space
+          shell: bash
+          run: |
+              df -h
