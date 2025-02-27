@@ -1,0 +1,28 @@
+name: 'Maximie space'
+description: 'Try to maximize available space by removing unneeded software packages from Github runners'
+
+runs:
+  using: 'composite'
+  steps:
+
+  - name: Maximize build space
+    shell: bash
+    run: |
+        echo "Disk usage before"
+        echo "========================"
+        df -h
+        echo "Space used by toolchain"
+        echo "-------------------------"
+        du -h --max-depth=2 /opt || true
+         echo "Space used by sw packages"
+        echo "-------------------------"
+        du -h --max-depth=2 /__t || true
+        # Remove sw packages
+        sudo rm -fr /__t/PyPy || true
+        sudo rm -fr /__t/node || true
+        sudo rm -fr /__t/CodeQL || true
+        sudo rm -fr /__t/Ruby || true
+        sudo rm -fr /__t/go || true
+        echo "Disk usage after"
+        echo "========================"
+        df -h
