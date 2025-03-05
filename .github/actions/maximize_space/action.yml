@@ -18,11 +18,23 @@ runs:
         echo "-------------------------"
         du -h --max-depth=2 /__t || true
         # Remove sw packages
-        sudo rm -fr /__t/PyPy || true
-        sudo rm -fr /__t/node || true
-        sudo rm -fr /__t/CodeQL || true
-        sudo rm -fr /__t/Ruby || true
-        sudo rm -fr /__t/go || true
+        if [ -d "/__t" ]; then
+          sudo rm -fr /__t/PyPy || true
+          sudo rm -fr /__t/node || true
+          sudo rm -fr /__t/CodeQL || true
+          sudo rm -fr /__t/Ruby || true
+          sudo rm -fr /__t/go || true
+        fi
+        if [ -d "/opt/hostedtoolcache" ]; then
+          sudo rm -fr /opt/hostedtoolcache/PyPy || true
+          sudo rm -fr /opt/hostedtoolcache/node || true
+          sudo rm -fr /opt/hostedtoolcache/CodeQL || true
+          sudo rm -fr /opt/hostedtoolcache/Ruby || true
+          sudo rm -fr /opt/hostedtoolcache/go || true
+          sudo rm -fr /opt/google/chrome || true
+          sudo rm -fr /opt/microsoft || true
+          sudo rm -fr /opt/az || true
+        fi
         echo "Disk usage after"
         echo "========================"
         df -h

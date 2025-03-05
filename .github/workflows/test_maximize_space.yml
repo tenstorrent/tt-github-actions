@@ -9,11 +9,22 @@ on:
 
 jobs:
 
-  use-actions:
-
+  run-with-container:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/tenstorrent/tt-mlir/tt-mlir-ci-ubuntu-22-04:latest
+    steps:
+        - uses: actions/checkout@v4
+        - name: Maximize space
+          uses: ./.github/actions/maximize_space
+        - uses: actions/checkout@v4
+        - name: Check space
+          shell: bash
+          run: |
+              df -h
+
+  run-without-container:
+    runs-on: ubuntu-latest
     steps:
         - uses: actions/checkout@v4
         - name: Maximize space
