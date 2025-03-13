@@ -16,6 +16,8 @@
 				<property name="op_name" value="matmul"/>
 				<property name="framework_op_name" value="tt-matmul"/>
 				<property name="op_kind" value="mul"/>
+                <property name="owner" value="tt-xla" />
+                <property name="group" value="generality" />
             </properties>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_transpose[params1]" time="0.339">
