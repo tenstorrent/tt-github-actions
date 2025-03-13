@@ -95,10 +95,10 @@ def get_pydantic_test_from_pytest_testcase_(testcase, default_timestamp=datetime
     category = get_category_from_pytest_testcase_(testcase)
 
     # leaving empty for now
-    group = None
+    group = properties.get("group")
 
     # leaving empty for now
-    owner = None
+    owner = properties.get("owner")
 
     full_test_name = f"{filepath}::{testcase.attrib['name']}"
 
