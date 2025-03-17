@@ -61,6 +61,7 @@ def test_create_pipeline_json(run_id, expected):
     "run_id, expected_file",
     [
         ("12890516473", "test/data/12890516473/artifacts/forge-benchmark-e2e-mnist_35942438708.json"),
+        ("12890516474", "test/data/12890516474/artifacts/forge-benchmark-e2e-mnist_35942438708.json"),
     ],
 )
 def test_create_benchmark_json(run_id, expected_file):
@@ -88,30 +89,32 @@ def test_create_benchmark_json(run_id, expected_file):
 def compare_benchmark(reported, expected):
 
     # Compare manually reported data with expected data
-    assert expected["model"] == reported["ml_model_name"]
-    assert expected["model_type"] == reported["ml_model_type"]
-    assert expected["run_type"] == reported["run_type"]
-    assert expected["config"] == reported["config_params"]
-    assert expected["num_layers"] == reported["num_layers"]
-    assert expected["batch_size"] == reported["batch_size"]
-    assert expected["precision"] == reported["precision"]
-    assert expected["dataset_name"] == reported["dataset_name"]
-    assert expected["profile_name"] == reported["profiler_name"]
-    assert expected["input_sequence_length"] == reported["input_sequence_length"]
-    assert expected["output_sequence_length"] == reported["output_sequence_length"]
-    assert expected["image_dimension"] == reported["image_dimension"]
-    assert expected["perf_analysis"] == reported["perf_analysis"]
-    assert expected["training"] == reported["training"]
-    assert expected["device_ip"] == reported["device_ip"]
-    for i, measurement in enumerate(expected["measurements"]):
-        assert measurement["iteration"] == reported["measurements"][i]["iteration"]
-        assert measurement["step_name"] == reported["measurements"][i]["step_name"]
-        assert measurement["step_warm_up_num_iterations"] == reported["measurements"][i]["step_warm_up_num_iterations"]
-        assert measurement["measurement_name"] == reported["measurements"][i]["name"]
-        assert measurement["value"] == reported["measurements"][i]["value"]
-        assert measurement["target"] == reported["measurements"][i]["target"]
-        assert measurement["device_power"] == reported["measurements"][i]["device_power"]
-        assert measurement["device_temperature"] == reported["measurements"][i]["device_temperature"]
+    assert expected.get("model") == reported.get("ml_model_name")
+    assert expected.get("model_type") == reported.get("ml_model_type")
+    assert expected.get("run_type") == reported.get("run_type")
+    assert expected.get("config") == reported.get("config_params")
+    assert expected.get("num_layers") == reported.get("num_layers")
+    assert expected.get("batch_size") == reported.get("batch_size")
+    assert expected.get("precision") == reported.get("precision")
+    assert expected.get("dataset_name") == reported.get("dataset_name")
+    assert expected.get("profile_name") == reported.get("profiler_name")
+    assert expected.get("input_sequence_length") == reported.get("input_sequence_length")
+    assert expected.get("output_sequence_length") == reported.get("output_sequence_length")
+    assert expected.get("image_dimension") == reported.get("image_dimension")
+    assert expected.get("perf_analysis") == reported.get("perf_analysis")
+    assert expected.get("training") == reported.get("training")
+    assert expected.get("device_ip") == reported.get("device_ip")
+    for i, measurement in enumerate(expected.get("measurements", [])):
+        assert measurement.get("iteration") == reported["measurements"][i].get("iteration")
+        assert measurement.get("step_name") == reported["measurements"][i].get("step_name")
+        assert measurement.get("step_warm_up_num_iterations") == reported["measurements"][i].get(
+            "step_warm_up_num_iterations"
+        )
+        assert measurement.get("measurement_name") == reported["measurements"][i].get("name")
+        assert measurement.get("value") == reported["measurements"][i].get("value")
+        assert measurement.get("target") == reported["measurements"][i].get("target")
+        assert measurement.get("device_power") == reported["measurements"][i].get("device_power")
+        assert measurement.get("device_temperature") == reported["measurements"][i].get("device_temperature")
 
 
 def check_constraint(pipeline):
