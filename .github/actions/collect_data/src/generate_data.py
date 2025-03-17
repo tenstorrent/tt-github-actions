@@ -10,6 +10,7 @@ from utils import get_github_runner_environment
 from cicd import create_cicd_json_for_data_analysis, get_cicd_json_filename
 from benchmark import create_json_from_report, get_benchmark_filename
 from optests import create_optest_reports, get_optest_filename
+from shared import is_failure
 
 
 def create_pipeline_json(workflow_filename: str, jobs_filename: str, workflow_outputs_dir):
@@ -95,5 +96,5 @@ if __name__ == "__main__":
         workflow_outputs_dir=args.output_dir,
     )
 
-    if report_failure:
+    if is_failure():
         raise Exception("Failed to generate some reports")
