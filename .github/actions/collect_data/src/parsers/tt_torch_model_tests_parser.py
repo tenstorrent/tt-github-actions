@@ -12,6 +12,7 @@ from pydantic_models import OpTest, TensorDesc
 from .parser import Parser
 from enum import IntEnum
 from typing import Optional
+from pydantic import ValidationError
 
 
 class OpCompilationStatus(IntEnum):
@@ -91,26 +92,32 @@ def _get_pydantic_test(filepath, name, test, project, github_job_id, default_tim
 
     tags = None
 
-    return OpTest(
-        github_job_id=github_job_id,
-        full_test_name=full_test_name,
-        test_start_ts=test_start_ts,
-        test_end_ts=test_end_ts,
-        test_case_name=name,
-        filepath=filepath,
-        success=success,
-        skipped=skipped,
-        error_message=error_message,
-        config=config,
-        frontend=project,
-        model_name=test.get("model_name", model_name),
-        op_kind="",
-        op_name=test.get("framework_op_name", ""),
-        framework_op_name=test.get("framework_op_name", ""),
-        inputs=_map_tensor_desc(test.get("input_tensors")),
-        outputs=_map_tensor_desc(test.get("output_tensors")),
-        op_params=None,
-    )
+    try:
+        return OpTest(
+            github_job_id=github_job_id,
+            full_test_name=full_test_name,
+            test_start_ts=test_start_ts,
+            test_end_ts=test_end_ts,
+            test_case_name=name,
+            filepath=filepath,
+            success=success,
+            skipped=skipped,
+            error_message=error_message,
+            config=config,
+            frontend=project,
+            model_name=test.get("model_name", model_name),
+            op_kind="",
+            op_name=test.get("framework_op_name", ""),
+            framework_op_name=test.get("framework_op_name", ""),
+            inputs=_map_tensor_desc(test.get("input_tensors")),
+            outputs=_map_tensor_desc(test.get("output_tensors")),
+            op_params=None,
+        )
+    except ValidationError as e:
+        global report_failure
+        report_failure = True
+        logger.error(f"Validation error: {e}")
+        return None
 
 
 def _map_tensor_desc(tensors):

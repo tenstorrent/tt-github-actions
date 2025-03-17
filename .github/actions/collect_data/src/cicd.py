@@ -8,6 +8,7 @@ import pathlib
 from loguru import logger
 from datetime import timedelta
 import random
+from pydantic import ValidationError
 
 from utils import (
     get_pipeline_row_from_github_info,
@@ -59,7 +60,15 @@ def create_cicd_json_for_data_analysis(
                 tests.extend(tests_in_report)
             logger.info(f"Found {len(tests)} tests total for job {github_job_id}")
         raw_job["job_start_ts"] = alter_time(raw_job["job_start_ts"])
-        jobs.append(pydantic_models.Job(**raw_job, tests=tests))
+        try:
+            jobs.append(pydantic_models.Job(**raw_job, tests=tests))
+        except ValidationError as e:
+            global report_failure
+            report_failure = True
+
+            logger.error(f"Failed to create job: {e}")
+            logger.error(f"Job: {raw_job}")
+            logger.error(f"Tests: {tests}")
 
     return pydantic_models.Pipeline(**raw_pipeline, jobs=jobs)
 

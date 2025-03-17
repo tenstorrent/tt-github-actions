@@ -6,6 +6,7 @@ import os
 import pathlib
 import json
 from loguru import logger
+from pydantic import ValidationError
 from pydantic_models import BenchmarkMeasurement, CompleteBenchmarkRun
 
 """
@@ -69,48 +70,54 @@ def _map_benchmark_data(pipeline, job_id, report_data):
         logger.error(f"No job found with github_job_id: {job_id}")
         return None
 
-    return CompleteBenchmarkRun(
-        run_start_ts=pipeline.pipeline_start_ts,
-        run_end_ts=pipeline.pipeline_end_ts,
-        run_type=report_data["run_type"],
-        git_repo_name=pipeline.project,
-        git_commit_hash=pipeline.git_commit_hash,
-        git_commit_ts=pipeline.pipeline_submission_ts,
-        git_branch_name=pipeline.git_branch_name,
-        github_pipeline_id=pipeline.github_pipeline_id,
-        github_pipeline_link=pipeline.github_pipeline_link,
-        github_job_id=job.github_job_id,
-        user_name=pipeline.git_author,
-        docker_image=job.docker_image,
-        device_hostname=job.host_name,
-        device_ip=report_data.get("device_ip", None),
-        device_info=report_data["device_info"],
-        ml_model_name=report_data["model"],
-        ml_model_type=report_data["model_type"],
-        num_layers=report_data["num_layers"],
-        batch_size=report_data.get("batch_size", None),
-        config_params=report_data["config"],
-        precision=report_data["precision"],
-        dataset_name=report_data["dataset_name"],
-        profiler_name=report_data["profile_name"],
-        input_sequence_length=report_data["input_sequence_length"],
-        output_sequence_length=report_data["output_sequence_length"],
-        image_dimension=report_data["image_dimension"],
-        perf_analysis=report_data["perf_analysis"],
-        training=report_data.get("training", False),
-        measurements=[
-            BenchmarkMeasurement(
-                step_start_ts=job.job_start_ts,
-                step_end_ts=job.job_end_ts,
-                iteration=measurement["iteration"],
-                step_name=measurement["step_name"],
-                step_warm_up_num_iterations=measurement["step_warm_up_num_iterations"],
-                name=measurement["measurement_name"],
-                value=measurement["value"],
-                target=measurement["target"],
-                device_power=measurement["device_power"],
-                device_temperature=measurement["device_temperature"],
-            )
-            for measurement in report_data["measurements"]
-        ],
-    )
+    try:
+        return CompleteBenchmarkRun(
+            run_start_ts=pipeline.pipeline_start_ts,
+            run_end_ts=pipeline.pipeline_end_ts,
+            run_type=report_data["run_type"],
+            git_repo_name=pipeline.project,
+            git_commit_hash=pipeline.git_commit_hash,
+            git_commit_ts=pipeline.pipeline_submission_ts,
+            git_branch_name=pipeline.git_branch_name,
+            github_pipeline_id=pipeline.github_pipeline_id,
+            github_pipeline_link=pipeline.github_pipeline_link,
+            github_job_id=job.github_job_id,
+            user_name=pipeline.git_author,
+            docker_image=job.docker_image,
+            device_hostname=job.host_name,
+            device_ip=report_data.get("device_ip", None),
+            device_info=report_data["device_info"],
+            ml_model_name=report_data["model"],
+            ml_model_type=report_data["model_type"],
+            num_layers=report_data["num_layers"],
+            batch_size=report_data.get("batch_size", None),
+            config_params=report_data["config"],
+            precision=report_data["precision"],
+            dataset_name=report_data["dataset_name"],
+            profiler_name=report_data["profile_name"],
+            input_sequence_length=report_data["input_sequence_length"],
+            output_sequence_length=report_data["output_sequence_length"],
+            image_dimension=report_data["image_dimension"],
+            perf_analysis=report_data["perf_analysis"],
+            training=report_data.get("training", False),
+            measurements=[
+                BenchmarkMeasurement(
+                    step_start_ts=job.job_start_ts,
+                    step_end_ts=job.job_end_ts,
+                    iteration=measurement["iteration"],
+                    step_name=measurement["step_name"],
+                    step_warm_up_num_iterations=measurement["step_warm_up_num_iterations"],
+                    name=measurement["measurement_name"],
+                    value=measurement["value"],
+                    target=measurement["target"],
+                    device_power=measurement["device_power"],
+                    device_temperature=measurement["device_temperature"],
+                )
+                for measurement in report_data["measurements"]
+            ],
+        )
+    except ValidationError as e:
+        global report_failure
+        report_failure = True
+        logger.error(f"Validation error: {e}")
+        return None
