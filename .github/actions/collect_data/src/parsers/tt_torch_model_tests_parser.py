@@ -13,6 +13,7 @@ from .parser import Parser
 from enum import IntEnum
 from typing import Optional
 from pydantic import ValidationError
+from shared import failure_happened
 
 
 class OpCompilationStatus(IntEnum):
@@ -114,8 +115,7 @@ def _get_pydantic_test(filepath, name, test, project, github_job_id, default_tim
             op_params=None,
         )
     except ValidationError as e:
-        global report_failure
-        report_failure = True
+        failure_happened()
         logger.error(f"Validation error: {e}")
         return None
 

@@ -8,6 +8,7 @@ import json
 from loguru import logger
 from pydantic import ValidationError
 from pydantic_models import BenchmarkMeasurement, CompleteBenchmarkRun
+from shared import failure_happened
 
 """
 Generate benchmark data from perf reports.
@@ -117,7 +118,6 @@ def _map_benchmark_data(pipeline, job_id, report_data):
             ],
         )
     except ValidationError as e:
-        global report_failure
-        report_failure = True
+        failure_happened()
         logger.error(f"Validation error: {e}")
         return None

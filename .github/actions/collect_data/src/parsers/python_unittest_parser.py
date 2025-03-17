@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from .parser import Parser
 from pydantic import ValidationError
+from shared import failure_happened
 
 
 class PythonUnittestParser(Parser):
@@ -99,8 +100,7 @@ def get_tests(test_report_path):
                     )
                     tests.append(test)
                 except ValidationError as e:
-                    global report_failure
-                    report_failure = True
+                    failure_happened()
                     logger.error(f"Validation error: {e}")
 
                 previous_test_end_ts = test_end_ts
