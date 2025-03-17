@@ -1,0 +1,924 @@
+{
+  "total_count": 7,
+  "jobs": [
+    {
+      "run_id": 12890516474,
+      "workflow_name": "On PR",
+      "head_branch": "vcanic/upload_download_artifacts",
+      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516474",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOMYlQT88AAAAIXjUE8g",
+      "head_sha": "f4660ec96ae842071e0bf2774bcee16c2ccb25f4",
+      "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/jobs/35940271346",
+      "html_url": "https://github.com/tenstorrent/tt-forge-fe/actions/runs/12890516474/job/35940271346",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2025-01-21T15:42:18Z",
+      "started_at": "2025-01-21T15:42:23Z",
+      "completed_at": "2025-01-21T15:42:27Z",
+      "name": "spdx / check-spdx-headers",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2025-01-21T15:42:23Z",
+          "completed_at": "2025-01-21T15:42:24Z"
+        },
+        {
+          "name": "checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2025-01-21T15:42:24Z",
+          "completed_at": "2025-01-21T15:42:25Z"
+        },
+        {
+          "name": "Run enarx/spdx@master",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2025-01-21T15:42:25Z",
+          "completed_at": "2025-01-21T15:42:25Z"
+        },
+        {
+          "name": "Post checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2025-01-21T15:42:25Z",
+          "completed_at": "2025-01-21T15:42:25Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2025-01-21T15:42:25Z",
+          "completed_at": "2025-01-21T15:42:25Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/check-runs/35940271346",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 5,
+      "runner_name": "GitHub Actions 5",
+      "runner_group_id": 2,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 35940272662,
+      "run_id": 12890516474,
+      "workflow_name": "On PR",
+      "head_branch": "vcanic/upload_download_artifacts",
+      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516474",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOMYlQT88AAAAIXjUKFg",
+      "head_sha": "f4660ec96ae842071e0bf2774bcee16c2ccb25f4",
+      "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/jobs/35940272662",
+      "html_url": "https://github.com/tenstorrent/tt-forge-fe/actions/runs/12890516474/job/35940272662",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2025-01-21T15:42:19Z",
+      "started_at": "2025-01-21T15:42:24Z",
+      "completed_at": "2025-01-21T15:43:10Z",
+      "name": "pre-commit / pre-commit",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2025-01-21T15:42:23Z",
+          "completed_at": "2025-01-21T15:42:24Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2025-01-21T15:42:24Z",
+          "completed_at": "2025-01-21T15:42:25Z"
+        },
+        {
+          "name": "Set up Python",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2025-01-21T15:42:26Z",
+          "completed_at": "2025-01-21T15:42:26Z"
+        },
+        {
+          "name": "Run pre-commit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2025-01-21T15:42:26Z",
+          "completed_at": "2025-01-21T15:43:08Z"
+        },
+        {
+          "name": "Post Set up Python",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2025-01-21T15:43:08Z",
+          "completed_at": "2025-01-21T15:43:08Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2025-01-21T15:43:10Z",
+          "completed_at": "2025-01-21T15:43:10Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2025-01-21T15:43:08Z",
+          "completed_at": "2025-01-21T15:43:08Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/check-runs/35940272662",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 3,
+      "runner_name": "GitHub Actions 3",
+      "runner_group_id": 2,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 35940273037,
+      "run_id": 12890516474,
+      "workflow_name": "On PR",
+      "head_branch": "vcanic/upload_download_artifacts",
+      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516474",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOMYlQT88AAAAIXjULjQ",
+      "head_sha": "f4660ec96ae842071e0bf2774bcee16c2ccb25f4",
+      "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/jobs/35940273037",
+      "html_url": "https://github.com/tenstorrent/tt-forge-fe/actions/runs/12890516474/job/35940273037",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2025-01-21T15:42:20Z",
+      "started_at": "2025-01-21T15:42:23Z",
+      "completed_at": "2025-01-21T15:42:37Z",
+      "name": "docker-build / docker-build / build-image",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2025-01-21T15:42:22Z",
+          "completed_at": "2025-01-21T15:42:24Z"
+        },
+        {
+          "name": "Set up runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2025-01-21T15:42:24Z",
+          "completed_at": "2025-01-21T15:42:24Z"
+        },
+        {
+          "name": "Fix permissions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2025-01-21T15:42:25Z",
+          "completed_at": "2025-01-21T15:42:25Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2025-01-21T15:42:25Z",
+          "completed_at": "2025-01-21T15:42:28Z"
+        },
+        {
+          "name": "Cleanup submodules",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2025-01-21T15:42:29Z",
+          "completed_at": "2025-01-21T15:42:29Z"
+        },
+        {
+          "name": "Log in to GitHub Container Registry",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2025-01-21T15:42:29Z",
+          "completed_at": "2025-01-21T15:42:30Z"
+        },
+        {
+          "name": "Build Docker images and output the image name",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2025-01-21T15:42:30Z",
+          "completed_at": "2025-01-21T15:42:33Z"
+        },
+        {
+          "name": "Post Log in to GitHub Container Registry",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2025-01-21T15:42:33Z",
+          "completed_at": "2025-01-21T15:42:33Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2025-01-21T15:42:37Z",
+          "completed_at": "2025-01-21T15:42:37Z"
+        },
+        {
+          "name": "Complete runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2025-01-21T15:42:37Z",
+          "completed_at": "2025-01-21T15:42:37Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2025-01-21T15:42:34Z",
+          "completed_at": "2025-01-21T15:42:34Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/check-runs/35940273037",
+      "labels": [
+        "builder"
+      ],
+      "runner_id": 24,
+      "runner_name": "builder-5",
+      "runner_group_id": 1,
+      "runner_group_name": "Default"
+    },
+    {
+      "id": 35940291765,
+      "run_id": 12890516474,
+      "workflow_name": "On PR",
+      "head_branch": "vcanic/upload_download_artifacts",
+      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516474",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOMYlQT88AAAAIXjVUtQ",
+      "head_sha": "f4660ec96ae842071e0bf2774bcee16c2ccb25f4",
+      "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/jobs/35940291765",
+      "html_url": "https://github.com/tenstorrent/tt-forge-fe/actions/runs/12890516474/job/35940291765",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2025-01-21T15:42:38Z",
+      "started_at": "2025-01-21T15:42:43Z",
+      "completed_at": "2025-01-21T16:10:47Z",
+      "name": "docker-build / build-and-test (runner, 1)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2025-01-21T15:42:42Z",
+          "completed_at": "2025-01-21T15:42:46Z"
+        },
+        {
+          "name": "Set up runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2025-01-21T15:42:46Z",
+          "completed_at": "2025-01-21T15:43:29Z"
+        },
+        {
+          "name": "Initialize containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2025-01-21T15:43:30Z",
+          "completed_at": "2025-01-21T15:43:31Z"
+        },
+        {
+          "name": "Set reusable strings",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2025-01-21T15:43:31Z",
+          "completed_at": "2025-01-21T15:43:32Z"
+        },
+        {
+          "name": "Git safe dir",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2025-01-21T15:43:32Z",
+          "completed_at": "2025-01-21T15:43:32Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2025-01-21T15:43:32Z",
+          "completed_at": "2025-01-21T15:43:38Z"
+        },
+        {
+          "name": "Cleanup submodules",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2025-01-21T15:43:39Z",
+          "completed_at": "2025-01-21T15:43:41Z"
+        },
+        {
+          "name": "Update submodule if mlir_override is set",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2025-01-21T15:43:41Z",
+          "completed_at": "2025-01-21T15:43:41Z"
+        },
+        {
+          "name": "ccache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2025-01-21T15:43:41Z",
+          "completed_at": "2025-01-21T15:43:49Z"
+        },
+        {
+          "name": "Build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2025-01-21T15:43:50Z",
+          "completed_at": "2025-01-21T15:54:24Z"
+        },
+        {
+          "name": "Run Unit Tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2025-01-21T15:54:25Z",
+          "completed_at": "2025-01-21T15:54:44Z"
+        },
+        {
+          "name": "Run Test",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2025-01-21T15:54:45Z",
+          "completed_at": "2025-01-21T16:10:11Z"
+        },
+        {
+          "name": "Upload Test Log",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2025-01-21T16:10:12Z",
+          "completed_at": "2025-01-21T16:10:14Z"
+        },
+        {
+          "name": "Upload Test Report",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2025-01-21T16:10:14Z",
+          "completed_at": "2025-01-21T16:10:15Z"
+        },
+        {
+          "name": "Show Test Report",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2025-01-21T16:10:15Z",
+          "completed_at": "2025-01-21T16:10:16Z"
+        },
+        {
+          "name": "Post ccache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 27,
+          "started_at": "2025-01-21T16:10:17Z",
+          "completed_at": "2025-01-21T16:10:42Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 28,
+          "started_at": "2025-01-21T16:10:43Z",
+          "completed_at": "2025-01-21T16:10:43Z"
+        },
+        {
+          "name": "Stop containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 29,
+          "started_at": "2025-01-21T16:10:43Z",
+          "completed_at": "2025-01-21T16:10:44Z"
+        },
+        {
+          "name": "Complete runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 30,
+          "started_at": "2025-01-21T16:10:44Z",
+          "completed_at": "2025-01-21T16:10:44Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 31,
+          "started_at": "2025-01-21T16:10:44Z",
+          "completed_at": "2025-01-21T16:10:44Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/check-runs/35940291765",
+      "labels": [
+        "in-service",
+        "runner"
+      ],
+      "runner_id": 32,
+      "runner_name": "f10cs10-n150",
+      "runner_group_id": 1,
+      "runner_group_name": "Default"
+    },
+    {
+      "id": 35940292165,
+      "run_id": 12890516474,
+      "workflow_name": "On PR",
+      "head_branch": "vcanic/upload_download_artifacts",
+      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516474",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOMYlQT88AAAAIXjVWRQ",
+      "head_sha": "f4660ec96ae842071e0bf2774bcee16c2ccb25f4",
+      "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/jobs/35940292165",
+      "html_url": "https://github.com/tenstorrent/tt-forge-fe/actions/runs/12890516474/job/35940292165",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2025-01-21T15:42:38Z",
+      "started_at": "2025-01-21T15:42:42Z",
+      "completed_at": "2025-01-21T16:15:16Z",
+      "name": "docker-build / build-and-test (runner, 2)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2025-01-21T15:42:42Z",
+          "completed_at": "2025-01-21T15:42:45Z"
+        },
+        {
+          "name": "Set up runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2025-01-21T15:42:45Z",
+          "completed_at": "2025-01-21T15:43:29Z"
+        },
+        {
+          "name": "Initialize containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2025-01-21T15:43:29Z",
+          "completed_at": "2025-01-21T15:43:32Z"
+        },
+        {
+          "name": "Set reusable strings",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2025-01-21T15:43:32Z",
+          "completed_at": "2025-01-21T15:43:32Z"
+        },
+        {
+          "name": "Git safe dir",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2025-01-21T15:43:32Z",
+          "completed_at": "2025-01-21T15:43:32Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2025-01-21T15:43:33Z",
+          "completed_at": "2025-01-21T15:43:40Z"
+        },
+        {
+          "name": "Cleanup submodules",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2025-01-21T15:43:40Z",
+          "completed_at": "2025-01-21T15:43:42Z"
+        },
+        {
+          "name": "Update submodule if mlir_override is set",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2025-01-21T15:43:42Z",
+          "completed_at": "2025-01-21T15:43:42Z"
+        },
+        {
+          "name": "ccache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2025-01-21T15:43:42Z",
+          "completed_at": "2025-01-21T15:43:50Z"
+        },
+        {
+          "name": "Build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2025-01-21T15:43:51Z",
+          "completed_at": "2025-01-21T15:54:29Z"
+        },
+        {
+          "name": "Run Unit Tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2025-01-21T15:54:30Z",
+          "completed_at": "2025-01-21T15:54:49Z"
+        },
+        {
+          "name": "Run Test",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2025-01-21T15:54:49Z",
+          "completed_at": "2025-01-21T16:14:41Z"
+        },
+        {
+          "name": "Upload Test Log",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2025-01-21T16:14:42Z",
+          "completed_at": "2025-01-21T16:14:43Z"
+        },
+        {
+          "name": "Upload Test Report",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2025-01-21T16:14:44Z",
+          "completed_at": "2025-01-21T16:14:44Z"
+        },
+        {
+          "name": "Show Test Report",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2025-01-21T16:14:45Z",
+          "completed_at": "2025-01-21T16:14:46Z"
+        },
+        {
+          "name": "Post ccache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 27,
+          "started_at": "2025-01-21T16:14:46Z",
+          "completed_at": "2025-01-21T16:15:12Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 28,
+          "started_at": "2025-01-21T16:15:12Z",
+          "completed_at": "2025-01-21T16:15:13Z"
+        },
+        {
+          "name": "Stop containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 29,
+          "started_at": "2025-01-21T16:15:13Z",
+          "completed_at": "2025-01-21T16:15:13Z"
+        },
+        {
+          "name": "Complete runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 30,
+          "started_at": "2025-01-21T16:15:16Z",
+          "completed_at": "2025-01-21T16:15:16Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 31,
+          "started_at": "2025-01-21T16:15:13Z",
+          "completed_at": "2025-01-21T16:15:14Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/check-runs/35940292165",
+      "labels": [
+        "in-service",
+        "runner"
+      ],
+      "runner_id": 34,
+      "runner_name": "f09cs10-n150",
+      "runner_group_id": 1,
+      "runner_group_name": "Default"
+    },
+    {
+      "id": 35942413316,
+      "run_id": 12890516474,
+      "workflow_name": "On PR",
+      "head_branch": "vcanic/upload_download_artifacts",
+      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516474",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOMYlQT88AAAAIXlW0BA",
+      "head_sha": "f4660ec96ae842071e0bf2774bcee16c2ccb25f4",
+      "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/jobs/35942413316",
+      "html_url": "https://github.com/tenstorrent/tt-forge-fe/actions/runs/12890516474/job/35942413316",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2025-01-21T16:15:18Z",
+      "started_at": "2025-01-21T16:15:22Z",
+      "completed_at": "2025-01-21T16:15:40Z",
+      "name": "perf-benchmark / docker-build / build-image",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2025-01-21T16:15:22Z",
+          "completed_at": "2025-01-21T16:15:24Z"
+        },
+        {
+          "name": "Set up runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2025-01-21T16:15:24Z",
+          "completed_at": "2025-01-21T16:15:24Z"
+        },
+        {
+          "name": "Fix permissions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2025-01-21T16:15:24Z",
+          "completed_at": "2025-01-21T16:15:24Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2025-01-21T16:15:24Z",
+          "completed_at": "2025-01-21T16:15:29Z"
+        },
+        {
+          "name": "Cleanup submodules",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2025-01-21T16:15:29Z",
+          "completed_at": "2025-01-21T16:15:32Z"
+        },
+        {
+          "name": "Log in to GitHub Container Registry",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2025-01-21T16:15:32Z",
+          "completed_at": "2025-01-21T16:15:32Z"
+        },
+        {
+          "name": "Build Docker images and output the image name",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2025-01-21T16:15:33Z",
+          "completed_at": "2025-01-21T16:15:36Z"
+        },
+        {
+          "name": "Post Log in to GitHub Container Registry",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2025-01-21T16:15:36Z",
+          "completed_at": "2025-01-21T16:15:36Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2025-01-21T16:15:37Z",
+          "completed_at": "2025-01-21T16:15:37Z"
+        },
+        {
+          "name": "Complete runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2025-01-21T16:15:40Z",
+          "completed_at": "2025-01-21T16:15:40Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2025-01-21T16:15:37Z",
+          "completed_at": "2025-01-21T16:15:37Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/check-runs/35942413316",
+      "labels": [
+        "builder"
+      ],
+      "runner_id": 24,
+      "runner_name": "builder-5",
+      "runner_group_id": 1,
+      "runner_group_name": "Default"
+    },
+    {
+      "id": 35942438708,
+      "run_id": 12890516474,
+      "workflow_name": "On PR",
+      "head_branch": "vcanic/upload_download_artifacts",
+      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516474",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOMYlQT88AAAAIXlYXNA",
+      "head_sha": "f4660ec96ae842071e0bf2774bcee16c2ccb25f4",
+      "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/jobs/35942438708",
+      "html_url": "https://github.com/tenstorrent/tt-forge-fe/actions/runs/12890516474/job/35942438708",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2025-01-21T16:15:40Z",
+      "started_at": "2025-01-21T16:15:45Z",
+      "completed_at": "2025-01-21T16:28:27Z",
+      "name": "perf-benchmark / build-and-run-perf",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2025-01-21T16:15:45Z",
+          "completed_at": "2025-01-21T16:15:47Z"
+        },
+        {
+          "name": "Set up runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2025-01-21T16:15:47Z",
+          "completed_at": "2025-01-21T16:16:31Z"
+        },
+        {
+          "name": "Initialize containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2025-01-21T16:16:31Z",
+          "completed_at": "2025-01-21T16:16:33Z"
+        },
+        {
+          "name": "Set reusable strings",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2025-01-21T16:16:33Z",
+          "completed_at": "2025-01-21T16:16:34Z"
+        },
+        {
+          "name": "Git safe dir",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2025-01-21T16:16:34Z",
+          "completed_at": "2025-01-21T16:16:34Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2025-01-21T16:16:34Z",
+          "completed_at": "2025-01-21T16:16:40Z"
+        },
+        {
+          "name": "Cleanup submodules",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2025-01-21T16:16:41Z",
+          "completed_at": "2025-01-21T16:16:43Z"
+        },
+        {
+          "name": "ccache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2025-01-21T16:16:43Z",
+          "completed_at": "2025-01-21T16:16:51Z"
+        },
+        {
+          "name": "Build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2025-01-21T16:16:51Z",
+          "completed_at": "2025-01-21T16:27:42Z"
+        },
+        {
+          "name": "Run Perf Benchmark",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2025-01-21T16:27:43Z",
+          "completed_at": "2025-01-21T16:27:57Z"
+        },
+        {
+          "name": "Upload Perf Report",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2025-01-21T16:27:58Z",
+          "completed_at": "2025-01-21T16:27:58Z"
+        },
+        {
+          "name": "Post ccache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2025-01-21T16:27:59Z",
+          "completed_at": "2025-01-21T16:28:23Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2025-01-21T16:28:23Z",
+          "completed_at": "2025-01-21T16:28:24Z"
+        },
+        {
+          "name": "Stop containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2025-01-21T16:28:24Z",
+          "completed_at": "2025-01-21T16:28:24Z"
+        },
+        {
+          "name": "Complete runner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22,
+          "started_at": "2025-01-21T16:28:27Z",
+          "completed_at": "2025-01-21T16:28:27Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23,
+          "started_at": "2025-01-21T16:28:24Z",
+          "completed_at": "2025-01-21T16:28:25Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/check-runs/35942438708",
+      "labels": [
+        "in-service",
+        "n150",
+        "performance"
+      ],
+      "runner_id": 32,
+      "runner_name": "f10cs10-n150",
+      "runner_group_id": 1,
+      "runner_group_name": "Default"
+    }
+  ]
+}

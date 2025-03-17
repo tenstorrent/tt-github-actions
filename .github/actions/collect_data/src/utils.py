@@ -125,13 +125,13 @@ def get_job_failure_signature_(github_job) -> Optional[Union[InfraErrorV1]]:
 
 
 def get_job_row_from_github_job(github_job):
-    github_job_id = github_job["id"]
+    github_job_id = github_job.get("id")
 
     logger.info(f"Processing github job with ID {github_job_id}")
 
-    host_name = github_job["runner_name"]
+    host_name = github_job.get("runner_name")
 
-    labels = github_job["labels"]
+    labels = github_job.get("labels", [])
 
     if not host_name:
         location = None
@@ -153,9 +153,9 @@ def get_job_row_from_github_job(github_job):
         logger.warning("Assuming ubuntu-20.04 for tt cloud, but may not be the case soon")
         os = "ubuntu-20.04"
 
-    name = github_job["name"]
+    name = github_job.get("name")
 
-    assert github_job["status"] == "completed", f"{github_job_id} is not completed"
+    assert github_job.get("status") == "completed", f"{github_job_id} is not completed"
 
     # Determine card type based on runner name
     runner_name = (github_job.get("runner_name") or "").upper()
@@ -165,9 +165,9 @@ def get_job_row_from_github_job(github_job):
             card_type = card
             break
 
-    job_submission_ts = github_job["created_at"]
+    job_submission_ts = github_job.get("created_at")
 
-    job_start_ts = github_job["started_at"]
+    job_start_ts = github_job.get("started_at")
 
     job_submission_ts_dt = parse_timestamp(job_submission_ts)
     job_start_ts_dt = parse_timestamp(job_start_ts)
@@ -178,9 +178,9 @@ def get_job_row_from_github_job(github_job):
         )
         job_submission_ts = job_start_ts
 
-    job_end_ts = github_job["completed_at"]
+    job_end_ts = github_job.get("completed_at")
 
-    job_success = github_job["conclusion"] == "success"
+    job_success = github_job.get("conclusion") == "success"
     job_status = str(github_job.get("conclusion", "unknown"))
 
     is_build_job = "build" in name or "build" in labels
@@ -191,7 +191,7 @@ def get_job_row_from_github_job(github_job):
     logger.warning("docker_image erroneously used in pipeline data model, but should be moved. Returning null")
     docker_image = None
 
-    github_job_link = github_job["html_url"]
+    github_job_link = github_job.get("html_url")
 
     failure_signature = get_job_failure_signature_(github_job)
 
@@ -216,7 +216,7 @@ def get_job_row_from_github_job(github_job):
 
 
 def get_job_rows_from_github_info(github_pipeline_json, github_jobs_json):
-    return list(map(get_job_row_from_github_job, github_jobs_json["jobs"]))
+    return list(map(get_job_row_from_github_job, github_jobs_json.get("jobs")))
 
 
 def get_github_runner_environment():
