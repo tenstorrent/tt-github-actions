@@ -13,6 +13,7 @@ from utils import parse_timestamp
 import ast
 import html
 from pydantic import ValidationError
+from shared import failure_happened
 
 
 class PythonPytestParser(Parser):
@@ -138,8 +139,7 @@ def get_pydantic_test_from_pytest_testcase_(testcase, default_timestamp=datetime
             tags=tags,
         )
     except ValidationError as e:
-        global report_failure
-        report_failure = True
+        failure_happened()
         logger.error(f"Validation error: {e}")
         return None
 
