@@ -32,7 +32,10 @@ def create_json_from_report(pipeline, workflow_outputs_dir):
 
 def get_benchmark_filename(report):
     ts = report.run_start_ts.strftime("%Y-%m-%dT%H:%M:%S%z")
-    return f"benchmark_{report.github_job_id}_{ts}.json"
+    sanitized_model_name = (
+        "".join(c if c.isalnum() or c == " " else "" for c in report.ml_model_name).replace(" ", "_").lower()
+    )
+    return f"benchmark_{report.github_job_id}_{sanitized_model_name}_{ts}.json"
 
 
 def _get_model_reports(workflow_outputs_dir, workflow_run_id: int):
