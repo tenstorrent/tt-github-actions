@@ -63,6 +63,9 @@ def create_optest_json(pipeline, workflow_outputs_dir):
 
 if __name__ == "__main__":
 
+    global report_failure
+    report_failure = False
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--run_id", type=str, required=True, help="Run ID of the workflow")
     parser.add_argument(
