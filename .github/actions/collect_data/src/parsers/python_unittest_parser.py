@@ -7,6 +7,7 @@ from pydantic_models import Test
 from datetime import datetime, timedelta
 from typing import Optional
 from .parser import Parser
+from pydantic import ValidationError
 
 
 class PythonUnittestParser(Parser):
@@ -80,22 +81,28 @@ def get_tests(test_report_path):
                     test_start_ts = max(test_start_ts, previous_test_end_ts)
                 test_end_ts = add_time(test_start_ts, duration)
 
-                test = Test(
-                    test_start_ts=test_start_ts,
-                    test_end_ts=test_end_ts,
-                    test_case_name=testcase["@name"],
-                    filepath=file,
-                    category=testcase["@classname"],
-                    group="unittest",
-                    owner=None,
-                    error_message=message,
-                    success=not (error or failure),
-                    skipped=bool(skipped),
-                    full_test_name=f"{file}::{testcase['@name']}",
-                    config=None,
-                    tags=None,
-                )
-                tests.append(test)
+                try:
+                    test = Test(
+                        test_start_ts=test_start_ts,
+                        test_end_ts=test_end_ts,
+                        test_case_name=testcase["@name"],
+                        filepath=file,
+                        category=testcase["@classname"],
+                        group="unittest",
+                        owner=None,
+                        error_message=message,
+                        success=not (error or failure),
+                        skipped=bool(skipped),
+                        full_test_name=f"{file}::{testcase['@name']}",
+                        config=None,
+                        tags=None,
+                    )
+                    tests.append(test)
+                except ValidationError as e:
+                    global report_failure
+                    report_failure = True
+                    logger.error(f"Validation error: {e}")
+
                 previous_test_end_ts = test_end_ts
     return tests
 

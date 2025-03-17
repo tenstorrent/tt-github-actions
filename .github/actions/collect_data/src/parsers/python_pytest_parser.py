@@ -12,6 +12,7 @@ from . import junit_xml_utils
 from utils import parse_timestamp
 import ast
 import html
+from pydantic import ValidationError
 
 
 class PythonPytestParser(Parser):
@@ -120,21 +121,27 @@ def get_pydantic_test_from_pytest_testcase_(testcase, default_timestamp=datetime
     except (ValueError, SyntaxError, TypeError) as e:
         print(f"Error parsing config: {e}")
 
-    return Test(
-        test_start_ts=test_start_ts,
-        test_end_ts=test_end_ts,
-        test_case_name=test_case_name,
-        filepath=filepath,
-        category=category,
-        group=group,
-        owner=owner,
-        error_message=error_message,
-        success=success,
-        skipped=skipped,
-        full_test_name=full_test_name,
-        config=config,
-        tags=tags,
-    )
+    try:
+        return Test(
+            test_start_ts=test_start_ts,
+            test_end_ts=test_end_ts,
+            test_case_name=test_case_name,
+            filepath=filepath,
+            category=category,
+            group=group,
+            owner=owner,
+            error_message=error_message,
+            success=success,
+            skipped=skipped,
+            full_test_name=full_test_name,
+            config=config,
+            tags=tags,
+        )
+    except ValidationError as e:
+        global report_failure
+        report_failure = True
+        logger.error(f"Validation error: {e}")
+        return None
 
 
 def is_valid_testcase_(testcase):
