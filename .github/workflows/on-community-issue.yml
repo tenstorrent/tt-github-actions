@@ -7,7 +7,7 @@ on:
     types: [opened]
 
 jobs:
-  gh-slack-bridge:
+  gh-workflow:
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -19,26 +19,20 @@ jobs:
           if [ "${{ github.event_name }}" = "issues" ]; then
             echo "USERNAME=${{ github.event.issue.user.login }}" >> $GITHUB_ENV
             echo "NUMBER=${{ github.event.issue.number }}" >> $GITHUB_ENV
-            echo "EVENT_URL=${{ github.event.issue.html_url }}" >> $GITHUB_ENV
-            echo "EVENT_TYPE=issue" >> $GITHUB_ENV
             echo "GH_COMMAND=issue" >> $GITHUB_ENV
           elif [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "USERNAME=${{ github.event.pull_request.user.login }}" >> $GITHUB_ENV
             echo "NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
-            echo "EVENT_URL=${{ github.event.pull_request.html_url }}" >> $GITHUB_ENV
-            echo "EVENT_TYPE=PR" >> $GITHUB_ENV
             echo "GH_COMMAND=pr" >> $GITHUB_ENV
           elif [ "${{ github.event_name }}" = "push" ]; then
             echo "USERNAME=${{ github.actor }}" >> $GITHUB_ENV
-            echo "EVENT_URL=https://github.com/${{ github.repository }}/commit/${{ github.sha }}" >> $GITHUB_ENV
-            echo "EVENT_TYPE=push" >> $GITHUB_ENV
           fi
       - name: Check if organization member
         id: is_organization_member
         env:
           GITHUB_ORG: tenstorrent
         run: |
-          http_status=$(curl -o /dev/null -s -w '%{http_code}' -H "Authorization: Bearer ${{ secrets.ORG_READ_GITHUB_TOKEN }}" https://api.github.com/orgs/${{ env.GITHUB_ORG }}/members/${{ env.USERNAME }})
+          http_status=$(curl -o /dev/null -s -w '%{http_code}' -H "Authorization: Bearer ${{ secrets.TT-BOT-ORG_MEMBERS_READ_TOKEN }}" https://api.github.com/orgs/${{ env.GITHUB_ORG }}/members/${{ env.USERNAME }})
           if [ "$http_status" -eq 204 ]; then
             echo "Detected org member"
             echo "is_member=true" >> $GITHUB_OUTPUT
@@ -51,6 +45,6 @@ jobs:
         run: |
           gh ${{env.GH_COMMAND}} edit ${{ env.NUMBER }} --add-label ${{ env.LABELS }}
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.TT-BOT-ISSUE_PR_WRITE_TOKEN }}
           GH_REPO: ${{ github.repository }}
           LABELS: community
