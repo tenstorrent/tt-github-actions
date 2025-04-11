@@ -24,7 +24,7 @@ runs:
     shell: bash
     run: |
       pip install -r ${GITHUB_ACTION_PATH}/requirements.txt
-      job_id=$(python fetch_job_id.py \
+      job_id=$(python ${GITHUB_ACTION_PATH}/fetch_job_id.py \
         --job-name "${{ inputs.job_name }}" \
         --repo "${{ github.repository }}" \
         --run-id "${{ github.run_id }}" \
