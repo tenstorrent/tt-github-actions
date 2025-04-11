@@ -23,7 +23,7 @@ runs:
     id: fetch-job-id
     shell: bash
     run: |
-      pip install -r requirements.txt
+      pip install -r ${GITHUB_ACTION_PATH}/requirements.txt
       job_id=$(python fetch_job_id.py \
         --job-name "${{ inputs.job_name }}" \
         --repo "${{ github.repository }}" \
