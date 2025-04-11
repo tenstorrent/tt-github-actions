@@ -25,7 +25,7 @@ runs:
 
   - name: Fetch Job ID
     env:
-      GITHUB_TOKEN: ${{ inputs.gh_token }}
+      GH_TOKEN: ${{ inputs.gh_token }}
     id: fetch-job-id
     shell: bash
     run: |
