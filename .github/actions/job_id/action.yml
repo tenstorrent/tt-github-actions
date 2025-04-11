@@ -52,7 +52,7 @@ runs:
       done
 
       if [ -z "$job_id" ]; then
-          echo "Job name '$JOB_NAME' not found in workflow ID '$workflow_id'."
+          echo "Job name '$JOB_NAME' not found in workflow ID $workflow_id."
           exit 1
       fi
 
