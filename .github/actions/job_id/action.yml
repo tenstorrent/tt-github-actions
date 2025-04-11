@@ -19,23 +19,21 @@ runs:
   using: 'composite'
   steps:
 
-  - uses: actions/setup-python@v5
-    with:
-      python-version: '3.10'
-
   - name: Fetch Job ID
-    env:
-      GH_TOKEN: ${{ inputs.gh_token }}
     id: fetch-job-id
     shell: bash
     run: |
-
-      pip install -r ${GITHUB_ACTION_PATH}/requirements.txt
-      job_id=$(python ${GITHUB_ACTION_PATH}/fetch_job_id.py \
-        --job-name "${{ inputs.job_name }}" \
-        --repo "${{ github.repository }}" \
-        --run-id "${{ github.run_id }}" \
-        --run-attempt "${{ github.run_attempt }}" \
-      )
-      echo "Job ID: $job_id"
+      job_name="${{ inputs.job_name }}"
+      workflow_id="${{ github.run_id }}"
+      attempt_id="${{ github.run_attempt }}"
+      response=$(curl -s -H "Authorization: token ${{ inputs.gh_token }}" \
+        "https://api.github.com/repos/${{ github.repository }}/actions/runs/${workflow_id}/jobs?per_page=1000")
+      job_id=$(echo "$response" | jq -r '.jobs[] | select(.name | contains("${{ inputs.job_name }}")) | .id ')
+      echo $job_id
+      if ! [[ "$job_id" =~ ^[0-9]+$ ]]; then
+        echo "Error: Job ID not found" >&2
+        echo "JOB NAMES"
+        echo "$response" | jq -r '.jobs[] | .name '
+        exit 1
+      fi
       echo "job_id=$job_id" >> $GITHUB_OUTPUT
