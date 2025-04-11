@@ -25,7 +25,7 @@ runs:
     run: |
       JOB_NAME="${{ inputs.job_name }}"
       workflow_id="${{ github.run_id }}"
-      repo=${{ github.repository }}
+      repo="${{ github.repository }}""
 
       page=1
       per_page=90
@@ -33,9 +33,9 @@ runs:
 
       while true; do
           response=$(curl -s -H "Authorization: token ${{ inputs.gh_token }}" \
-              https://api.github.com/repos/$repo/actions/runs/$workflow_id/jobs?per_page=$per_page&page=$page")
+              "https://api.github.com/repos/$repo/actions/runs/$workflow_id/jobs?per_page=$per_page&page=$page")
 
-          job_id=$(echo "$response" | jq -r --arg JOB_NAME "$JOB_NAME" '.jobs[] | select(.name == $JOB_NAME) | .id')
+          job_id=$(echo "$response" | jq -r --arg JOB_NAME "$JOB_NAME" '.jobs[] | select(.name | contains($JOB_NAME)) | .id')
 
           if [ -n "$job_id" ]; then
               echo "Job ID for job name '$JOB_NAME' is: $job_id"
