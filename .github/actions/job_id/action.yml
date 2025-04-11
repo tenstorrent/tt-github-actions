@@ -24,9 +24,12 @@ runs:
       python-version: '3.10'
 
   - name: Fetch Job ID
+    env:
+      GITHUB_TOKEN: ${{ inputs.gh_token }}
     id: fetch-job-id
     shell: bash
     run: |
+
       pip install -r ${GITHUB_ACTION_PATH}/requirements.txt
       job_id=$(python ${GITHUB_ACTION_PATH}/fetch_job_id.py \
         --job-name "${{ inputs.job_name }}" \
