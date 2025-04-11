@@ -18,3 +18,13 @@ Fetching is done based on pipeline run_id and job name, which must be exact, tak
     echo github.job "${{ github.job }}" pipeline "${{ github.run_id }}" attempt "${{ github.run_attempt }}"
     echo JOB_ID: "${{ steps.fetch-job-id.outputs.job_id }}"
 ```
+
+## Test python script
+
+```bash
+python fetch_job_id.py \
+  --job-name="bmk (bmk_100_qtn_test_qwen2_token_classification_full-Qwen_Qwen2-7B-eval_)" \
+  --repo="tenstorrent/tt-torch" \
+  --run-id=14389459213 \
+  --run-attempt=1
+```
