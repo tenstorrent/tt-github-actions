@@ -25,7 +25,7 @@ runs:
     run: |
       JOB_NAME="${{ inputs.job_name }}"
       workflow_id="${{ github.run_id }}"
-      repo="${{ github.repository }}""
+      repo="${{ github.repository }}"
 
       page=1
       per_page=90
