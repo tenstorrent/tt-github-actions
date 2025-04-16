@@ -10,13 +10,14 @@ from pydantic import ValidationError
 from pydantic_models import BenchmarkMeasurement, CompleteBenchmarkRun
 from shared import failure_happened
 from abc import ABC, abstractmethod
+from typing import List, Dict
 
 """
 Generate benchmark data from perf reports.
 """
 
 
-def create_json_from_report(pipeline, workflow_outputs_dir) -> list[CompleteBenchmarkRun]:
+def create_json_from_report(pipeline, workflow_outputs_dir) -> List[CompleteBenchmarkRun]:
 
     results = []
     reports = _get_model_reports(workflow_outputs_dir, pipeline.github_pipeline_id)
@@ -37,7 +38,7 @@ def get_benchmark_filename(report) -> str:
     return f"benchmark_{report.github_pipeline_id}_{ts}.jsonl"
 
 
-def _get_model_reports(workflow_outputs_dir, workflow_run_id: int) -> dict[int, list[pathlib.Path]]:
+def _get_model_reports(workflow_outputs_dir, workflow_run_id: int) -> Dict[int, List[pathlib.Path]]:
     """
     This function searches for perf reports in the artifacts directory
     and returns a mapping of job IDs to the paths of the perf reports.
