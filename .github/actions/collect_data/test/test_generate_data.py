@@ -58,8 +58,8 @@ def test_create_pipeline_json(run_id, expected):
 @pytest.mark.parametrize(
     "run_id, expected_file",
     [
-        ("12890516473", "test/data/12890516473/expected/benchmark_40487698077.json"),
-        ("14439943793", "test/data/14439943793/expected/benchmark_40487698077.jsonl"),
+        ("12890516473", "test/data/12890516473/expected/benchmark.json"),
+        ("14468030535", "test/data/14468030535/expected/benchmark.jsonl"),
     ],
 )
 def test_create_benchmark_json(run_id, expected_file):
@@ -81,10 +81,10 @@ def test_create_benchmark_json(run_id, expected_file):
     with open(report_file, "r") as report, open(expected_file, "r") as expected:
         report_json = [json.loads(line) for line in report]
         expected_json = [json.loads(line) for line in expected]
-        diff = DeepDiff(report_json, expected_json, exclude_regex_paths=[r".*step_start_ts.*"])
-
-        # Assert no differences
-        assert not diff, f"Objects are not equal. Differences: {diff}"
+        for report_line, expected_line in zip(report_json, expected_json):
+            diff = DeepDiff(report_line, expected_line, exclude_regex_paths=[r".*step_start_ts.*"])
+            # Assert no differences for each line
+            assert not diff, f"Objects are not equal. Differences:\n{json.dumps(diff, indent=4)}"
 
 
 def check_constraint(pipeline):

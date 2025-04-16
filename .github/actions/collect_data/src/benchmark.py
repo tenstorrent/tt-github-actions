@@ -34,7 +34,7 @@ def create_json_from_report(pipeline, workflow_outputs_dir) -> list[CompleteBenc
 
 def get_benchmark_filename(report) -> str:
     ts = report.run_start_ts.strftime("%Y-%m-%dT%H:%M:%S%z")
-    return f"benchmark_{report.github_job_id}_{ts}.jsonl"
+    return f"benchmark_{report.github_pipeline_id}_{ts}.jsonl"
 
 
 def _get_model_reports(workflow_outputs_dir, workflow_run_id: int) -> dict[int, list[pathlib.Path]]:
@@ -231,22 +231,26 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         """
         Creates BenchmarkMeasurement objects for the specified keys in the data.
         """
-        return [
-            BenchmarkMeasurement(
-                step_start_ts=job.job_start_ts,
-                step_end_ts=job.job_end_ts,
-                iteration=1,
-                step_name=step_name,
-                step_warm_up_num_iterations=None,
-                name=key,
-                value=data.get(key),
-                target=None,
-                device_power=None,
-                device_temperature=None,
-            )
-            for key in keys
-            if key in data
-        ]
+        measurements = []
+        for key in keys:
+            if key in data:
+                try:
+                    measurement = BenchmarkMeasurement(
+                        step_start_ts=job.job_start_ts,
+                        step_end_ts=job.job_end_ts,
+                        iteration=1,
+                        step_name=step_name,
+                        step_warm_up_num_iterations=None,
+                        name=key,
+                        value=data.get(key),
+                        target=None,
+                        device_power=None,
+                        device_temperature=None,
+                    )
+                    measurements.append(measurement)
+                except Exception as e:
+                    logger.error(f"Error constructing BenchmarkMeasurement for key: {key}, value: {data.get(key)}.")
+        return measurements
 
     def _create_complete_benchmark_run(
         self,
