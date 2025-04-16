@@ -32,18 +32,16 @@ def create_pipeline_json(workflow_filename: str, jobs_filename: str, workflow_ou
     return pipeline, report_filename
 
 
-def create_benchmark_jsons(pipeline, workflow_outputs_dir):
-    results = []
+def create_benchmark_jsonl(pipeline, workflow_outputs_dir) -> str:
     reports = create_json_from_report(pipeline, workflow_outputs_dir)
-    for report in reports:
-        report_filename = get_benchmark_filename(
-            report
-        )  # f"benchmark_{report.github_job_id}_{report.run_start_ts}.json"
-        logger.info(f"Writing benchmark JSON to {report_filename}")
-        with open(report_filename, "w") as f:
-            f.write(report.model_dump_json())
-        results.append((report, report_filename))
-    return results
+    # Sort reports by github_job_id and run_start_ts descending
+    reports.sort(key=lambda x: (x.github_job_id, x.run_start_ts), reverse=True)
+    report_filename = get_benchmark_filename(reports[0])
+    logger.info(f"Writing all benchmark JSONs to {report_filename}")
+    with open(report_filename, "w") as f:
+        for report in reports:
+            f.write(report.model_dump_json() + "\n")
+    return report_filename
 
 
 def create_optest_json(pipeline, workflow_outputs_dir):
@@ -85,7 +83,7 @@ if __name__ == "__main__":
     )
 
     logger.info(f"Creating benchmark JSON for workflow run ID {args.run_id}")
-    create_benchmark_jsons(
+    create_benchmark_jsonl(
         pipeline=pipeline,
         workflow_outputs_dir=args.output_dir,
     )
