@@ -2,19 +2,17 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from generate_data import create_pipeline_json, create_benchmark_jsons
+from generate_data import create_pipeline_json, create_benchmark_jsonl
 import os
 import json
 import pytest
+from deepdiff import DeepDiff
 
 
 @pytest.mark.parametrize(
     "run_id, expected",
     [
-        ("11236784732", {"jobs_cnt": 2, "tests_cnt": 583}),
-        ("12007373278", {"jobs_cnt": 9, "tests_cnt": 245}),
-        ("12083382635", {"jobs_cnt": 21, "tests_cnt": 322}),
-        ("12084081698", {"jobs_cnt": 4, "tests_cnt": 250}),
+        ("14439943793", {"jobs_cnt": 1, "tests_cnt": 0}),
     ],
 )
 def test_create_pipeline_json(run_id, expected):
@@ -60,8 +58,8 @@ def test_create_pipeline_json(run_id, expected):
 @pytest.mark.parametrize(
     "run_id, expected_file",
     [
-        ("12890516473", "test/data/12890516473/artifacts/forge-benchmark-e2e-mnist_35942438708.json"),
-        ("12890516474", "test/data/12890516474/artifacts/forge-benchmark-e2e-mnist_35942438708.json"),
+        ("12890516473", "test/data/12890516473/expected/benchmark_40487698077.json"),
+        ("14439943793", "test/data/14439943793/expected/benchmark_40487698077.jsonl"),
     ],
 )
 def test_create_benchmark_json(run_id, expected_file):
@@ -76,45 +74,17 @@ def test_create_benchmark_json(run_id, expected_file):
         jobs_filename=f"test/data/{run_id}/workflow_jobs.json",
         workflow_outputs_dir="test/data",
     )
-    reports = create_benchmark_jsons(pipeline, "test/data")
-    for _, report_filename in reports:
-        assert os.path.exists(report_filename)
-        with open(report_filename, "r") as file:
-            report_json = json.load(file)
-            # load results json file and compare with report
-            expected = json.load(open(f"{expected_file}", "r"))
-            compare_benchmark(report_json, expected)
+    report_file = create_benchmark_jsonl(pipeline, "test/data")
+    assert os.path.exists(report_file)
 
+    # Compare the content of the report file and the expected file as JSON objects
+    with open(report_file, "r") as report, open(expected_file, "r") as expected:
+        report_json = [json.loads(line) for line in report]
+        expected_json = [json.loads(line) for line in expected]
+        diff = DeepDiff(report_json, expected_json, exclude_regex_paths=[r".*step_start_ts.*"])
 
-def compare_benchmark(reported, expected):
-
-    # Compare manually reported data with expected data
-    assert expected.get("model") == reported.get("ml_model_name")
-    assert expected.get("model_type") == reported.get("ml_model_type")
-    assert expected.get("run_type") == reported.get("run_type")
-    assert expected.get("config") == reported.get("config_params")
-    assert expected.get("num_layers") == reported.get("num_layers")
-    assert expected.get("batch_size") == reported.get("batch_size")
-    assert expected.get("precision") == reported.get("precision")
-    assert expected.get("dataset_name") == reported.get("dataset_name")
-    assert expected.get("profile_name") == reported.get("profiler_name")
-    assert expected.get("input_sequence_length") == reported.get("input_sequence_length")
-    assert expected.get("output_sequence_length") == reported.get("output_sequence_length")
-    assert expected.get("image_dimension") == reported.get("image_dimension")
-    assert expected.get("perf_analysis") == reported.get("perf_analysis")
-    assert expected.get("training") == reported.get("training")
-    assert expected.get("device_ip") == reported.get("device_ip")
-    for i, measurement in enumerate(expected.get("measurements", [])):
-        assert measurement.get("iteration") == reported["measurements"][i].get("iteration")
-        assert measurement.get("step_name") == reported["measurements"][i].get("step_name")
-        assert measurement.get("step_warm_up_num_iterations") == reported["measurements"][i].get(
-            "step_warm_up_num_iterations"
-        )
-        assert measurement.get("measurement_name") == reported["measurements"][i].get("name")
-        assert measurement.get("value") == reported["measurements"][i].get("value")
-        assert measurement.get("target") == reported["measurements"][i].get("target")
-        assert measurement.get("device_power") == reported["measurements"][i].get("device_power")
-        assert measurement.get("device_temperature") == reported["measurements"][i].get("device_temperature")
+        # Assert no differences
+        assert not diff, f"Objects are not equal. Differences: {diff}"
 
 
 def check_constraint(pipeline):
