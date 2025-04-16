@@ -34,6 +34,9 @@ def create_pipeline_json(workflow_filename: str, jobs_filename: str, workflow_ou
 
 def create_benchmark_jsonl(pipeline, workflow_outputs_dir) -> str:
     reports = create_json_from_report(pipeline, workflow_outputs_dir)
+    if not reports:
+        logger.warning("No benchmark reports found")
+        return None
     # Sort reports by github_job_id and run_start_ts descending
     reports.sort(key=lambda x: (x.github_job_id, x.run_start_ts), reverse=True)
     report_filename = get_benchmark_filename(reports[0])

@@ -250,7 +250,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     )
                     measurements.append(measurement)
                 except Exception as e:
-                    logger.error(f"Error constructing BenchmarkMeasurement for key: {key}, value: {data.get(key)}.")
+                    logger.warning(f"Missing value for key: {key}, value: {data.get(key)}.")
         return measurements
 
     def _create_complete_benchmark_run(
