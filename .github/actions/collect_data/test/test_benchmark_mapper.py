@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import pytest
 from unittest.mock import MagicMock
-from src.benchmark import ShieldBenchmarkDataMapper, CompleteBenchmarkRun
+from benchmark import ShieldBenchmarkDataMapper, CompleteBenchmarkRun
 
 
 @pytest.fixture
