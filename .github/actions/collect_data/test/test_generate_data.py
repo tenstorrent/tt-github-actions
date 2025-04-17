@@ -65,6 +65,7 @@ def test_create_pipeline_json(run_id, expected):
     [
         ("12890516473", "test/data/12890516473/expected/benchmark.json"),
         ("14468030535", "test/data/14468030535/expected/benchmark.jsonl"),
+        ("14492364249", "test/data/14492364249/expected/benchmark.jsonl"),
     ],
 )
 def test_create_benchmark_json(run_id, expected_file):
@@ -114,7 +115,7 @@ def test_check_benchmark_project(run_id, expected_project):
     reports = create_json_from_report(pipeline, "test/data")
     assert reports is not None
     assert len(reports) > 0
-    assert reports[0].get("git_repo_name") == expected_project
+    assert reports[0].git_repo_name == expected_project
 
 
 def check_constraint(pipeline):

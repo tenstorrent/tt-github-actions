@@ -306,7 +306,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
 
 
 def _map_benchmark_data(pipeline, job_id, report_data):
-    if pipeline.project == "tt-forge-fe":
+    if pipeline.project in ["tt-forge-fe", "tt-forge"]:
         mapper = ForgeFeBenchmarkDataMapper()
     elif pipeline.project == "tt-shield":
         mapper = ShieldBenchmarkDataMapper()
