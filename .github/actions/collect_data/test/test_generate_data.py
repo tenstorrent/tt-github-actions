@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from generate_data import create_pipeline_json, create_benchmark_jsonl
+from benchmark import create_json_from_report
 import os
 import json
 import pytest
@@ -110,12 +111,10 @@ def test_check_benchmark_project(run_id, expected_project):
         jobs_filename=f"test/data/{run_id}/workflow_jobs.json",
         workflow_outputs_dir="test/data",
     )
-    reports = create_benchmark_jsonl(pipeline, "test/data")
-    for _, report_filename in reports:
-        assert os.path.exists(report_filename)
-        with open(report_filename, "r") as file:
-            report_json = json.load(file)
-            assert report_json.get("git_repo_name") == expected_project
+    reports = create_json_from_report(pipeline, "test/data")
+    assert reports is not None
+    assert len(reports) > 0
+    assert reports[0].get("git_repo_name") == expected_project
 
 
 def check_constraint(pipeline):
