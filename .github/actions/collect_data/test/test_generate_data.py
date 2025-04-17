@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from generate_data import create_pipeline_json, create_benchmark_jsonl
+from benchmark import create_json_from_report
 import os
 import json
 import pytest
@@ -64,6 +65,7 @@ def test_create_pipeline_json(run_id, expected):
     [
         ("12890516473", "test/data/12890516473/expected/benchmark.json"),
         ("14468030535", "test/data/14468030535/expected/benchmark.jsonl"),
+        ("14492364249", "test/data/14492364249/expected/benchmark.jsonl"),
     ],
 )
 def test_create_benchmark_json(run_id, expected_file):
@@ -89,6 +91,31 @@ def test_create_benchmark_json(run_id, expected_file):
             diff = DeepDiff(report_line, expected_line, exclude_regex_paths=[r".*step_start_ts.*"])
             # Assert no differences for each line
             assert not diff, f"Objects are not equal. Differences:\n{json.dumps(diff, indent=4)}"
+
+
+@pytest.mark.parametrize(
+    "run_id, expected_project",
+    [
+        ("12890516473", "tt-forge-fe"),
+        ("14492364249", "tt-forge-fe"),
+    ],
+)
+def test_check_benchmark_project(run_id, expected_project):
+    """
+    End-to-end test for create_pipeline_json function
+    Calling this will generate a pipeline json file
+    """
+    os.environ["GITHUB_EVENT_NAME"] = "test"
+
+    pipeline, _ = create_pipeline_json(
+        workflow_filename=f"test/data/{run_id}/workflow.json",
+        jobs_filename=f"test/data/{run_id}/workflow_jobs.json",
+        workflow_outputs_dir="test/data",
+    )
+    reports = create_json_from_report(pipeline, "test/data")
+    assert reports is not None
+    assert len(reports) > 0
+    assert reports[0].git_repo_name == expected_project
 
 
 def check_constraint(pipeline):
