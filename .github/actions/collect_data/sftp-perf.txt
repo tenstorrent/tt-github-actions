@@ -1,2 +1,2 @@
-put -r benchmark_*.json
+put -r benchmark_*.json*
 ls -hal

@@ -5,7 +5,7 @@
 import os
 import enum
 from datetime import datetime
-from typing import Optional, Union
+from typing import Optional, Union, List, Dict, Any
 
 from loguru import logger
 
@@ -14,7 +14,7 @@ class InfraErrorV1(enum.Enum):
     GENERIC_SET_UP_FAILURE = enum.auto()
 
 
-def parse_timestamp(timestamp):
+def parse_timestamp(timestamp: str) -> Optional[datetime]:
     """
     Parse a timestamp string into a datetime object.
     Supports multiple formats with and without timezone and milliseconds.
@@ -44,11 +44,15 @@ def parse_timestamp(timestamp):
     return None  # Return None if no format matches
 
 
-def get_data_pipeline_datetime_from_datetime(requested_datetime):
+def get_data_pipeline_datetime_from_datetime(requested_datetime: datetime) -> str:
     return requested_datetime.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
 
 
-def get_pipeline_row_from_github_info(github_runner_environment, github_pipeline_json, github_jobs_json):
+def get_pipeline_row_from_github_info(
+    github_runner_environment: Dict[str, Any],
+    github_pipeline_json: Dict[str, Any],
+    github_jobs_json: Dict[str, Any],
+) -> Dict[str, Any]:
     github_pipeline_id = github_pipeline_json["id"]
     pipeline_submission_ts = github_pipeline_json["created_at"]
 
@@ -108,7 +112,7 @@ def get_pipeline_row_from_github_info(github_runner_environment, github_pipeline
     }
 
 
-def get_job_failure_signature_(github_job) -> Optional[Union[InfraErrorV1]]:
+def get_job_failure_signature_(github_job: Dict[str, Any]) -> Optional[Union[InfraErrorV1, str]]:
     if github_job["conclusion"] == "success":
         return None
     for step in github_job["steps"]:
@@ -124,7 +128,7 @@ def get_job_failure_signature_(github_job) -> Optional[Union[InfraErrorV1]]:
     return None
 
 
-def get_job_row_from_github_job(github_job):
+def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
     github_job_id = github_job.get("id")
 
     logger.info(f"Processing github job with ID {github_job_id}")
@@ -215,13 +219,14 @@ def get_job_row_from_github_job(github_job):
     }
 
 
-def get_job_rows_from_github_info(github_pipeline_json, github_jobs_json):
+def get_job_rows_from_github_info(
+    github_pipeline_json: Dict[str, Any], github_jobs_json: Dict[str, Any]
+) -> List[Dict[str, Any]]:
     return list(map(get_job_row_from_github_job, github_jobs_json.get("jobs")))
 
 
-def get_github_runner_environment():
-    assert "GITHUB_EVENT_NAME" in os.environ
-    github_event_name = os.environ["GITHUB_EVENT_NAME"]
+def get_github_runner_environment() -> Dict[str, str]:
+    github_event_name = os.environ.get("GITHUB_EVENT_NAME", "test")
 
     return {
         "github_event_name": github_event_name,

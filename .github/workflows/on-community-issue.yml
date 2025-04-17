@@ -5,6 +5,7 @@ on:
     types: [opened]
   pull_request:
     types: [opened]
+  workflow_call:
 
 jobs:
   gh-workflow:
@@ -45,6 +46,6 @@ jobs:
         run: |
           gh ${{env.GH_COMMAND}} edit ${{ env.NUMBER }} --add-label ${{ env.LABELS }}
         env:
-          GH_TOKEN: ${{ secrets.TT_BOT_ISSUE_PR_WRITE_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           LABELS: community
