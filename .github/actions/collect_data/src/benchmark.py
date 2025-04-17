@@ -79,7 +79,7 @@ def _map_benchmark_data(pipeline, job_id, report_data):
             run_start_ts=pipeline.pipeline_start_ts,
             run_end_ts=pipeline.pipeline_end_ts,
             run_type=report_data.get("run_type"),
-            git_repo_name=pipeline.project,
+            git_repo_name=report_data.get("project", pipeline.project),
             git_commit_hash=pipeline.git_commit_hash,
             git_commit_ts=pipeline.pipeline_submission_ts,
             git_branch_name=pipeline.git_branch_name,

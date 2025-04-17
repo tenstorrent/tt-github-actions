@@ -62,6 +62,7 @@ def test_create_pipeline_json(run_id, expected):
     [
         ("12890516473", "test/data/12890516473/artifacts/forge-benchmark-e2e-mnist_35942438708.json"),
         ("12890516474", "test/data/12890516474/artifacts/forge-benchmark-e2e-mnist_35942438708.json"),
+        ("14492364249", "test/data/14492364249/artifacts/benchmark_forge-fe_e2e_mnist_linear_32_32_40651588679.json"),
     ],
 )
 def test_create_benchmark_json(run_id, expected_file):
@@ -84,6 +85,33 @@ def test_create_benchmark_json(run_id, expected_file):
             # load results json file and compare with report
             expected = json.load(open(f"{expected_file}", "r"))
             compare_benchmark(report_json, expected)
+
+
+@pytest.mark.parametrize(
+    "run_id, expected_project",
+    [
+        ("12890516474", "tt-forge-fe"),
+        ("14492364249", "tt-forge-fe"),
+    ],
+)
+def test_check_benchmark_project(run_id, expected_project):
+    """
+    End-to-end test for create_pipeline_json function
+    Calling this will generate a pipeline json file
+    """
+    os.environ["GITHUB_EVENT_NAME"] = "test"
+
+    pipeline, _ = create_pipeline_json(
+        workflow_filename=f"test/data/{run_id}/workflow.json",
+        jobs_filename=f"test/data/{run_id}/workflow_jobs.json",
+        workflow_outputs_dir="test/data",
+    )
+    reports = create_benchmark_jsons(pipeline, "test/data")
+    for _, report_filename in reports:
+        assert os.path.exists(report_filename)
+        with open(report_filename, "r") as file:
+            report_json = json.load(file)
+            assert report_json.get("git_repo_name") == expected_project
 
 
 def compare_benchmark(reported, expected):
