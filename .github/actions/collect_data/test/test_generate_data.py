@@ -94,7 +94,7 @@ def test_create_benchmark_json(run_id, expected_file):
 @pytest.mark.parametrize(
     "run_id, expected_project",
     [
-        ("12890516474", "tt-forge-fe"),
+        ("12890516473", "tt-forge-fe"),
         ("14492364249", "tt-forge-fe"),
     ],
 )
@@ -110,7 +110,7 @@ def test_check_benchmark_project(run_id, expected_project):
         jobs_filename=f"test/data/{run_id}/workflow_jobs.json",
         workflow_outputs_dir="test/data",
     )
-    reports = create_benchmark_jsons(pipeline, "test/data")
+    reports = create_benchmark_jsonl(pipeline, "test/data")
     for _, report_filename in reports:
         assert os.path.exists(report_filename)
         with open(report_filename, "r") as file:
