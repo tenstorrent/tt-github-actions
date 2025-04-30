@@ -26,11 +26,9 @@ inputs:
   start_collection:
     description: 'Start telemetry collection'
     required: false
-    default: 'false'
   finish_collection:
     description: 'Finish telemetry collection'
     required: false
-    default: 'false'
 
 runs:
   using: 'composite'
