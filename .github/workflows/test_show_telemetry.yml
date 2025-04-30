@@ -16,8 +16,7 @@ jobs:
       matrix:
         config:
           - { "runs-on": "ubuntu-latest" }
-          - { "runs-on": "tt-beta-ubuntu-2204-small" }
-          - { "runs-on": "tt-beta-ubuntu-2204-small", "image": "public.ecr.aws/ubuntu/ubuntu:22.04" }
+          - { "runs-on": "ubuntu-latest", "image": "public.ecr.aws/ubuntu/ubuntu:22.04" }
 
     runs-on: ${{ matrix.config.runs-on }}
     container:
@@ -27,11 +26,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      # - name: Set up Python
-      #   uses: actions/setup-python@v4
-      #   with:
-      #     python-version: '3.x'
 
       - name: Start telemetry collection
         id: telemetry_start
