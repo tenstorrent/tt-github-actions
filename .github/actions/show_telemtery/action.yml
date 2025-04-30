@@ -23,38 +23,28 @@ inputs:
     description: 'Name of the artifact to upload'
     required: false
     default: 'system-telemetry'
+  start_collection:
+    description: 'Start telemetry collection'
+    required: false
+    default: 'false'
+  finish_collection:
+    description: 'Finish telemetry collection'
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
-
-  post: |
-    echo "Stopping telemetry collection process..."
-    if [ -n "$TELEMETRY_PID" ]; then
-      kill $TELEMETRY_PID || true
-      echo "Process with PID $TELEMETRY_PID terminated"
-    fi
-
-    python ${{ github.action_path }}/process_telemetry.py \
-      --input-file "/tmp/telemetry_data.jsonl" \
-      --generate-chart "${{ inputs.generate_chart }}" \
-      --github-summary "$GITHUB_STEP_SUMMARY"
-
-    if [ "${{ inputs.upload_artifact }}" = "true" ]; then
-      # We can't use the upload-artifact action directly in pre/post
-      # So we'll create a marker file that can be used by a workflow
-      mkdir -p /tmp/telemetry_artifacts
-      cp /tmp/telemetry_data.jsonl /tmp/telemetry_artifacts/${{ inputs.artifact_name }}.jsonl
-      echo "TELEMETRY_ARTIFACT_PATH=/tmp/telemetry_artifacts/${{ inputs.artifact_name }}.jsonl" >> $GITHUB_ENV
-      echo "::notice ::Telemetry data is available at $TELEMETRY_ARTIFACT_PATH. Use 'actions/upload-artifact' to upload it."
-    fi
   shell: bash
 
   steps:
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
+
     - name: Start telemetry collection
+      if: ${{ inputs.start_collection }}
       run: |
         python -m pip install --upgrade pip
         pip install -r ${{ github.action_path }}/requirements.txt
@@ -65,3 +55,26 @@ runs:
           --output-file "/tmp/telemetry_data.jsonl" > /tmp/telemetry.log 2>&1 &
         echo "TELEMETRY_PID=$!" >> $GITHUB_ENV
         echo "Telemetry collection started with PID: $!"
+
+    - name: Finish telemetry collection
+      if: ${{ inputs.finish_collection }}
+      run: |
+        echo "Stopping telemetry collection process..."
+        if [ -n "$TELEMETRY_PID" ]; then
+          kill $TELEMETRY_PID || true
+          echo "Process with PID $TELEMETRY_PID terminated"
+        fi
+
+        python ${{ github.action_path }}/process_telemetry.py \
+          --input-file "/tmp/telemetry_data.jsonl" \
+          --generate-chart "${{ inputs.generate_chart }}" \
+          --github-summary "$GITHUB_STEP_SUMMARY"
+
+        if [ "${{ inputs.upload_artifact }}" = "true" ]; then
+          # We can't use the upload-artifact action directly in pre/post
+          # So we'll create a marker file that can be used by a workflow
+          mkdir -p /tmp/telemetry_artifacts
+          cp /tmp/telemetry_data.jsonl /tmp/telemetry_artifacts/${{ inputs.artifact_name }}.jsonl
+          echo "TELEMETRY_ARTIFACT_PATH=/tmp/telemetry_artifacts/${{ inputs.artifact_name }}.jsonl" >> $GITHUB_ENV
+          echo "::notice ::Telemetry data is available at $TELEMETRY_ARTIFACT_PATH. Use 'actions/upload-artifact' to upload it."
+        fi

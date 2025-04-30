@@ -33,10 +33,11 @@ jobs:
       #   with:
       #     python-version: '3.x'
 
-      - name: Telemetry Collection
-        id: telemetry
+      - name: Start telemetry collection
+        id: telemetry_start
         uses: ./.github/actions/show_telemtery
         with:
+          start_collection: true
           sampling_rate: 5
           proc_path: ${{ matrix.config.image && '/host/proc' || '/proc' }}
 
@@ -81,6 +82,12 @@ jobs:
             sleep 1
           done
           sleep 10
+
+      - name: End telemetry collection
+        id: telemetry_end
+        uses: ./.github/actions/show_telemtery
+        with:
+          finish_collection: true
 
       - name: Upload Telemetry Data
         uses: actions/upload-artifact@v4
