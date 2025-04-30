@@ -83,7 +83,7 @@ jobs:
           sleep 10
 
       - name: Upload Telemetry Data
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: telemetry-data-${{ matrix.config.image && 'container' || 'host' }}
           path: tmp

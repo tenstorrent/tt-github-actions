@@ -51,7 +51,7 @@ jobs:
       # If you've set upload_artifact to true, you should add this step
       - name: Upload telemetry data
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: system-telemetry
           path: ${{ env.TELEMETRY_ARTIFACT_PATH }}
@@ -92,7 +92,7 @@ jobs:
       # Don't forget to add this if you want the artifact
       - name: Upload telemetry data
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: system-telemetry
           path: ${{ env.TELEMETRY_ARTIFACT_PATH }}
@@ -175,7 +175,7 @@ jobs:
           rm /tmp/test
       - name: Upload telemetry data
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: system-telemetry
           path: ${{ env.TELEMETRY_ARTIFACT_PATH }}
