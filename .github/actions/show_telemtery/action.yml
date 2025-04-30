@@ -42,10 +42,11 @@ runs:
         python -m pip install --upgrade pip
         pip install -r ${{ github.action_path }}/requirements.txt
         echo "Starting telemetry collection process..."
+        mkdir -p "${{ inputs.telemetry_path }}"
         nohup python ${{ github.action_path }}/collect_telemetry.py \
           --proc-path "${{ inputs.proc_path }}" \
           --sampling-rate "${{ inputs.sampling_rate }}" \
-          --output-file "${{ inputs.telemetry_path }}/telemetry_data.jsonl" > tmp/telemetry.log 2>&1 &
+          --output-file "${{ inputs.telemetry_path }}/telemetry_data.jsonl" > ${{ inputs.telemetry_path }}/telemetry.log 2>&1 &
         echo "TELEMETRY_PID=$!" >> $GITHUB_ENV
         echo "Telemetry collection started with PID: $!"
 
