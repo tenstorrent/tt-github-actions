@@ -39,6 +39,7 @@ jobs:
         with:
           start_collection: true
           sampling_rate: 5
+          telemetry_path: 'telemetry'
           proc_path: ${{ matrix.config.image && '/host/proc' || '/proc' }}
 
       - name: Simulate CPU Load
@@ -76,7 +77,6 @@ jobs:
       - name: Simulate Network Load
         run: |
           echo "Simulating network load..."
-          apt-get update && apt-get install -y curl || sudo apt-get update && sudo apt-get install -y curl
           for i in {1..20}; do
             curl -s -o /dev/null https://github.com &
             sleep 1
@@ -88,9 +88,10 @@ jobs:
         uses: ./.github/actions/show_telemtery
         with:
           finish_collection: true
+          telemetry_path: 'telemetry'
 
       - name: Upload Telemetry Data
         uses: actions/upload-artifact@v4
         with:
           name: telemetry-data-${{ matrix.config.image && 'container' || 'host' }}
-          path: tmp
+          path: telemetry
