@@ -8,7 +8,7 @@ on:
     paths:
       - '.github/actions/show_telemtery/**'
   push:
-
+    branches: [ "main" ]
 
 jobs:
   test-telemetry:
@@ -20,9 +20,10 @@ jobs:
           - { "runs-on": "tt-beta-ubuntu-2204-small", "image": "public.ecr.aws/ubuntu/ubuntu:22.04" }
 
     runs-on: ${{ matrix.config.runs-on }}
-    container: ${{ matrix.config.image }}
-    volumes:
-      - /proc:/host/proc:ro
+    container:
+      image: ${{ matrix.config.image }}
+      volumes:
+        - /proc:/host/proc:ro
 
     steps:
       - uses: actions/checkout@v4
