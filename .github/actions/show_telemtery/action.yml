@@ -26,18 +26,7 @@ inputs:
 
 runs:
   using: 'composite'
-  pre: |
-    # Set up Python and dependencies
-    python -m pip install --upgrade pip
-    pip install -r ${{ github.action_path }}/requirements.txt
 
-    echo "Starting telemetry collection process..."
-    nohup python ${{ github.action_path }}/collect_telemetry.py \
-      --proc-path "${{ inputs.proc_path }}" \
-      --sampling-rate "${{ inputs.sampling_rate }}" \
-      --output-file "/tmp/telemetry_data.jsonl" > /tmp/telemetry.log 2>&1 &
-    echo "TELEMETRY_PID=$!" >> $GITHUB_ENV
-    echo "Telemetry collection started with PID: $!"
   post: |
     echo "Stopping telemetry collection process..."
     if [ -n "$TELEMETRY_PID" ]; then
@@ -65,3 +54,14 @@ runs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
+    - name: Start telemetry collection
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r ${{ github.action_path }}/requirements.txt
+        echo "Starting telemetry collection process..."
+        nohup python ${{ github.action_path }}/collect_telemetry.py \
+          --proc-path "${{ inputs.proc_path }}" \
+          --sampling-rate "${{ inputs.sampling_rate }}" \
+          --output-file "/tmp/telemetry_data.jsonl" > /tmp/telemetry.log 2>&1 &
+        echo "TELEMETRY_PID=$!" >> $GITHUB_ENV
+        echo "Telemetry collection started with PID: $!"
