@@ -45,6 +45,7 @@ runs:
 
     - name: Start telemetry collection
       if: ${{ inputs.start_collection }}
+      shell: bash
       run: |
         python -m pip install --upgrade pip
         pip install -r ${{ github.action_path }}/requirements.txt
@@ -58,6 +59,7 @@ runs:
 
     - name: Finish telemetry collection
       if: ${{ inputs.finish_collection }}
+      shell: bash
       run: |
         echo "Stopping telemetry collection process..."
         if [ -n "$TELEMETRY_PID" ]; then
