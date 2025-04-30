@@ -146,7 +146,7 @@ To test changes to this action locally:
 
 6. **View the results**:
    ```bash
-   cat /tmp/summary.md  # View the markdown content
+   cat tmp/summary.md  # View the markdown content
    # Open any generated chart_*.png files
    ```
 
@@ -171,8 +171,8 @@ jobs:
       - name: Run Test Process
         run: |
           # Create some activity
-          dd if=/dev/zero of=/tmp/test bs=1M count=100
-          rm /tmp/test
+          dd if=/dev/zero of=tmp/test bs=1M count=100
+          rm tmp/test
       - name: Upload telemetry data
         if: always()
         uses: actions/upload-artifact@v4

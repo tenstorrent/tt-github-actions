@@ -51,7 +51,7 @@ runs:
         nohup python ${{ github.action_path }}/collect_telemetry.py \
           --proc-path "${{ inputs.proc_path }}" \
           --sampling-rate "${{ inputs.sampling_rate }}" \
-          --output-file "/tmp/telemetry_data.jsonl" > /tmp/telemetry.log 2>&1 &
+          --output-file "tmp/telemetry_data.jsonl" > tmp/telemetry.log 2>&1 &
         echo "TELEMETRY_PID=$!" >> $GITHUB_ENV
         echo "Telemetry collection started with PID: $!"
 
@@ -66,15 +66,15 @@ runs:
         fi
 
         python ${{ github.action_path }}/process_telemetry.py \
-          --input-file "/tmp/telemetry_data.jsonl" \
+          --input-file "tmp/telemetry_data.jsonl" \
           --generate-chart "${{ inputs.generate_chart }}" \
           --github-summary "$GITHUB_STEP_SUMMARY"
 
         if [ "${{ inputs.upload_artifact }}" = "true" ]; then
           # We can't use the upload-artifact action directly in pre/post
           # So we'll create a marker file that can be used by a workflow
-          mkdir -p /tmp/telemetry_artifacts
-          cp /tmp/telemetry_data.jsonl /tmp/telemetry_artifacts/${{ inputs.artifact_name }}.jsonl
-          echo "TELEMETRY_ARTIFACT_PATH=/tmp/telemetry_artifacts/${{ inputs.artifact_name }}.jsonl" >> $GITHUB_ENV
+          mkdir -p tmp/telemetry_artifacts
+          cp tmp/telemetry_data.jsonl tmp/telemetry_artifacts/${{ inputs.artifact_name }}.jsonl
+          echo "TELEMETRY_ARTIFACT_PATH=tmp/telemetry_artifacts/${{ inputs.artifact_name }}.jsonl" >> $GITHUB_ENV
           echo "::notice ::Telemetry data is available at $TELEMETRY_ARTIFACT_PATH. Use 'actions/upload-artifact' to upload it."
         fi
