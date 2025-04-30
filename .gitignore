@@ -5,4 +5,8 @@
 .github/actions/collect_data/test/data/tt_torch_models/models/**
 .github/actions/collect_data/generated/**
 .env
-.github/actions/collect_data/benchmark_*.json
+.github/actions/collect_data/*.jsonl
+
+.github/actions/show_telemtery/*.out
+.github/actions/show_telemtery/*.log
+.github/actions/show_telemtery/tmp/

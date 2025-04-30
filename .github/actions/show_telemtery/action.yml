@@ -1,0 +1,67 @@
+name: 'System Telemetry Collector'
+description: 'Collects system statistics from /proc and displays them as charts'
+author: 'Tenstorrent'
+
+inputs:
+  proc_path:
+    description: 'Path to the proc folder (e.g., /host/proc)'
+    required: true
+    default: '/proc'
+  sampling_rate:
+    description: 'Sampling rate in seconds'
+    required: false
+    default: '5'
+  generate_chart:
+    description: 'Generate charts in GitHub job summary'
+    required: false
+    default: 'true'
+  upload_artifact:
+    description: 'Upload telemetry data as an artifact'
+    required: false
+    default: 'true'
+  artifact_name:
+    description: 'Name of the artifact to upload'
+    required: false
+    default: 'system-telemetry'
+
+runs:
+  using: 'composite'
+  pre: |
+    # Set up Python and dependencies
+    python -m pip install --upgrade pip
+    pip install -r ${{ github.action_path }}/requirements.txt
+
+    echo "Starting telemetry collection process..."
+    nohup python ${{ github.action_path }}/collect_telemetry.py \
+      --proc-path "${{ inputs.proc_path }}" \
+      --sampling-rate "${{ inputs.sampling_rate }}" \
+      --output-file "/tmp/telemetry_data.jsonl" > /tmp/telemetry.log 2>&1 &
+    echo "TELEMETRY_PID=$!" >> $GITHUB_ENV
+    echo "Telemetry collection started with PID: $!"
+  post: |
+    echo "Stopping telemetry collection process..."
+    if [ -n "$TELEMETRY_PID" ]; then
+      kill $TELEMETRY_PID || true
+      echo "Process with PID $TELEMETRY_PID terminated"
+    fi
+
+    python ${{ github.action_path }}/process_telemetry.py \
+      --input-file "/tmp/telemetry_data.jsonl" \
+      --generate-chart "${{ inputs.generate_chart }}" \
+      --github-summary "$GITHUB_STEP_SUMMARY"
+
+    if [ "${{ inputs.upload_artifact }}" = "true" ]; then
+      # We can't use the upload-artifact action directly in pre/post
+      # So we'll create a marker file that can be used by a workflow
+      mkdir -p /tmp/telemetry_artifacts
+      cp /tmp/telemetry_data.jsonl /tmp/telemetry_artifacts/${{ inputs.artifact_name }}.jsonl
+      echo "TELEMETRY_ARTIFACT_PATH=/tmp/telemetry_artifacts/${{ inputs.artifact_name }}.jsonl" >> $GITHUB_ENV
+      echo "::notice ::Telemetry data is available at $TELEMETRY_ARTIFACT_PATH. Use 'actions/upload-artifact' to upload it."
+    fi
+  shell: bash
+
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
