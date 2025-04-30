@@ -16,7 +16,7 @@ jobs:
       matrix:
         config:
           - { "runs-on": "ubuntu-latest" }
-          - { "runs-on": "ubuntu-latest", "image": "python:3.10" }
+          # - { "runs-on": "ubuntu-latest", "image": "python:3.10" }
 
     runs-on: ${{ matrix.config.runs-on }}
     container:
