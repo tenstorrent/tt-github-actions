@@ -9,4 +9,4 @@
 
 .github/actions/show_telemtery/*.out
 .github/actions/show_telemtery/*.log
-.github/actions/show_telemtery/tmp/
+.github/actions/show_telemtery/telemetry/

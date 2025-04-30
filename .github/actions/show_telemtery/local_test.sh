@@ -5,16 +5,16 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${SCRIPT_DIR}"
 
-# Create tmp directory if it doesn't exist
-mkdir -p "${SCRIPT_DIR}/tmp"
+# Create telemetry directory if it doesn't exist
+mkdir -p "${SCRIPT_DIR}/telemetry"
 
 # Clean up any previous telemetry files
-rm -f "${SCRIPT_DIR}/tmp/telemetry_data.jsonl"
+rm -f "${SCRIPT_DIR}/telemetry/telemetry_data.jsonl"
 
 # Start collect_telemetry.py in the background
 echo "Starting telemetry collection..."
-TELEMETRY_OUTPUT="${SCRIPT_DIR}/tmp/telemetry_data.jsonl"
-nohup python3 "${SCRIPT_DIR}/collect_telemetry.py" --proc-path /proc --output-file "${TELEMETRY_OUTPUT}" --sampling-rate 2 > "${SCRIPT_DIR}/tmp/collect.log" 2>&1 &
+TELEMETRY_OUTPUT="${SCRIPT_DIR}/telemetry/telemetry_data.jsonl"
+nohup python3 "${SCRIPT_DIR}/collect_telemetry.py" --proc-path /proc --output-file "${TELEMETRY_OUTPUT}" --sampling-rate 2 > "${SCRIPT_DIR}/telemetry/collect.log" 2>&1 &
 TELEMETRY_PID=$!
 
 echo "Telemetry collection started with PID: ${TELEMETRY_PID}"
@@ -62,9 +62,9 @@ kill -9 ${MEMORY_PID} 2>/dev/null || true
 
 # Simulate disk load
 echo "Simulating disk load..."
-dd if=/dev/zero of="${SCRIPT_DIR}/tmp/largefile" bs=1M count=1024
+dd if=/dev/zero of="${SCRIPT_DIR}/telemetry/largefile" bs=1M count=1024
 sleep 5
-rm "${SCRIPT_DIR}/tmp/largefile"
+rm "${SCRIPT_DIR}/telemetry/largefile"
 
 # Simulate network load
 echo "Simulating network load..."
@@ -84,19 +84,19 @@ wait ${TELEMETRY_PID} 2>/dev/null || true
 
 # Process telemetry data
 echo "Processing telemetry data..."
-python3 "${SCRIPT_DIR}/process_telemetry.py" --input-file "${TELEMETRY_OUTPUT}" --generate-chart true --github-summary "${SCRIPT_DIR}/tmp/summary.md"
+python3 "${SCRIPT_DIR}/process_telemetry.py" --input-file "${TELEMETRY_OUTPUT}" --generate-chart true --github-summary "${SCRIPT_DIR}/telemetry/summary.md"
 
 # Show results
 echo "Test completed. Results are available in:"
 echo "- Raw data: ${TELEMETRY_OUTPUT}"
-echo "- Charts: tmp/cpu_chart.png, tmp/memory_chart.png, etc."
-echo "- Summary: tmp/summary.md"
+echo "- Charts: telemetry/cpu_chart.png, telemetry/memory_chart.png, etc."
+echo "- Summary: telemetry/summary.md"
 
 # Display summary.md if it exists
-if [ -f "${SCRIPT_DIR}/tmp/summary.md" ]; then
+if [ -f "${SCRIPT_DIR}/telemetry/summary.md" ]; then
     echo ""
     echo "==================== SUMMARY ===================="
-    cat "${SCRIPT_DIR}/tmp/summary.md"
+    cat "${SCRIPT_DIR}/telemetry/summary.md"
     echo "================================================="
 fi
 

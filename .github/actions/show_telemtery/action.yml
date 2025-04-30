@@ -63,4 +63,7 @@ runs:
         python ${{ github.action_path }}/process_telemetry.py \
           --input-file "${{ inputs.telemetry_path }}/telemetry_data.jsonl" \
           --generate-chart "${{ inputs.generate_chart }}" \
-          --github-summary "$GITHUB_STEP_SUMMARY"
+          --github-summary "${{ inputs.telemetry_path }}/summary.md"
+
+        echo "## System Telemetry Results" >> $GITHUB_STEP_SUMMARY
+        cat "${{ inputs.telemetry_path }}/summary.md" >> $GITHUB_STEP_SUMMARY
