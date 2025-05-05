@@ -490,10 +490,13 @@ class TelemetryProcessor:
                 "yAxis": {"label": y_label},
                 "timeTicks": {"unit": "minute", "interval": 5, "format": "%H:%M"},
                 "background": {
-                    "color": "#f8f9fa",  # Light gray background that works well on both light and dark themes
-                    "border": {"color": "#dee2e6", "width": 1},  # Slightly darker border
+                    "color": "#ffffff",  # Pure white background for maximum contrast and visibility
+                    "border": {"color": "#b0b0b0", "width": 2},  # Darker border with increased width
+                    "opacity": 1.0,  # Fully opaque background
                 },
-                "grid": {"color": "#e9ecef"},  # Light grid lines
+                "grid": {"color": "#e0e0e0"},  # Darker grid lines for better visibility
+                "imageFormat": "jpeg",  # Force JPEG format which doesn't support transparency
+                "chart": {"padding": 20},  # Add padding around the chart
             },
             "lines": lines,
         }
