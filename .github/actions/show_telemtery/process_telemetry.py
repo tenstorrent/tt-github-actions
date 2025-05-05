@@ -460,7 +460,8 @@ class TelemetryProcessor:
 
         # Prepare lines data
         lines = []
-        colors = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"]
+        # High contrast colors that work well on both light and dark themes
+        colors = ["#ff3333", "#3366ff", "#33cc33", "#cc33cc", "#ff9900", "#00ccff", "#cc6600", "#ff00ff", "#333333"]
 
         color_index = 0
         for key, values in chart_data.items():
@@ -489,9 +490,18 @@ class TelemetryProcessor:
                 "xAxis": {"label": x_label},
                 "yAxis": {"label": y_label},
                 "timeTicks": {"unit": "minute", "interval": 5, "format": "%H:%M"},
-                "grid": {"color": "#e0e0e0"},  # Darker grid lines for better visibility
+                "background": {"color": "#ffffff"},  # White background
+                "grid": {"color": "#a0a0a0"},  # Darker grid lines for better visibility
                 "imageFormat": "jpeg",  # Force JPEG format which doesn't support transparency
                 "chart": {"padding": 20},  # Add padding around the chart
+                "legend": {
+                    "background": {"color": "#ffffff"},  # White legend background
+                    "text": {"color": "#000000", "fontWeight": "bold"},  # Black bold text for legend
+                },
+                "axis": {
+                    "text": {"color": "#000000", "fontWeight": "bold"},  # Black bold text for axis labels
+                    "line": {"color": "#000000", "width": 2},  # Black axis lines
+                },
             },
             "lines": lines,
         }
@@ -597,8 +607,8 @@ class TelemetryProcessor:
                     f.write(f"### {description}\n\n")
 
                     if chart_url:
-                        # Add the chart image using Markdown image syntax
-                        f.write(f'<div style="background-color: white">  <img src="{chart_url}" /></div>\n\n')
+                        # Add the chart image with pure markdown syntax (no need for div wrapper anymore)
+                        f.write(f"![{description}]({chart_url})\n\n")
                     else:
                         # Display text if chart generation failed
                         f.write(f"*Chart generation failed. Please check the logs for more information.*\n\n")

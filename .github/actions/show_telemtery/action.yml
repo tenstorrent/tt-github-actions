@@ -42,6 +42,7 @@ runs:
       run: |
         echo "Starting telemetry collection process..."
         mkdir -p "${{ inputs.telemetry_path }}"
+        pip install requests
         nohup python3 ${GITHUB_ACTION_PATH}/collect_telemetry.py \
           --proc-path "${{ inputs.proc_path }}" \
           --sampling-rate "${{ inputs.sampling_rate }}" \
