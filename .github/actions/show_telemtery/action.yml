@@ -36,7 +36,7 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: pip install requests
+      run: python3 -m pip install requests
 
     - name: Start telemetry collection
       env:

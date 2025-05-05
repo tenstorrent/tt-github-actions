@@ -489,6 +489,11 @@ class TelemetryProcessor:
                 "xAxis": {"label": x_label},
                 "yAxis": {"label": y_label},
                 "timeTicks": {"unit": "minute", "interval": 5, "format": "%H:%M"},
+                "background": {
+                    "color": "#f8f9fa",  # Light gray background that works well on both light and dark themes
+                    "border": {"color": "#dee2e6", "width": 1},  # Slightly darker border
+                },
+                "grid": {"color": "#e9ecef"},  # Light grid lines
             },
             "lines": lines,
         }
