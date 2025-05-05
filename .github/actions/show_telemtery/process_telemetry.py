@@ -9,8 +9,10 @@ for GitHub job summary.
 import argparse
 import json
 import os
+import base64
 from datetime import datetime
 from collections import defaultdict
+from io import BytesIO
 
 import matplotlib.pyplot as plt
 
@@ -579,13 +581,15 @@ class TelemetryProcessor:
             # Add charts
             for i, (fig, description) in enumerate(charts):
                 if fig:
-                    chart_path = f"chart_{i}.png"
-                    full_path = os.path.join(charts_dir, chart_path)
-                    fig.savefig(full_path)
+                    # Convert figure to base64 encoded string for embedding in markdown
+                    buffer = BytesIO()
+                    fig.savefig(buffer, format="png")
+                    buffer.seek(0)
+                    image_data = base64.b64encode(buffer.read()).decode()
                     plt.close(fig)
 
                     f.write(f"### {description}\n\n")
-                    f.write(f"![{description}]({chart_path})\n\n")
+                    f.write(f"![{description}](data:image/png;base64,{image_data})\n\n")
 
     def generate_summary(self):
         """Generate a text summary of the collected data."""
