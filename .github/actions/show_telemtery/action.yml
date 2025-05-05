@@ -36,7 +36,7 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: pip install -r ${GITHUB_ACTION_PATH}/requirements.txt
+      run: pip3 install -r ${GITHUB_ACTION_PATH}/requirements.txt
 
     - name: Start telemetry collection
       if: ${{ inputs.start_collection }}
