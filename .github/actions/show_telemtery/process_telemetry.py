@@ -9,12 +9,10 @@ for GitHub job summary.
 import argparse
 import json
 import os
-import base64
+import requests
 from datetime import datetime
 from collections import defaultdict
-from io import BytesIO
-
-import matplotlib.pyplot as plt
+from typing import List, Dict, Any, Tuple, Optional
 
 
 class TelemetryProcessor:
@@ -335,32 +333,8 @@ class TelemetryProcessor:
         if not memory_data["timestamps"]:
             return None, "No memory data available"
 
-        fig, ax = plt.subplots(figsize=(10, 6))
-
-        # Plot used memory
-        ax.plot(memory_data["timestamps"], memory_data["used_memory_mb"], "b-", label="Used Memory (MB)")
-
-        # Add percent used as line on secondary axis
-        ax2 = ax.twinx()
-        ax2.plot(memory_data["timestamps"], memory_data["used_percent"], "r-", label="Used Percent")
-
-        # Configure axes
-        ax.set_xlabel("Time")
-        ax.set_ylabel("Memory (MB)")
-        ax2.set_ylabel("Used Percent (%)")
-        ax2.set_ylim(0, 100)
-
-        # Add labels and title
-        ax.set_title("System Memory Usage")
-
-        # Combine legends
-        lines1, labels1 = ax.get_legend_handles_labels()
-        lines2, labels2 = ax2.get_legend_handles_labels()
-        ax2.legend(lines1 + lines2, labels1 + labels2, loc="upper left")
-
-        plt.tight_layout()
-
-        return fig, "System memory usage over time"
+        # Data is already prepared by process_memory_usage
+        return memory_data, "System memory usage over time"
 
     def generate_top_processes_memory_chart(self, top_n=5):
         """Generate a chart for top processes by memory usage."""
@@ -369,24 +343,8 @@ class TelemetryProcessor:
         if not process_memory["timestamps"] or len(process_memory) <= 1:
             return None, "No process memory data available"
 
-        fig, ax = plt.subplots(figsize=(10, 6))
-
-        # Plot memory usage for each process
-        for name in process_memory:
-            if name != "timestamps":
-                ax.plot(process_memory["timestamps"], process_memory[name], label=name[:15])
-
-        # Configure axes
-        ax.set_xlabel("Time")
-        ax.set_ylabel("Memory (MB)")
-
-        # Add labels and title
-        ax.set_title(f"Top {top_n} Processes by Memory Usage")
-        ax.legend(loc="upper left")
-
-        plt.tight_layout()
-
-        return fig, f"Top {top_n} processes by memory usage"
+        # Data is already prepared by process_top_processes_by_memory
+        return process_memory, f"Top {top_n} processes by memory usage"
 
     def generate_cpu_load_chart(self):
         """Generate a chart for CPU load."""
@@ -395,24 +353,8 @@ class TelemetryProcessor:
         if not cpu_data["timestamps"]:
             return None, "No CPU load data available"
 
-        fig, ax = plt.subplots(figsize=(10, 6))
-
-        # Plot load averages
-        ax.plot(cpu_data["timestamps"], cpu_data["load_1min"], "b-", label="1 min")
-        ax.plot(cpu_data["timestamps"], cpu_data["load_5min"], "g-", label="5 min")
-        ax.plot(cpu_data["timestamps"], cpu_data["load_15min"], "r-", label="15 min")
-
-        # Configure axes
-        ax.set_xlabel("Time")
-        ax.set_ylabel("Load Average")
-
-        # Add labels and title
-        ax.set_title("System Load Average")
-        ax.legend(loc="upper left")
-
-        plt.tight_layout()
-
-        return fig, "System load average over time"
+        # Data is already prepared by process_cpu_load
+        return cpu_data, "System load average over time"
 
     def generate_top_processes_cpu_chart(self, top_n=5):
         """Generate a chart for top processes by CPU usage."""
@@ -421,24 +363,8 @@ class TelemetryProcessor:
         if not process_cpu["timestamps"] or len(process_cpu) <= 1:
             return None, "No process CPU data available"
 
-        fig, ax = plt.subplots(figsize=(10, 6))
-
-        # Plot CPU usage for each process
-        for name in process_cpu:
-            if name != "timestamps":
-                ax.plot(process_cpu["timestamps"], process_cpu[name], label=name[:15])
-
-        # Configure axes
-        ax.set_xlabel("Time")
-        ax.set_ylabel("CPU (%)")
-
-        # Add labels and title
-        ax.set_title(f"Top {top_n} Processes by CPU Usage")
-        ax.legend(loc="upper left")
-
-        plt.tight_layout()
-
-        return fig, f"Top {top_n} processes by CPU usage"
+        # Data is already prepared by process_top_processes_by_cpu
+        return process_cpu, f"Top {top_n} processes by CPU usage"
 
     def generate_network_chart(self):
         """Generate a chart for network usage."""
@@ -447,23 +373,14 @@ class TelemetryProcessor:
         if not network_data["timestamps"]:
             return None, "No network data available"
 
-        fig, ax = plt.subplots(figsize=(10, 6))
+        # Convert to format suitable for Globadge
+        chart_data = {
+            "timestamps": network_data["timestamps"],
+            "Received (KB/s)": network_data["total_recv_kbps"],
+            "Sent (KB/s)": network_data["total_sent_kbps"],
+        }
 
-        # Plot total network usage
-        ax.plot(network_data["timestamps"], network_data["total_recv_kbps"], "b-", label="Received")
-        ax.plot(network_data["timestamps"], network_data["total_sent_kbps"], "r-", label="Sent")
-
-        # Configure axes
-        ax.set_xlabel("Time")
-        ax.set_ylabel("KB/s")
-
-        # Add labels and title
-        ax.set_title("Network Bandwidth Usage")
-        ax.legend(loc="upper left")
-
-        plt.tight_layout()
-
-        return fig, "Network bandwidth usage over time"
+        return chart_data, "Network bandwidth usage over time"
 
     def generate_disk_chart(self):
         """Generate a chart for disk space usage."""
@@ -472,26 +389,16 @@ class TelemetryProcessor:
         if not disk_data["timestamps"] or not disk_data["mountpoints"]:
             return None, "No disk space data available"
 
-        fig, ax = plt.subplots(figsize=(10, 6))
+        # Convert to format suitable for Globadge
+        chart_data = {"timestamps": disk_data["timestamps"]}
 
-        # Plot free space percent for each mountpoint
+        # Add each mountpoint as a series
         for mp, data in disk_data["mountpoints"].items():
-            # Only show mountpoints with data
-            if any(p > 0 for p in data["free_percent"]):
-                ax.plot(disk_data["timestamps"], data["free_percent"], label=mp)
+            # Only include mountpoints with data
+            if data["free_percent"] and any(p > 0 for p in data["free_percent"]):
+                chart_data[f"{mp} (% Free)"] = data["free_percent"]
 
-        # Configure axes
-        ax.set_xlabel("Time")
-        ax.set_ylabel("Free Space (%)")
-        ax.set_ylim(0, 100)
-
-        # Add labels and title
-        ax.set_title("Disk Free Space")
-        ax.legend(loc="upper left")
-
-        plt.tight_layout()
-
-        return fig, "Disk free space over time"
+        return chart_data, "Disk free space over time"
 
     def generate_all_charts(self):
         """Generate all charts and return them as a list of (fig, description) tuples."""
@@ -526,6 +433,115 @@ class TelemetryProcessor:
             charts.append(disk_chart)
 
         return charts
+
+    def generate_globadge_chart(
+        self, chart_data: Dict[str, Any], title: str, x_label: str, y_label: str
+    ) -> Optional[str]:
+        """Generate a chart using the Globadge API and return the URL to the hosted chart.
+
+        Args:
+            chart_data: Dictionary containing the chart data in a format suitable for conversion to Globadge format
+            title: Title of the chart
+            x_label: Label for the x-axis
+            y_label: Label for the y-axis
+
+        Returns:
+            URL to the hosted chart, or None if generation failed
+        """
+        # Prepare the data for the Globadge API
+        if "timestamps" not in chart_data or len(chart_data["timestamps"]) == 0:
+            return None
+
+        # Configure the request for Globadge API
+        url = "https://api.globadge.com/v1/chartgen/line/time"
+
+        # Convert timestamps to epoch milliseconds
+        timestamps = [(ts.timestamp() * 1000) for ts in chart_data["timestamps"]]
+
+        # Prepare lines data
+        lines = []
+        colors = ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"]
+
+        color_index = 0
+        for key, values in chart_data.items():
+            if key != "timestamps" and len(values) > 0:
+                # Limit to 9 lines (Globadge limitation)
+                if color_index >= 9:
+                    break
+
+                points = []
+                for i, value in enumerate(values):
+                    if i < len(timestamps):
+                        points.append({"x": timestamps[i], "y": max(0, float(value))})
+
+                lines.append({"label": key, "color": colors[color_index], "points": points})
+                color_index += 1
+
+        # Skip if no data lines
+        if not lines:
+            return None
+
+        # Build request payload
+        payload = {
+            "options": {
+                "width": 800,
+                "height": 500,
+                "xAxis": {"label": x_label},
+                "yAxis": {"label": y_label},
+                "timeTicks": {"unit": "minute", "interval": 5, "format": "%H:%M"},
+            },
+            "lines": lines,
+        }
+
+        try:
+            # Make the API request
+            response = requests.put(url, json=payload)
+            response.raise_for_status()
+
+            # Extract the chart URL from the response
+            result = response.json()
+            if "url" in result:
+                return result["url"]
+            else:
+                print(f"Warning: Globadge API response missing URL: {result}")
+                return None
+
+        except Exception as e:
+            print(f"Warning: Failed to generate chart via Globadge API: {e}")
+            return None
+
+    def generate_chart_url(self, chart_data, description) -> Optional[str]:
+        """Generate a chart URL using the Globadge API.
+
+        Args:
+            chart_data: Dictionary with the chart data
+            description: Description of the chart
+
+        Returns:
+            URL to the hosted chart, or None if generation failed
+        """
+        if not chart_data or not chart_data.get("timestamps"):
+            return None
+
+        # Determine chart type and appropriate y-axis label
+        x_label = "Time"
+        y_label = ""
+
+        if "memory usage" in description.lower():
+            y_label = "Memory (MB / %)"
+        elif "load average" in description.lower():
+            y_label = "Load Average"
+        elif "processes by cpu" in description.lower():
+            y_label = "CPU (%)"
+        elif "processes by memory" in description.lower():
+            y_label = "Memory (MB)"
+        elif "network" in description.lower():
+            y_label = "KB/s"
+        elif "disk" in description.lower():
+            y_label = "Free Space (%)"
+
+        # Generate chart URL
+        return self.generate_globadge_chart(chart_data, description, x_label, y_label)
 
     def write_github_summary(self, github_summary_path):
         """Write charts and summary to GitHub job summary markdown file."""
@@ -578,18 +594,20 @@ class TelemetryProcessor:
                     f.write(f"- **Average sampling rate**: {duration / (len(self.data) - 1):.2f} seconds\n")
             f.write("\n")
 
-            # Add charts
-            for i, (fig, description) in enumerate(charts):
-                if fig:
-                    # Convert figure to base64 encoded string for embedding in markdown
-                    buffer = BytesIO()
-                    fig.savefig(buffer, format="png")
-                    buffer.seek(0)
-                    image_data = base64.b64encode(buffer.read()).decode()
-                    plt.close(fig)
+            # Add charts using Globadge API
+            for i, (chart_data, description) in enumerate(charts):
+                if chart_data:
+                    # Generate chart URL using Globadge API
+                    chart_url = self.generate_chart_url(chart_data, description)
 
                     f.write(f"### {description}\n\n")
-                    f.write(f'<img src="data:image/png;base64,{image_data}" alt="{description}" />\n\n')
+
+                    if chart_url:
+                        # Add the chart image using Markdown image syntax
+                        f.write(f"![{description}]({chart_url})\n\n")
+                    else:
+                        # Display text if chart generation failed
+                        f.write(f"*Chart generation failed. Please check the logs for more information.*\n\n")
 
     def generate_summary(self):
         """Generate a text summary of the collected data."""

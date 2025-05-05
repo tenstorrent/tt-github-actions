@@ -36,9 +36,11 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: pip3 install -r ${GITHUB_ACTION_PATH}/requirements.txt
+      run: pip install requests
 
     - name: Start telemetry collection
+      env:
+        PYTHONPATH: ${{ github.workspace }}
       if: ${{ inputs.start_collection }}
       shell: bash
       run: |
@@ -52,6 +54,8 @@ runs:
         echo "Telemetry collection started with PID: $!"
 
     - name: Finish telemetry collection
+      env:
+        PYTHONPATH: ${{ github.workspace }}
       if: ${{ inputs.finish_collection }}
       shell: bash
       run: |
