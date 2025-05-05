@@ -489,11 +489,6 @@ class TelemetryProcessor:
                 "xAxis": {"label": x_label},
                 "yAxis": {"label": y_label},
                 "timeTicks": {"unit": "minute", "interval": 5, "format": "%H:%M"},
-                "background": {
-                    "color": "#ffffff",  # Pure white background for maximum contrast and visibility
-                    "border": {"color": "#b0b0b0", "width": 2},  # Darker border with increased width
-                    "opacity": 1.0,  # Fully opaque background
-                },
                 "grid": {"color": "#e0e0e0"},  # Darker grid lines for better visibility
                 "imageFormat": "jpeg",  # Force JPEG format which doesn't support transparency
                 "chart": {"padding": 20},  # Add padding around the chart
@@ -574,15 +569,6 @@ class TelemetryProcessor:
         end_time = max(timestamps) if timestamps else None
         duration = (end_time - start_time).total_seconds() if start_time and end_time else 0
 
-        # Directory for saving charts
-        charts_dir = os.path.dirname(github_summary_path)
-        if charts_dir:
-            try:
-                os.makedirs(charts_dir, exist_ok=True)
-                print(f"Created charts directory: {charts_dir}")
-            except OSError as e:
-                print(f"Warning: Could not create charts directory {charts_dir}: {e}")
-
         # Generate all charts
         charts = self.generate_all_charts()
 
@@ -612,7 +598,7 @@ class TelemetryProcessor:
 
                     if chart_url:
                         # Add the chart image using Markdown image syntax
-                        f.write(f"![{description}]({chart_url})\n\n")
+                        f.write(f'<div style="background-color: white">  <img src="{chart_url}" /></div>\n\n')
                     else:
                         # Display text if chart generation failed
                         f.write(f"*Chart generation failed. Please check the logs for more information.*\n\n")
