@@ -589,7 +589,7 @@ class TelemetryProcessor:
                     plt.close(fig)
 
                     f.write(f"### {description}\n\n")
-                    f.write(f"![{description}](data:image/png;base64,{image_data})\n\n")
+                    f.write(f'<img src="data:image/png;base64,{image_data}" alt="{description}" />\n\n')
 
     def generate_summary(self):
         """Generate a text summary of the collected data."""
