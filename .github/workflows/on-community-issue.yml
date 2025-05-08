@@ -1,11 +1,19 @@
-name: "Issue Notification"
+name: "Community Issue / PR Labeling Workflow"
 
 on:
-  issues:
-    types: [opened]
-  pull_request:
-    types: [opened]
+  # This is specifically needed as we are called externally
   workflow_call:
+
+  #
+  # These are what we are expecting in the calling repo / workflow, these
+  # should not be activated here
+  #
+
+  #issues:
+  #  types: [opened]
+  #pull_request:
+  #  types: [opened]
+
 
 jobs:
   gh-workflow:
@@ -38,6 +46,8 @@ jobs:
             echo "Detected org member"
             echo "is_member=true" >> $GITHUB_OUTPUT
           else
+            echo "Debug: HTTP Status: ${http_status}"
+            echo ""
             echo "Detected community member"
             echo "is_member=false" >> $GITHUB_OUTPUT
           fi
