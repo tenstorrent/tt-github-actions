@@ -59,5 +59,5 @@ jobs:
       - name: Upload Telemetry Data
         uses: actions/upload-artifact@v4
         with:
-          name: telemetry-data-${{ matrix.config.image && 'container' || 'host' }}
+          name: telemetry-data-${{ matrix.config.runs-on }}-${{ matrix.config.image }}
           path: telemetry
