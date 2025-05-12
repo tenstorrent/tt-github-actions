@@ -55,9 +55,3 @@ jobs:
         with:
           finish_collection: true
           telemetry_path: 'telemetry'
-
-      - name: Upload Telemetry Data
-        uses: actions/upload-artifact@v4
-        with:
-          name: telemetry-data-${{ matrix.config.runs-on }}-${{ matrix.config.image }}
-          path: telemetry

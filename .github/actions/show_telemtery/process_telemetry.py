@@ -490,7 +490,7 @@ class TelemetryProcessor:
                 "height": 500,
                 "xAxis": {"label": x_label, "color": line_color},
                 "yAxis": {"label": y_label, "color": line_color},
-                "timeTicks": {"unit": "minute", "interval": 5, "format": "%H:%M"},
+                "timeTicks": {"unit": "auto"},
                 "chart": {"padding": 20},  # Add padding around the chart
             },
             "lines": lines,
