@@ -39,6 +39,7 @@ runs:
         PYTHONPATH: ${{ github.workspace }}
       if: ${{ inputs.start_collection }}
       shell: bash
+      working-directory: ${{ github.action_path }}
       run: |
         echo "Starting telemetry collection process..."
         mkdir -p "${{ inputs.telemetry_path }}"
@@ -59,6 +60,7 @@ runs:
         PYTHONPATH: ${{ github.workspace }}
       if: ${{ inputs.finish_collection }}
       shell: bash
+      working-directory: ${{ github.action_path }}
       run: |
         source venv/bin/activate
 
