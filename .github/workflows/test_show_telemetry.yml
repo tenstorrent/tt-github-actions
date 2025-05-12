@@ -17,7 +17,8 @@ jobs:
         config:
           - { "runs-on": "ubuntu-latest" }
           - { "runs-on": "ubuntu-latest", "image": "ghcr.io/tenstorrent/tt-forge-fe/tt-forge-fe-ci-ubuntu-22-04:dt-8ee183d6fc5ceb4feb9feff9b2674560c43d8a00b38c7b892449220a1d3d5691" }
-          # - { "runs-on": "ubuntu-22.04", "image": "ghcr.io/tenstorrent/tt-forge-fe/tt-forge-fe-ci-ubuntu-22-04:dt-8ee183d6fc5ceb4feb9feff9b2674560c43d8a00b38c7b892449220a1d3d5691" }
+          - { "runs-on": "ubuntu-latest", "image": "ubuntu:22.04" }
+          - { "runs-on": "ubuntu-latest", "image": "ubuntu:24.04" }
 
     runs-on: ${{ matrix.config.runs-on }}
     container:
@@ -36,6 +37,10 @@ jobs:
           sampling_rate: 5
           telemetry_path: 'telemetry'
           proc_path: ${{ matrix.config.image && '/host/proc' || '/proc' }}
+
+      - name: Simulate Load
+        run: |
+          sleep 15
 
       # - name: Simulate CPU Load
       #   run: |

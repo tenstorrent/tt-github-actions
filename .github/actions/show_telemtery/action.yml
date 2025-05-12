@@ -42,7 +42,11 @@ runs:
       run: |
         echo "Starting telemetry collection process..."
         mkdir -p "${{ inputs.telemetry_path }}"
+
+        python3 -m venv venv
+        source venv/bin/activate
         pip install requests
+
         nohup python3 ${GITHUB_ACTION_PATH}/collect_telemetry.py \
           --proc-path "${{ inputs.proc_path }}" \
           --sampling-rate "${{ inputs.sampling_rate }}" \
@@ -56,13 +60,14 @@ runs:
       if: ${{ inputs.finish_collection }}
       shell: bash
       run: |
+        source venv/bin/activate
+
         echo "Stopping telemetry collection process..."
         if [ -n "$TELEMETRY_PID" ]; then
           kill $TELEMETRY_PID || true
           echo "Process with PID $TELEMETRY_PID terminated"
         fi
 
-        pip install requests
         python3 ${GITHUB_ACTION_PATH}/process_telemetry.py \
           --input-file "${{ inputs.telemetry_path }}/telemetry_data.jsonl" \
           --generate-chart "${{ inputs.generate_chart }}" \

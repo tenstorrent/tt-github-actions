@@ -482,26 +482,16 @@ class TelemetryProcessor:
         if not lines:
             return None
 
+        line_color = "#ff7f00"
         # Build request payload
         payload = {
             "options": {
                 "width": 800,
                 "height": 500,
-                "xAxis": {"label": x_label},
-                "yAxis": {"label": y_label},
+                "xAxis": {"label": x_label, "color": line_color},
+                "yAxis": {"label": y_label, "color": line_color},
                 "timeTicks": {"unit": "minute", "interval": 5, "format": "%H:%M"},
-                "background": {"color": "#ffffff"},  # White background
-                "grid": {"color": "#a0a0a0"},  # Darker grid lines for better visibility
-                "imageFormat": "jpeg",  # Force JPEG format which doesn't support transparency
                 "chart": {"padding": 20},  # Add padding around the chart
-                "legend": {
-                    "background": {"color": "#ffffff"},  # White legend background
-                    "text": {"color": "#000000", "fontWeight": "bold"},  # Black bold text for legend
-                },
-                "axis": {
-                    "text": {"color": "#000000", "fontWeight": "bold"},  # Black bold text for axis labels
-                    "line": {"color": "#000000", "width": 2},  # Black axis lines
-                },
             },
             "lines": lines,
         }
@@ -583,7 +573,7 @@ class TelemetryProcessor:
         charts = self.generate_all_charts()
 
         # Write summary to GitHub job summary
-        with open(github_summary_path, "a") as f:
+        with open(github_summary_path, "w") as f:
             f.write("## System Telemetry\n\n")
 
             # Collection details
