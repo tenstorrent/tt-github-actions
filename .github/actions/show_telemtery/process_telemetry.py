@@ -9,7 +9,9 @@ for GitHub job summary.
 import argparse
 import json
 import os
-import requests
+import http.client
+import urllib.parse
+import ssl
 from datetime import datetime
 from collections import defaultdict
 from typing import List, Dict, Any, Tuple, Optional
@@ -497,12 +499,39 @@ class TelemetryProcessor:
         }
 
         try:
-            # Make the API request
-            response = requests.put(url, json=payload)
-            response.raise_for_status()
+            # Parse URL for the HTTP request
+            url_parts = urllib.parse.urlparse(url)
+            is_https = url_parts.scheme == "https"
+            host = url_parts.netloc
+            path = url_parts.path
 
-            # Extract the chart URL from the response
-            result = response.json()
+            # Convert payload to JSON string
+            json_payload = json.dumps(payload)
+
+            # Set up headers
+            headers = {"Content-Type": "application/json", "Content-Length": str(len(json_payload))}
+
+            # Create connection
+            if is_https:
+                conn = http.client.HTTPSConnection(host, context=ssl.create_default_context())
+            else:
+                conn = http.client.HTTPConnection(host)
+
+            # Make the request
+            conn.request("PUT", path, body=json_payload, headers=headers)
+            response = conn.getresponse()
+
+            # Check status code
+            if response.status < 200 or response.status >= 300:
+                print(f"Warning: API request failed with status {response.status}")
+                conn.close()
+                return None
+
+            # Get and parse response data
+            response_data = response.read().decode("utf-8")
+            conn.close()
+
+            result = json.loads(response_data)
             if "url" in result:
                 return result["url"]
             else:
