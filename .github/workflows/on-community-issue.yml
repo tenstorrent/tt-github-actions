@@ -52,11 +52,11 @@ jobs:
             echo "Detected community member"
             echo "is_member=false" >> $GITHUB_OUTPUT
           fi
-      - name: Add community label
-        if: ${{ steps.is_organization_member.outputs.is_member == 'false' && env.GH_COMMAND && env.NUMBER }}
-        run: |
-          gh ${{env.GH_COMMAND}} edit ${{ env.NUMBER }} --add-label ${{ env.LABELS }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          LABELS: community
+      #- name: Add community label
+      #  if: ${{ steps.is_organization_member.outputs.is_member == 'false' && env.GH_COMMAND && env.NUMBER }}
+      #  run: |
+      #    gh ${{env.GH_COMMAND}} edit ${{ env.NUMBER }} --add-label ${{ env.LABELS }}
+      #  env:
+      #    GH_TOKEN: ${{ github.token }}
+      #    GH_REPO: ${{ github.repository }}
+      #    LABELS: community
