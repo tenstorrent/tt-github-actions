@@ -172,8 +172,8 @@ def check_file(
     # Enforce C++ license headers must start at line 0 (beginning of file)
     if path.suffix in [".cpp", ".cc", ".h", ".hpp", ".cuh", ".cu", ".c"] and header_start_line != 0:
         print(f"❌ C++ license header in {path} must be at the beginning of the file")
+        # Apply fixes to all files
         if fix:
-            # First remove the current header
             if replace_header(path, expected_lines, header_start_line):
                 print(f"✅ Moved license header to beginning of file in {path}")
                 return True
@@ -181,33 +181,38 @@ def check_file(
                 print(f"❌ Failed to move license header to beginning of file in {path}")
         return False
 
-    # Enforce Python and Bash license headers must start at line 0, with an exception for shebang lines
+    # Enforce Python license headers must start at line 0, and Bash license headers at line 0 or 1 if shebang
     if path.suffix in [".py", ".sh"]:
-        # Check if the file has a shebang line at line 0
-        has_shebang = False
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                first_line = f.readline().strip()
-                if first_line.startswith("#!"):
-                    # Accept any shebang line for Python or Bash files
-                    has_shebang = True
-        except Exception:
-            pass  # If we can't read the file, assume no shebang
+        # Different rules for Python vs Bash
+        if path.suffix == ".py":
+            # Python files must have license headers at line 0, no exceptions
+            allowed_start = 0
+            message = "Python"
+        else:
+            # For Bash files, check if there's a shebang line at line 0
+            has_shebang = False
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    first_line = f.readline().strip()
+                    if first_line.startswith("#!"):
+                        has_shebang = True
+            except Exception:
+                pass  # If we can't read the file, assume no shebang
 
-        # If there's a shebang, header should be at line 1, otherwise at line 0
-        allowed_start = 1 if has_shebang else 0
+            # If there's a shebang, header should be at line 1, otherwise at line 0
+            allowed_start = 1 if has_shebang else 0
+            message = "Bash"
+
+        # Check if header is at the right position
         if header_start_line > allowed_start:
-            # Use appropriate message based on file type
+            # Different error messages for Python vs Bash
             if path.suffix == ".py":
-                message = "Python"
-            elif path.suffix == ".sh":
-                message = "Bash"
+                print(f"❌ Python license header in {path} must be at the beginning of the file (line 0)")
             else:
-                message = "Script"
-
-            print(
-                f"❌ {message} license header in {path} must be at the beginning of the file or immediately after the shebang line"
-            )
+                print(
+                    f"❌ Bash license header in {path} must be at the beginning of the file or immediately after the shebang line"
+                )
+            # For wrong placement, apply fixes
             if fix:
                 if replace_header(path, expected_lines, header_start_line):
                     print(f"✅ Moved license header to correct position in {path}")
@@ -233,6 +238,7 @@ def check_file(
         print("\n".join(actual))
         print()
 
+        # Apply fixes for incorrect header content
         if fix and header_start_line >= 0:
             if replace_header(path, expected_lines, header_start_line):
                 print(f"✅ Fixed header in {path}")

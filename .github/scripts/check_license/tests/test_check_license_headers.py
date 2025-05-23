@@ -169,11 +169,9 @@ class TestCheckLicenseHeaders(unittest.TestCase):
         # Now we verify that the check_file function enforces C++ license headers to start at line 0
         expected_header = get_expected_header(".cpp")
         result = check_file(incorrect_path, expected_header, only_errors=True)  # Suppress output
-        
+
         # The check should fail now since we're enforcing that C++ headers must start at line 0
-        self.assertFalse(
-            result, "The license checker should reject C++ files with headers not at the beginning"
-        )
+        self.assertFalse(result, "The license checker should reject C++ files with headers not at the beginning")
 
     def test_py_header_placement(self):
         """Test the placement of license headers in Python files"""
@@ -201,7 +199,7 @@ class TestCheckLicenseHeaders(unittest.TestCase):
         # (or line 1 if there's a shebang line)
         expected_header = get_expected_header(".py")
         result = check_file(incorrect_path, expected_header, only_errors=True)  # Suppress output
-        
+
         # The check should fail now since we're enforcing that Python headers must start at line 0
         # or immediately after the shebang line
         self.assertFalse(
@@ -344,20 +342,20 @@ class TestCheckLicenseHeaders(unittest.TestCase):
         mock_stdout.seek(0)
         mock_stdout.truncate(0)
         result = check_file(py_wrong_file, expected_header)
-        
+
         # The file should fail validation due to incorrect header content
         self.assertFalse(result, "Files with wrong header content should fail validation")
         self.assertIn("Mismatch", mock_stdout.getvalue())
-        
+
         # Now, let's test a file with incorrectly placed header
         # Create a test file with incorrectly placed header (not at line 0 or 1)
         py_wrong_placement = self.read_fixture("test_py_with_header_wrong_placement.py")
         py_wrong_placement_file = self.create_test_file("wrong_placement.py", py_wrong_placement)
-        
+
         # Clear the mock stdout
         mock_stdout.seek(0)
         mock_stdout.truncate(0)
-        
+
         # Test the file with incorrectly placed header
         # This test validates the placement check part of the checker
         result = check_file(py_wrong_placement_file, expected_header)
@@ -389,23 +387,23 @@ class TestCheckLicenseHeaders(unittest.TestCase):
         # Test check with incorrect file content
         # This validates that files with wrong header content fail validation
         result = check_file(cpp_wrong_file, expected_header)
-        
+
         # The file should fail validation due to incorrect header content
         self.assertFalse(result, "Files with wrong header content should fail validation")
         self.assertIn("Mismatch", mock_stdout.getvalue())
-        
+
         # Clear the mock stdout
         mock_stdout.seek(0)
         mock_stdout.truncate(0)
-        
+
         # Create a file with incorrectly placed header
         cpp_wrong_placement = self.read_fixture("test_cpp_with_header_wrong_placement.cpp")
         cpp_wrong_placement_file = self.create_test_file("wrong_placement.cpp", cpp_wrong_placement)
-        
+
         # Clear the mock stdout
         mock_stdout.seek(0)
         mock_stdout.truncate(0)
-        
+
         # Test file with incorrectly placed header
         result = check_file(cpp_wrong_placement_file, expected_header)
         self.assertFalse(result)
