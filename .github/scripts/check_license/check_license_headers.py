@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# SPDX-FileCopyrightText: 2025 Tenstorrent AI ULC
+# SPDX-FileCopyrightText: © 2025 Tenstorrent AI ULC
 #
 # SPDX-License-Identifier: Apache-2.0
 
@@ -263,22 +263,22 @@ def check_file(
 
 def create_temp_file(original_path, content, temp_dir=None):
     """Create a temporary file with the given content
-    
+
     Args:
         original_path: Path to the original file (used for name and extension)
         content: Content to write to the temporary file
         temp_dir: Optional directory to create the temporary file in
-        
+
     Returns:
         Path to the temporary file
     """
     filename = os.path.basename(original_path)
-    
+
     # Use the specified temp directory if provided, otherwise use system default
     if temp_dir:
         # Create the temp directory if it doesn't exist
         os.makedirs(temp_dir, exist_ok=True)
-        
+
         # Create a temporary file in the specified directory
         temp_file_path = os.path.join(temp_dir, f"temp_{filename}")
         with open(temp_file_path, "w", encoding="utf-8") as f:
@@ -404,12 +404,12 @@ def add_license_header(path: Path, expected_lines, temp_dir=None):
             # Create temp file
             new_content = "".join(new_lines)
             temp_file = create_temp_file(path, new_content, temp_dir)
-            
+
             # Copy temp file content back to original
             with open(path, "w", encoding="utf-8") as f:
                 with open(temp_file, "r", encoding="utf-8") as tf:
                     f.write(tf.read())
-                    
+
             # Remove temp file
             if os.path.exists(temp_file):
                 os.remove(temp_file)
@@ -481,12 +481,12 @@ def replace_header(path: Path, expected_lines, header_start_line, temp_dir=None)
                 # Create temp file
                 new_content = "".join(new_lines)
                 temp_file = create_temp_file(path, new_content, temp_dir)
-                
+
                 # Copy temp file content back to original
                 with open(path, "w", encoding="utf-8") as f:
                     with open(temp_file, "r", encoding="utf-8") as tf:
                         f.write(tf.read())
-                        
+
                 # Remove temp file
                 if os.path.exists(temp_file):
                     os.remove(temp_file)
@@ -519,12 +519,12 @@ def replace_header(path: Path, expected_lines, header_start_line, temp_dir=None)
                 # Create temp file
                 new_content = "".join(new_lines)
                 temp_file = create_temp_file(path, new_content, temp_dir)
-                
+
                 # Copy temp file content back to original
                 with open(path, "w", encoding="utf-8") as f:
                     with open(temp_file, "r", encoding="utf-8") as tf:
                         f.write(tf.read())
-                        
+
                 # Remove temp file
                 if os.path.exists(temp_file):
                     os.remove(temp_file)
