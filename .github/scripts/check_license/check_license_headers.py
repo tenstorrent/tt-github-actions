@@ -172,10 +172,10 @@ def check_file(
     if path.suffix in [".cpp", ".cc", ".h", ".hpp", ".cuh", ".cu", ".c"]:
         # C++ headers must start at line 0
         if header_start_line != 0:
-            print(f"❌ C++ license header in {path} is incorrectly positioned")
+            print(f"❌ C++ license header in {path} is incorrectly positioned and must be at the beginning of the file")
             if fix:
                 if replace_header(path, expected_lines, header_start_line, temp_dir=temp_dir):
-                    print(f"✅ License header issue fixed in {path}")
+                    print(f"✅ Fixed header in {path}")
                     return True
                 else:
                     print(f"❌ Failed to fix license header issue in {path}")
@@ -198,15 +198,15 @@ def check_file(
         if header_start_line > allowed_start:
             # Use appropriate message based on file type
             if path.suffix == ".py":
-                print(f"❌ Python license header in {path} is incorrectly positioned")
+                print(f"❌ Python license header in {path} is incorrectly positioned and must be at the beginning of the file")
             elif path.suffix == ".sh":
-                print(f"❌ Bash license header in {path} is incorrectly positioned")
+                print(f"❌ Bash license header in {path} is incorrectly positioned and must be at the beginning of the file")
             else:
                 print(f"❌ Script license header in {path} is incorrectly positioned")
 
             if fix:
                 if replace_header(path, expected_lines, header_start_line, temp_dir=temp_dir):
-                    print(f"✅ License header issue fixed in {path}")
+                    print(f"✅ Fixed header in {path}")
                     return True
                 else:
                     print(f"❌ Failed to fix license header issue in {path}")
@@ -246,7 +246,7 @@ def check_file(
 
         if fix and header_start_line >= 0:
             if replace_header(path, expected_lines, header_start_line, temp_dir=temp_dir):
-                print(f"✅ License header issue fixed in {path}")
+                print(f"✅ Fixed header in {path}")
                 return True
             else:
                 print(f"❌ Failed to fix license header issue in {path}")
