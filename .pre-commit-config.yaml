@@ -11,7 +11,7 @@ repos:
         name: Check License Headers
         entry: python3 .github/scripts/check_license/check_license_headers.py --fix --only-errors
         language: system
-        types_or: [python, c++, c, header]
+        types_or: [python, c++, c, header, shell]
         exclude: '(?x)^(.*/fixtures/.*|.*/golden/.*)$'  # Exclude all test fixtures and golden files
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: v20.1.5

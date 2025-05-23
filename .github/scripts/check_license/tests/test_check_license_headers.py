@@ -651,14 +651,107 @@ echo "Hello World"
         self.assertTrue(result)
         with open(temp_file_path, "r", encoding="utf-8") as f:
             content = f.read()
-            self.assertIn("Tenstorrent AI ULC", content)
-            self.assertIn("Apache-2.0", content)
+            self.assertIn("SPDX-FileCopyrightText", content)
+            self.assertIn("SPDX-License-Identifier: Apache-2.0", content)
             # Check for C++ specific comment style
             self.assertIn("// SPDX", content)
+            # Make sure wrong company name was corrected
+            self.assertIn("Tenstorrent AI ULC", content)
+            self.assertNotIn("Wrong Company", content)
 
         # Compare the file with replaced header to the golden file for C++
         self.assertTrue(
             self.compare_with_golden(temp_file_path, ".cpp"), "File with replaced header doesn't match golden file"
+        )
+        
+    @patch("sys.stdout", new_callable=StringIO)
+    def test_check_bash_file(self, mock_stdout):
+        """Test check_file function with Bash files"""
+        # Copy the fixture with correct license header to temp directory
+        # First create a correct bash fixture with header
+        bash_correct_content = """#!/bin/bash
+# SPDX-FileCopyrightText: 2025 Tenstorrent AI ULC
+#
+# SPDX-License-Identifier: Apache-2.0
+
+echo "This is a bash script with the correct license header"
+"""
+        correct_fixture = "test_bash_with_header.sh"
+        correct_fixture_path = self.fixtures_dir / correct_fixture
+        # Create the file if it doesn't exist
+        if not correct_fixture_path.exists():
+            with open(correct_fixture_path, "w", encoding="utf-8") as f:
+                f.write(bash_correct_content)
+        
+        temp_correct_file = self.copy_fixture_to_temp(correct_fixture)
+
+        # Test check with correct file
+        expected_header = get_expected_header(".sh")
+        result = check_file(temp_correct_file, expected_header)
+        self.assertTrue(result)
+        self.assertIn("License header OK", mock_stdout.getvalue())
+
+        # Copy fixture with incorrect license header content to temp directory
+        wrong_fixture = "test_bash_wrong_header.sh"
+        temp_wrong_file = self.copy_fixture_to_temp(wrong_fixture)
+
+        # Clear the mock stdout
+        mock_stdout.seek(0)
+        mock_stdout.truncate(0)
+
+        # Test check with incorrect file content
+        result = check_file(temp_wrong_file, expected_header)
+
+        # The file should fail validation due to incorrect header content
+        self.assertFalse(result, "Files with wrong header content should fail validation")
+        self.assertIn("Mismatch", mock_stdout.getvalue())
+
+        # Test with fix=True to correct the header
+        mock_stdout.seek(0)
+        mock_stdout.truncate(0)
+        result = check_file(temp_wrong_file, expected_header, fix=True)
+        self.assertTrue(result, "The checker should fix files with wrong header content")
+        self.assertIn("Fixed header", mock_stdout.getvalue())
+
+        # Compare the fixed file with the golden file for Bash
+        self.assertTrue(self.compare_with_golden(temp_wrong_file, ".sh"), "Fixed file doesn't match golden file")
+
+        # Copy fixture with incorrectly placed header to temp directory
+        wrong_placement_fixture = "test_bash_with_header_wrong_placement.sh"
+        temp_wrong_placement_file = self.copy_fixture_to_temp(wrong_placement_fixture)
+
+        # Clear the mock stdout
+        mock_stdout.seek(0)
+        mock_stdout.truncate(0)
+
+        # Test file with incorrectly placed header
+        result = check_file(temp_wrong_placement_file, expected_header)
+        self.assertFalse(result, "Files with wrong header placement should fail validation")
+        # Bash files allow header after shebang
+        self.assertIn("license header", mock_stdout.getvalue().lower())
+    
+    def test_add_license_header_bash(self):
+        """Test add_license_header function for Bash files"""
+        # Copy the fixture without license header to temp directory
+        fixture_name = "test_bash_no_header.sh"
+        temp_file_path = self.copy_fixture_to_temp(fixture_name)
+
+        # Add license header
+        expected_header = get_raw_expected_header(".sh", "2025")
+        result = add_license_header(temp_file_path, expected_header)
+
+        # Verify header was added
+        self.assertTrue(result)
+        with open(temp_file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+            self.assertIn("SPDX-FileCopyrightText", content)
+            self.assertIn("SPDX-License-Identifier: Apache-2.0", content)
+            # Check for Bash specific comment style
+            self.assertIn("# SPDX", content)
+
+        # Compare the file with added header to the golden file for Bash
+        self.assertTrue(
+            self.compare_with_golden(temp_file_path, ".sh"), "File with added header doesn't match golden file"
         )
 
     @patch("subprocess.run")
