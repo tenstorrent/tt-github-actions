@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: © 2024 Wrong Company
+# SPDX-FileCopyrightText: © 2025 Tenstorrent AI ULC
 #
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 
 import sys
+
 print("Hello World")

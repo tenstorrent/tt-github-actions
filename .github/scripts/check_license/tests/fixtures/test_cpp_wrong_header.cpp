@@ -1,10 +1,10 @@
-// SPDX-FileCopyrightText: © 2024 Wrong Company
+// SPDX-FileCopyrightText: © 2025 Tenstorrent AI ULC
 //
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 #include <iostream>
 
 int main() {
-    std::cout << "Hello World" << std::endl;
-    return 0;
+  std::cout << "Hello World" << std::endl;
+  return 0;
 }

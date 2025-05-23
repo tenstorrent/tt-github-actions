@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: (c) 2025 Tenstorrent AI ULC
+# SPDX-FileCopyrightText: © 2025 Tenstorrent AI ULC
 #
 # SPDX-License-Identifier: Apache-2.0
 """
@@ -172,9 +172,9 @@ class ProcTelemetryCollector:
                                     "mountpoint": mountpoint,
                                     "free_bytes": free_bytes,
                                     "total_bytes": total_bytes,
-                                    "free_percent": round((free_bytes / total_bytes) * 100, 2)
-                                    if total_bytes > 0
-                                    else 0,
+                                    "free_percent": (
+                                        round((free_bytes / total_bytes) * 100, 2) if total_bytes > 0 else 0
+                                    ),
                                 }
                             )
                         except OSError:
