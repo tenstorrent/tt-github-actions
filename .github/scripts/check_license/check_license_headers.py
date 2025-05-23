@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 
-# SPDX-FileCopyrightText: © 2025 Tenstorrent AI ULC
+# SPDX-FileCopyrightText: 2025 Tenstorrent AI ULC
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import sys
-import re
-import unicodedata
-from pathlib import Path
 import argparse
-import subprocess
-from typing import Dict, Optional
+import datetime
+import os
+import re
 import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+from typing import Dict, Optional, Tuple
 
 # License header text as a docstring
 LICENSE_HEADER = """
@@ -147,6 +149,7 @@ def check_file(
     git_year=None,
     fix=False,
     only_errors=False,
+    temp_dir=None,
 ):
     actual_lines, header_start_line = extract_header_block(path, normalize_year, git_year)
 
@@ -154,7 +157,7 @@ def check_file(
     if not actual_lines or len(actual_lines) == 0:
         print(f"❌ No license header found in {path}")
         if fix:
-            if add_license_header(path, expected_lines):
+            if add_license_header(path, expected_lines, temp_dir=temp_dir):
                 print(f"✅ Added license header to {path}")
                 return True
             else:
@@ -170,7 +173,7 @@ def check_file(
         if header_start_line != 0:
             print(f"❌ C++ license header in {path} must be at the beginning of the file")
             if fix:
-                if replace_header(path, expected_lines, header_start_line):
+                if replace_header(path, expected_lines, header_start_line, temp_dir=temp_dir):
                     print(f"✅ Moved license header to beginning of file in {path}")
                     return True
                 else:
@@ -205,7 +208,7 @@ def check_file(
                 )
 
             if fix:
-                if replace_header(path, expected_lines, header_start_line):
+                if replace_header(path, expected_lines, header_start_line, temp_dir=temp_dir):
                     print(f"✅ Moved license header to correct position in {path}")
                     return True
                 else:
@@ -245,7 +248,7 @@ def check_file(
         print()
 
         if fix and header_start_line >= 0:
-            if replace_header(path, expected_lines, header_start_line):
+            if replace_header(path, expected_lines, header_start_line, temp_dir=temp_dir):
                 print(f"✅ Fixed header in {path}")
                 return True
             else:
@@ -255,6 +258,38 @@ def check_file(
         # Only print success messages if not in only_errors mode
         print(f"✅ License header OK in {path}")
     return True
+
+
+def create_temp_file(original_path, content, temp_dir=None):
+    """Create a temporary file with the given content
+    
+    Args:
+        original_path: Path to the original file (used for name and extension)
+        content: Content to write to the temporary file
+        temp_dir: Optional directory to create the temporary file in
+        
+    Returns:
+        Path to the temporary file
+    """
+    filename = os.path.basename(original_path)
+    
+    # Use the specified temp directory if provided, otherwise use system default
+    if temp_dir:
+        # Create the temp directory if it doesn't exist
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        # Create a temporary file in the specified directory
+        temp_file_path = os.path.join(temp_dir, f"temp_{filename}")
+        with open(temp_file_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        return Path(temp_file_path)
+    else:
+        # Use the standard tempfile module
+        fd, temp_path = tempfile.mkstemp(suffix=f"_{filename}")
+        os.close(fd)
+        with open(temp_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        return Path(temp_path)
 
 
 def check_git_requirements():
@@ -338,8 +373,8 @@ def get_file_years() -> dict[Path, int | None]:
 # now you have a master list of all the years for each file
 
 
-def add_license_header(path: Path, expected_lines):
-    """Add a license header to a file that doesn't have one"""
+def add_license_header(path: Path, expected_lines, temp_dir=None):
+    """Add license header to a file without a header"""
     try:
         ext = path.suffix
         git_year = get_git_year(path)
@@ -351,7 +386,8 @@ def add_license_header(path: Path, expected_lines):
 
         # Read the entire file
         with open(path, "r", encoding="utf-8") as f:
-            lines = f.readlines()
+            content = f.read()
+            lines = content.splitlines(True)  # Keep line endings
 
         # Insert header at the beginning of the file
         # For C/C++ files, place license header at the very beginning, before include guards
@@ -362,9 +398,24 @@ def add_license_header(path: Path, expected_lines):
             # For other files, just insert at the beginning
             new_lines = [line + "\n" for line in raw_header] + ["\n"] + lines
 
-        # Write the file back
-        with open(path, "w", encoding="utf-8") as f:
-            f.writelines(new_lines)
+        # Use temp directory if specified
+        if temp_dir:
+            # Create temp file
+            new_content = "".join(new_lines)
+            temp_file = create_temp_file(path, new_content, temp_dir)
+            
+            # Copy temp file content back to original
+            with open(path, "w", encoding="utf-8") as f:
+                with open(temp_file, "r", encoding="utf-8") as tf:
+                    f.write(tf.read())
+                    
+            # Remove temp file
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+        else:
+            # Write directly to the file
+            with open(path, "w", encoding="utf-8") as f:
+                f.writelines(new_lines)
 
         return True
     except Exception as e:
@@ -372,7 +423,7 @@ def add_license_header(path: Path, expected_lines):
         return False
 
 
-def replace_header(path: Path, expected_lines, header_start_line):
+def replace_header(path: Path, expected_lines, header_start_line, temp_dir=None):
     """Replace the existing SPDX header with the correct one"""
     try:
         ext = path.suffix
@@ -424,9 +475,24 @@ def replace_header(path: Path, expected_lines, header_start_line):
                     for header_line in raw_header:
                         new_lines.append(header_line + "\n")
 
-            # Write the file back
-            with open(path, "w", encoding="utf-8") as f:
-                f.writelines(new_lines)
+            # Use temp directory if specified
+            if temp_dir:
+                # Create temp file
+                new_content = "".join(new_lines)
+                temp_file = create_temp_file(path, new_content, temp_dir)
+                
+                # Copy temp file content back to original
+                with open(path, "w", encoding="utf-8") as f:
+                    with open(temp_file, "r", encoding="utf-8") as tf:
+                        f.write(tf.read())
+                        
+                # Remove temp file
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
+            else:
+                # Write directly to the file
+                with open(path, "w", encoding="utf-8") as f:
+                    f.writelines(new_lines)
 
             return True
         else:
@@ -447,9 +513,24 @@ def replace_header(path: Path, expected_lines, header_start_line):
             header_end_line = header_start_line + current_header_lines
             new_lines = lines[:header_start_line] + [line + "\n" for line in raw_header] + lines[header_end_line:]
 
-            # Write the file back
-            with open(path, "w", encoding="utf-8") as f:
-                f.writelines(new_lines)
+            # Use temp directory if specified
+            if temp_dir:
+                # Create temp file
+                new_content = "".join(new_lines)
+                temp_file = create_temp_file(path, new_content, temp_dir)
+                
+                # Copy temp file content back to original
+                with open(path, "w", encoding="utf-8") as f:
+                    with open(temp_file, "r", encoding="utf-8") as tf:
+                        f.write(tf.read())
+                        
+                # Remove temp file
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
+            else:
+                # Write directly to the file
+                with open(path, "w", encoding="utf-8") as f:
+                    f.writelines(new_lines)
 
             return True
 
@@ -470,6 +551,12 @@ def main():
         "--only-errors",
         action="store_true",
         help="Only print messages for files with errors.",
+    )
+    parser.add_argument(
+        "--temp-dir",
+        type=str,
+        default=None,
+        help="Path to a temporary directory for intermediate files. If not specified, system temp directory is used.",
     )
     parser.add_argument("files", nargs="+", help="Files to check")
     args = parser.parse_args()
@@ -513,6 +600,7 @@ def main():
             git_year,
             fix=args.fix,
             only_errors=args.only_errors,
+            temp_dir=args.temp_dir,
         ):
             failed = True
 
