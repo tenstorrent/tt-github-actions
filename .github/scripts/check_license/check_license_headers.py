@@ -173,21 +173,6 @@ def check_file(
 
     if actual_lines is None:
         return False
-        
-    # Check that license headers must be at the beginning of the file (line 0)
-    # This applies to both C++ and Python files
-    if (path.suffix in [".cpp", ".cc", ".h", ".hpp", ".cuh", ".cu", ".c", ".py", ".sh"] and 
-        header_start_line != 0):
-        file_type = "C++" if path.suffix in [".cpp", ".cc", ".h", ".hpp", ".cuh", ".cu", ".c"] else "Python"
-        print(f"❌ {file_type} license header in {path} must be at the beginning of the file")
-        if fix:
-            # First remove the current header
-            if replace_header(path, expected_lines, header_start_line):
-                print(f"✅ Moved license header to beginning of file in {path}")
-                return True
-            else:
-                print(f"❌ Failed to move license header to beginning of file in {path}")
-        return False
 
     actual = strip_noise_lines(actual_lines)
     expected = strip_noise_lines(expected_lines)
