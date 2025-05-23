@@ -103,7 +103,7 @@ def get_raw_expected_header(file_ext: str, git_year=None):
     current_year = str(datetime.now().year)  # Default to current year if git_year not provided
     if git_year:
         current_year = str(git_year)
-    
+
     # Replace <YEAR> placeholder with the appropriate year
     header_lines = [line.replace("<YEAR>", current_year) for line in header_lines]
 
@@ -168,7 +168,7 @@ def check_file(
 
     if actual_lines is None:
         return False
-        
+
     # Enforce C++ license headers must start at line 0 (beginning of file)
     if path.suffix in [".cpp", ".cc", ".h", ".hpp", ".cuh", ".cu", ".c"] and header_start_line != 0:
         print(f"❌ C++ license header in {path} must be at the beginning of the file")
@@ -180,23 +180,34 @@ def check_file(
             else:
                 print(f"❌ Failed to move license header to beginning of file in {path}")
         return False
-        
-    # Enforce Python license headers must start at line 0, with an exception for shebang lines
+
+    # Enforce Python and Bash license headers must start at line 0, with an exception for shebang lines
     if path.suffix in [".py", ".sh"]:
         # Check if the file has a shebang line at line 0
         has_shebang = False
         try:
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(path, "r", encoding="utf-8") as f:
                 first_line = f.readline().strip()
-                if first_line.startswith('#!') and 'python' in first_line.lower():
+                if first_line.startswith("#!"):
+                    # Accept any shebang line for Python or Bash files
                     has_shebang = True
         except Exception:
             pass  # If we can't read the file, assume no shebang
-            
+
         # If there's a shebang, header should be at line 1, otherwise at line 0
         allowed_start = 1 if has_shebang else 0
         if header_start_line > allowed_start:
-            print(f"❌ Python license header in {path} must be at the beginning of the file or immediately after the shebang line")
+            # Use appropriate message based on file type
+            if path.suffix == ".py":
+                message = "Python"
+            elif path.suffix == ".sh":
+                message = "Bash"
+            else:
+                message = "Script"
+
+            print(
+                f"❌ {message} license header in {path} must be at the beginning of the file or immediately after the shebang line"
+            )
             if fix:
                 if replace_header(path, expected_lines, header_start_line):
                     print(f"✅ Moved license header to correct position in {path}")
@@ -213,7 +224,7 @@ def check_file(
     # This is important to ensure files with incorrect company names fail validation
     has_correct_company = any("Tenstorrent AI ULC" in line for line in actual)
     has_correct_license = any("Apache-2.0" in line for line in actual)
-    
+
     if not has_correct_company or not has_correct_license or actual != expected:
         print(f"❌ Mismatch in {path}")
         print("---- Expected ----")
@@ -356,7 +367,7 @@ def replace_header(path: Path, expected_lines, header_start_line):
     try:
         ext = path.suffix
         git_year = get_git_year(path)
-        
+
         # If git_year is None, use current year
         if git_year is None:
             git_year = str(datetime.now().year)
@@ -411,7 +422,6 @@ def replace_header(path: Path, expected_lines, header_start_line):
             with open(path, "w", encoding="utf-8") as f:
                 f.writelines(new_lines)
                 f.flush()  # Ensure content is flushed to disk
-                
 
             return True
         else:
@@ -436,7 +446,6 @@ def replace_header(path: Path, expected_lines, header_start_line):
             with open(path, "w", encoding="utf-8") as f:
                 f.writelines(new_lines)
                 f.flush()  # Ensure content is flushed to disk
-                
 
             return True
 
