@@ -182,9 +182,9 @@ def check_file(
         # Check if the file has a shebang line at line 0
         has_shebang = False
         try:
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(path, "r", encoding="utf-8") as f:
                 first_line = f.readline().strip()
-                if first_line.startswith('#!'):
+                if first_line.startswith("#!"):
                     has_shebang = True
         except Exception:
             pass  # If we can't read the file, assume no shebang
@@ -196,10 +196,14 @@ def check_file(
             if path.suffix == ".py":
                 print(f"❌ Python license header in {path} must be at the beginning of the file (line 0)")
             elif path.suffix == ".sh":
-                print(f"❌ Bash license header in {path} must be at the beginning of the file or immediately after the shebang line")
+                print(
+                    f"❌ Bash license header in {path} must be at the beginning of the file or immediately after the shebang line"
+                )
             else:
-                print(f"❌ Script license header in {path} must be at the beginning of the file or immediately after the shebang line")
-            
+                print(
+                    f"❌ Script license header in {path} must be at the beginning of the file or immediately after the shebang line"
+                )
+
             if fix:
                 if replace_header(path, expected_lines, header_start_line):
                     print(f"✅ Moved license header to correct position in {path}")
@@ -211,27 +215,27 @@ def check_file(
     # Check header content
     actual = strip_noise_lines(actual_lines)
     expected = strip_noise_lines(expected_lines)
-    
+
     # Check that the essential content matches - focusing on key requirements
     # rather than exact formatting/whitespace matches
     headers_match = True
-    
+
     # Check for required elements in actual header
     actual_content = "\n".join(actual)
     expected_content = "\n".join(expected)
-    
+
     # 1. Must have company name
     if "Tenstorrent AI ULC" not in actual_content:
         headers_match = False
-    
+
     # 2. Must have license identifier
     if "Apache-2.0" not in actual_content:
         headers_match = False
-    
+
     # 3. Must have SPDX markers
     if "SPDX-FileCopyrightText" not in actual_content or "SPDX-License-Identifier" not in actual_content:
         headers_match = False
-    
+
     if not headers_match:
         print(f"❌ Mismatch in {path}")
         print("---- Expected ----")

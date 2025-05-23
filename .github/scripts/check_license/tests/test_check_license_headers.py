@@ -39,16 +39,16 @@ class TestCheckLicenseHeaders(unittest.TestCase):
         self.fixtures_dir = Path(__file__).parent / "fixtures"
         # Path to golden fixtures directory
         self.golden_dir = Path(__file__).parent / "golden"
-        
+
         # Ensure the golden directory exists
         if not self.golden_dir.exists():
             os.makedirs(self.golden_dir, exist_ok=True)
-            
+
         # Golden file paths for each language - create if they don't exist
         self.py_golden_path = self.golden_dir / "test_py_golden.py"
         self.cpp_golden_path = self.golden_dir / "test_cpp_golden.cpp"
         self.bash_golden_path = self.golden_dir / "test_bash_golden.sh"
-        
+
         # Create golden files if they don't exist
         self._ensure_golden_files()
 
@@ -68,25 +68,25 @@ class TestCheckLicenseHeaders(unittest.TestCase):
         fixture_path = self.fixtures_dir / fixture_name
         with open(fixture_path, "r", encoding="utf-8") as f:
             return f.read()
-            
+
     def read_golden(self, golden_name):
         """Helper method to read content from golden files"""
         golden_path = self.golden_dir / golden_name
         with open(golden_path, "r", encoding="utf-8") as f:
             return f.read()
-            
+
     def copy_fixture_to_temp(self, fixture_name):
         """Copy a fixture file to the temporary directory"""
         source_path = self.fixtures_dir / fixture_name
         dest_path = Path(self.temp_dir) / fixture_name
-        
+
         # Create parent directories if needed
         os.makedirs(os.path.dirname(dest_path), exist_ok=True)
-        
+
         # Copy the file
         shutil.copy2(source_path, dest_path)
         return dest_path
-        
+
     def _ensure_golden_files(self):
         """Ensure golden files exist for each language type"""
         # Create Python golden file if it doesn't exist
@@ -105,7 +105,7 @@ if __name__ == "__main__":
 """
             with open(self.py_golden_path, "w", encoding="utf-8") as f:
                 f.write(py_content)
-                
+
         # Create C++ golden file if it doesn't exist
         if not self.cpp_golden_path.exists():
             cpp_content = """// SPDX-FileCopyrightText: © 2025 Tenstorrent AI ULC
@@ -121,7 +121,7 @@ int main() {
 """
             with open(self.cpp_golden_path, "w", encoding="utf-8") as f:
                 f.write(cpp_content)
-                
+
         # Create Bash golden file if it doesn't exist
         if not self.bash_golden_path.exists():
             bash_content = """#!/bin/bash
@@ -133,7 +133,7 @@ echo "Hello World"
 """
             with open(self.bash_golden_path, "w", encoding="utf-8") as f:
                 f.write(bash_content)
-    
+
     def compare_with_golden(self, temp_file, extension):
         """Compare a temp file with the golden file for its language"""
         # Select the appropriate golden file based on file extension
@@ -145,32 +145,27 @@ echo "Hello World"
             golden_path = self.bash_golden_path
         else:
             raise ValueError(f"Unsupported file extension: {extension}")
-        
+
         # Read both files
         with open(temp_file, "r", encoding="utf-8") as f:
             temp_content = f.read()
-            
+
         with open(golden_path, "r", encoding="utf-8") as f:
             golden_content = f.read()
-        
+
         # Instead of exact match, check for the key license header elements
         # This is more robust to formatting differences
-        
+
         # Check for required elements in both files
-        required_elements = [
-            "SPDX-FileCopyrightText",
-            "Tenstorrent AI ULC",
-            "SPDX-License-Identifier",
-            "Apache-2.0"
-        ]
-        
+        required_elements = ["SPDX-FileCopyrightText", "Tenstorrent AI ULC", "SPDX-License-Identifier", "Apache-2.0"]
+
         # Verify all required elements are in both files
         for element in required_elements:
             if element not in temp_content:
                 return False
             if element not in golden_content:
                 return False
-        
+
         return True
 
     # ========================= License Format Tests =========================
@@ -268,7 +263,7 @@ echo "Hello World"
         fixture_name = "test_cpp_with_header_wrong_placement.cpp"
         temp_file_path = self.copy_fixture_to_temp(fixture_name)
         self.assertTrue(temp_file_path.exists(), f"Failed to copy {fixture_name} to temporary directory")
-        
+
         # Verify the actual placement is wrong in our fixture
         with open(temp_file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()[:10]
@@ -295,20 +290,17 @@ echo "Hello World"
         self.assertFalse(result, "The license checker should reject C++ files with headers not at the beginning")
         self.assertIn("C++ license header", stdout_output)
         self.assertIn("must be at the beginning of the file", stdout_output)
-        
+
         # Now test with fix=True
         with patch("sys.stdout", new=StringIO()) as mock_stdout:
             # Should fix the header placement
             result = check_file(temp_file_path, expected_header, fix=True)
             stdout_output = mock_stdout.getvalue()
-            
+
         self.assertTrue(result, "The license checker should fix C++ files with headers not at the beginning")
-        
+
         # Compare the fixed file with the golden file for C++
-        self.assertTrue(
-            self.compare_with_golden(temp_file_path, ".cpp"),
-            "Fixed file doesn't match golden file"
-        )
+        self.assertTrue(self.compare_with_golden(temp_file_path, ".cpp"), "Fixed file doesn't match golden file")
 
     def test_py_header_placement(self):
         """Test the placement of license headers in Python files"""
@@ -316,7 +308,7 @@ echo "Hello World"
         fixture_name = "test_py_with_header_wrong_placement.py"
         temp_file_path = self.copy_fixture_to_temp(fixture_name)
         self.assertTrue(temp_file_path.exists(), f"Failed to copy {fixture_name} to temporary directory")
-        
+
         # Verify the fixture file does have its header not at the beginning
         with open(temp_file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()[:10]
@@ -347,20 +339,17 @@ echo "Hello World"
         )
         self.assertIn("Python license header", stdout_output)
         self.assertIn("must be at the beginning of the file", stdout_output)
-        
+
         # Now test with fix=True
         with patch("sys.stdout", new=StringIO()) as mock_stdout:
             # Should fix the header placement
             result = check_file(temp_file_path, expected_header, fix=True)
             stdout_output = mock_stdout.getvalue()
-            
+
         self.assertTrue(result, "The license checker should fix Python files with headers not at the beginning")
-        
+
         # Compare the fixed file with the golden file for Python
-        self.assertTrue(
-            self.compare_with_golden(temp_file_path, ".py"),
-            "Fixed file doesn't match golden file"
-        )
+        self.assertTrue(self.compare_with_golden(temp_file_path, ".py"), "Fixed file doesn't match golden file")
 
     def test_normalize_line(self):
         """Test normalize_line function with various inputs"""
@@ -510,10 +499,7 @@ echo "Hello World"
         self.assertIn("Fixed header", mock_stdout.getvalue())
 
         # Compare the fixed file with the golden file for Python
-        self.assertTrue(
-            self.compare_with_golden(temp_wrong_file, ".py"),
-            "Fixed file doesn't match golden file"
-        )
+        self.assertTrue(self.compare_with_golden(temp_wrong_file, ".py"), "Fixed file doesn't match golden file")
 
         # Copy fixture with incorrectly placed header to temp directory
         wrong_placement_fixture = "test_py_with_header_wrong_placement.py"
@@ -558,7 +544,7 @@ echo "Hello World"
         # The file should fail validation due to incorrect header content
         self.assertFalse(result, "Files with wrong header content should fail validation")
         self.assertIn("Mismatch", mock_stdout.getvalue())
-        
+
         # Test with fix=True to correct the header
         mock_stdout.seek(0)
         mock_stdout.truncate(0)
@@ -567,10 +553,7 @@ echo "Hello World"
         self.assertIn("Fixed header", mock_stdout.getvalue())
 
         # Compare the fixed file with the golden file for C++
-        self.assertTrue(
-            self.compare_with_golden(temp_wrong_file, ".cpp"),
-            "Fixed file doesn't match golden file"
-        )
+        self.assertTrue(self.compare_with_golden(temp_wrong_file, ".cpp"), "Fixed file doesn't match golden file")
 
         # Copy fixture with incorrectly placed header to temp directory
         wrong_placement_fixture = "test_cpp_with_header_wrong_placement.cpp"
@@ -602,11 +585,10 @@ echo "Hello World"
             content = f.read()
             self.assertIn("SPDX-FileCopyrightText", content)
             self.assertIn("SPDX-License-Identifier: Apache-2.0", content)
-            
+
         # Compare the file with added header to the golden file for Python
         self.assertTrue(
-            self.compare_with_golden(temp_file_path, ".py"),
-            "File with added header doesn't match golden file"
+            self.compare_with_golden(temp_file_path, ".py"), "File with added header doesn't match golden file"
         )
 
     def test_add_license_header_cpp(self):
@@ -627,11 +609,10 @@ echo "Hello World"
             self.assertIn("SPDX-License-Identifier: Apache-2.0", content)
             # Check for C++ specific comment style
             self.assertIn("// SPDX", content)
-            
+
         # Compare the file with added header to the golden file for C++
         self.assertTrue(
-            self.compare_with_golden(temp_file_path, ".cpp"),
-            "File with added header doesn't match golden file"
+            self.compare_with_golden(temp_file_path, ".cpp"), "File with added header doesn't match golden file"
         )
 
     def test_replace_header(self):
@@ -650,11 +631,10 @@ echo "Hello World"
             content = f.read()
             self.assertIn("Tenstorrent AI ULC", content)
             self.assertIn("Apache-2.0", content)
-            
+
         # Compare the file with replaced header to the golden file for Python
         self.assertTrue(
-            self.compare_with_golden(temp_file_path, ".py"),
-            "File with replaced header doesn't match golden file"
+            self.compare_with_golden(temp_file_path, ".py"), "File with replaced header doesn't match golden file"
         )
 
     def test_replace_header_cpp(self):
@@ -675,11 +655,10 @@ echo "Hello World"
             self.assertIn("Apache-2.0", content)
             # Check for C++ specific comment style
             self.assertIn("// SPDX", content)
-            
+
         # Compare the file with replaced header to the golden file for C++
         self.assertTrue(
-            self.compare_with_golden(temp_file_path, ".cpp"),
-            "File with replaced header doesn't match golden file"
+            self.compare_with_golden(temp_file_path, ".cpp"), "File with replaced header doesn't match golden file"
         )
 
     @patch("subprocess.run")
