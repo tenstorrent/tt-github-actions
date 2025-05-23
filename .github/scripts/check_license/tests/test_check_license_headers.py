@@ -663,7 +663,7 @@ echo "Hello World"
         self.assertTrue(
             self.compare_with_golden(temp_file_path, ".cpp"), "File with replaced header doesn't match golden file"
         )
-        
+
     @patch("sys.stdout", new_callable=StringIO)
     def test_check_bash_file(self, mock_stdout):
         """Test check_file function with Bash files"""
@@ -682,7 +682,7 @@ echo "This is a bash script with the correct license header"
         if not correct_fixture_path.exists():
             with open(correct_fixture_path, "w", encoding="utf-8") as f:
                 f.write(bash_correct_content)
-        
+
         temp_correct_file = self.copy_fixture_to_temp(correct_fixture)
 
         # Test check with correct file
@@ -729,7 +729,7 @@ echo "This is a bash script with the correct license header"
         self.assertFalse(result, "Files with wrong header placement should fail validation")
         # Bash files allow header after shebang
         self.assertIn("license header", mock_stdout.getvalue().lower())
-    
+
     def test_add_license_header_bash(self):
         """Test add_license_header function for Bash files"""
         # Copy the fixture without license header to temp directory
