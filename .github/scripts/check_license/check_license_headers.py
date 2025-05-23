@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # SPDX-FileCopyrightText: © 2025 Tenstorrent AI ULC
 #
 # SPDX-License-Identifier: Apache-2.0
@@ -172,13 +170,13 @@ def check_file(
     if path.suffix in [".cpp", ".cc", ".h", ".hpp", ".cuh", ".cu", ".c"]:
         # C++ headers must start at line 0
         if header_start_line != 0:
-            print(f"❌ C++ license header in {path} must be at the beginning of the file")
+            print(f"❌ C++ license header in {path} is incorrectly positioned")
             if fix:
                 if replace_header(path, expected_lines, header_start_line, temp_dir=temp_dir):
-                    print(f"✅ Moved license header to beginning of file in {path}")
+                    print(f"✅ License header issue fixed in {path}")
                     return True
                 else:
-                    print(f"❌ Failed to move license header to beginning of file in {path}")
+                    print(f"❌ Failed to fix license header issue in {path}")
             return False
 
     # Check header placement for Python and Bash files
@@ -198,22 +196,18 @@ def check_file(
         if header_start_line > allowed_start:
             # Use appropriate message based on file type
             if path.suffix == ".py":
-                print(f"❌ Python license header in {path} must be at the beginning of the file (line 0)")
+                print(f"❌ Python license header in {path} is incorrectly positioned")
             elif path.suffix == ".sh":
-                print(
-                    f"❌ Bash license header in {path} must be at the beginning of the file or immediately after the shebang line"
-                )
+                print(f"❌ Bash license header in {path} is incorrectly positioned")
             else:
-                print(
-                    f"❌ Script license header in {path} must be at the beginning of the file or immediately after the shebang line"
-                )
+                print(f"❌ Script license header in {path} is incorrectly positioned")
 
             if fix:
                 if replace_header(path, expected_lines, header_start_line, temp_dir=temp_dir):
-                    print(f"✅ Moved license header to correct position in {path}")
+                    print(f"✅ License header issue fixed in {path}")
                     return True
                 else:
-                    print(f"❌ Failed to move license header to correct position in {path}")
+                    print(f"❌ Failed to fix license header issue in {path}")
             return False
 
     # Check header content
@@ -250,10 +244,10 @@ def check_file(
 
         if fix and header_start_line >= 0:
             if replace_header(path, expected_lines, header_start_line, temp_dir=temp_dir):
-                print(f"✅ Fixed header in {path}")
+                print(f"✅ License header issue fixed in {path}")
                 return True
             else:
-                print(f"❌ Failed to fix header in {path}")
+                print(f"❌ Failed to fix license header issue in {path}")
         return False
     elif not only_errors:
         # Only print success messages if not in only_errors mode
