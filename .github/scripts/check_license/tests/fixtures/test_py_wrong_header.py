@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# SPDX-FileCopyrightText: © 2025 Tenstorrent AI ULC
+# SPDX-FileCopyrightText: © 2025 Wrong Company
 #
 # SPDX-License-Identifier: Apache-2.0
 

@@ -7,6 +7,7 @@
 import sys
 import re
 import unicodedata
+from datetime import datetime
 from pathlib import Path
 import argparse
 import subprocess
@@ -99,8 +100,12 @@ def get_raw_expected_header(file_ext: str, git_year=None):
     header_lines = LICENSE_HEADER.strip().splitlines()
 
     # If we have a git year, use that year
+    current_year = str(datetime.now().year)  # Default to current year if git_year not provided
     if git_year:
-        header_lines = [line.replace("<YEAR>", str(git_year)) for line in header_lines]
+        current_year = str(git_year)
+    
+    # Replace <YEAR> placeholder with the appropriate year
+    header_lines = [line.replace("<YEAR>", current_year) for line in header_lines]
 
     return [f"{prefix}{line}" for line in header_lines]
 
@@ -163,11 +168,53 @@ def check_file(
 
     if actual_lines is None:
         return False
+        
+    # Enforce C++ license headers must start at line 0 (beginning of file)
+    if path.suffix in [".cpp", ".cc", ".h", ".hpp", ".cuh", ".cu", ".c"] and header_start_line != 0:
+        print(f"❌ C++ license header in {path} must be at the beginning of the file")
+        if fix:
+            # First remove the current header
+            if replace_header(path, expected_lines, header_start_line):
+                print(f"✅ Moved license header to beginning of file in {path}")
+                return True
+            else:
+                print(f"❌ Failed to move license header to beginning of file in {path}")
+        return False
+        
+    # Enforce Python license headers must start at line 0, with an exception for shebang lines
+    if path.suffix in [".py", ".sh"]:
+        # Check if the file has a shebang line at line 0
+        has_shebang = False
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                first_line = f.readline().strip()
+                if first_line.startswith('#!') and 'python' in first_line.lower():
+                    has_shebang = True
+        except Exception:
+            pass  # If we can't read the file, assume no shebang
+            
+        # If there's a shebang, header should be at line 1, otherwise at line 0
+        allowed_start = 1 if has_shebang else 0
+        if header_start_line > allowed_start:
+            print(f"❌ Python license header in {path} must be at the beginning of the file or immediately after the shebang line")
+            if fix:
+                if replace_header(path, expected_lines, header_start_line):
+                    print(f"✅ Moved license header to correct position in {path}")
+                    return True
+                else:
+                    print(f"❌ Failed to move license header to correct position in {path}")
+            return False
 
+    # Verify the content of the license header
     actual = strip_noise_lines(actual_lines)
     expected = strip_noise_lines(expected_lines)
 
-    if actual != expected:
+    # Check if header contains the correct company name and license identifier
+    # This is important to ensure files with incorrect company names fail validation
+    has_correct_company = any("Tenstorrent AI ULC" in line for line in actual)
+    has_correct_license = any("Apache-2.0" in line for line in actual)
+    
+    if not has_correct_company or not has_correct_license or actual != expected:
         print(f"❌ Mismatch in {path}")
         print("---- Expected ----")
         print("\n".join(expected))
@@ -293,9 +340,10 @@ def add_license_header(path: Path, expected_lines):
             # For other files, just insert at the beginning
             new_lines = [line + "\n" for line in raw_header] + ["\n"] + lines
 
-        # Write the file back
+        # Write the file back with updated header
         with open(path, "w", encoding="utf-8") as f:
             f.writelines(new_lines)
+            f.flush()  # Ensure content is flushed to disk
 
         return True
     except Exception as e:
@@ -308,6 +356,10 @@ def replace_header(path: Path, expected_lines, header_start_line):
     try:
         ext = path.suffix
         git_year = get_git_year(path)
+        
+        # If git_year is None, use current year
+        if git_year is None:
+            git_year = str(datetime.now().year)
 
         # Get the raw expected header (without normalization)
         raw_header = get_raw_expected_header(ext, git_year)
@@ -355,9 +407,11 @@ def replace_header(path: Path, expected_lines, header_start_line):
                     for header_line in raw_header:
                         new_lines.append(header_line + "\n")
 
-            # Write the file back
+            # Write the file back with updated header
             with open(path, "w", encoding="utf-8") as f:
                 f.writelines(new_lines)
+                f.flush()  # Ensure content is flushed to disk
+                
 
             return True
         else:
@@ -378,9 +432,11 @@ def replace_header(path: Path, expected_lines, header_start_line):
             header_end_line = header_start_line + current_header_lines
             new_lines = lines[:header_start_line] + [line + "\n" for line in raw_header] + lines[header_end_line:]
 
-            # Write the file back
+            # Write the file back with updated header
             with open(path, "w", encoding="utf-8") as f:
                 f.writelines(new_lines)
+                f.flush()  # Ensure content is flushed to disk
+                
 
             return True
 

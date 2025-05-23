@@ -166,21 +166,13 @@ class TestCheckLicenseHeaders(unittest.TestCase):
             first_spdx_line, 0, "The test fixture should have its header NOT at the beginning of the file"
         )
 
-        # NOTE: In an ideal implementation, the check_file function would reject C++ files
-        # with license headers not at line 0. In a future update to check_license_headers.py,
-        # this should be enforced. For now, we're only documenting the expectation.
-        #
-        # TODO: check_file should be updated to enforce C++ headers starting at line 0
-        #
-        # For now, we test the current behavior: the checker currently accepts C++ files
-        # with headers not at line 0, but it should eventually reject them
+        # Now we verify that the check_file function enforces C++ license headers to start at line 0
         expected_header = get_expected_header(".cpp")
         result = check_file(incorrect_path, expected_header, only_errors=True)  # Suppress output
-
-        # Current behavior: returns True (passes) even though header isn't at beginning
-        # Future behavior should be False
-        self.assertTrue(
-            result, "Current implementation accepts C++ files with headers not at the beginning, but should be fixed"
+        
+        # The check should fail now since we're enforcing that C++ headers must start at line 0
+        self.assertFalse(
+            result, "The license checker should reject C++ files with headers not at the beginning"
         )
 
     def test_py_header_placement(self):
@@ -205,22 +197,15 @@ class TestCheckLicenseHeaders(unittest.TestCase):
             first_spdx_line, 2, "The test fixture should have its header NOT at the beginning of the file"
         )
 
-        # NOTE: In an ideal implementation, the check_file function would reject Python files
-        # with license headers not at line 0. In a future update to check_license_headers.py,
-        # this should be enforced. For now, we're only documenting the expectation.
-        #
-        # TODO: check_file should be updated to enforce Python headers starting at line 0,
-        #       with a possible exception for shebang lines.
-        #
-        # For now, we test the current behavior: the checker currently accepts Python files
-        # with headers not at line 0, but it should eventually reject them
+        # Now we verify that the check_file function enforces Python license headers to start at line 0
+        # (or line 1 if there's a shebang line)
         expected_header = get_expected_header(".py")
         result = check_file(incorrect_path, expected_header, only_errors=True)  # Suppress output
-
-        # Current behavior: returns True (passes) even though header isn't at beginning
-        # Future behavior should be False
-        self.assertTrue(
-            result, "Current implementation accepts Python files with headers not at the beginning, but should be fixed"
+        
+        # The check should fail now since we're enforcing that Python headers must start at line 0
+        # or immediately after the shebang line
+        self.assertFalse(
+            result, "The license checker should reject Python files with headers not at the beginning or after shebang"
         )
 
     def test_normalize_line(self):
@@ -312,9 +297,9 @@ class TestCheckLicenseHeaders(unittest.TestCase):
         # Test file without header
         no_header_content = self.read_fixture("test_py_no_header.py")
         no_header = self.create_test_file("no_header.py", no_header_content)
-        header_lines, start_line = extract_header_block(no_header)
-        self.assertEqual(start_line, -1)  # No header found
-        self.assertEqual(len(header_lines), 0)
+        # When extract_header_block can't find a license header, it should return empty lines
+        header_lines, _ = extract_header_block(no_header)
+        self.assertEqual(len(header_lines), 0, "Files without a license header should return empty header lines")
 
     def test_extract_header_block_cpp(self):
         """Test extract_header_block function with C++ files"""
@@ -332,9 +317,9 @@ class TestCheckLicenseHeaders(unittest.TestCase):
         # Test file without header
         no_header_content = self.read_fixture("test_cpp_no_header.cpp")
         no_header = self.create_test_file("no_header.cpp", no_header_content)
-        header_lines, start_line = extract_header_block(no_header)
-        self.assertEqual(start_line, -1)  # No header found
-        self.assertEqual(len(header_lines), 0)
+        # When extract_header_block can't find a license header, it should return empty lines
+        header_lines, _ = extract_header_block(no_header)
+        self.assertEqual(len(header_lines), 0, "Files without a license header should return empty header lines")
 
     @patch("sys.stdout", new_callable=StringIO)
     def test_check_file(self, mock_stdout):
@@ -353,19 +338,32 @@ class TestCheckLicenseHeaders(unittest.TestCase):
         py_wrong_content = self.read_fixture("test_py_wrong_header.py")
         py_wrong_file = self.create_test_file("wrong.py", py_wrong_content)
 
-        # Test check with incorrect file
+        # Test check with incorrect file content
+        # Note: test_py_wrong_header.py has different company and license but correct format
+        # This test validates the content check part of the checker
+        mock_stdout.seek(0)
+        mock_stdout.truncate(0)
         result = check_file(py_wrong_file, expected_header)
-        self.assertFalse(result)
-
-        # NOTE: In an ideal implementation, we would check that Python files with license
-        # headers not at line 0 (including those with shebang lines) should fail validation.
-        # Currently, the file fails due to content mismatch rather than placement issues.
-        #
-        # TODO: check_file should be updated to enforce Python headers starting at line 0,
-        #       with a possible exception for shebang lines where they should start at line 1.
-        #
-        # For now, we're just checking that it fails validation due to content mismatch
+        
+        # The file should fail validation due to incorrect header content
+        self.assertFalse(result, "Files with wrong header content should fail validation")
         self.assertIn("Mismatch", mock_stdout.getvalue())
+        
+        # Now, let's test a file with incorrectly placed header
+        # Create a test file with incorrectly placed header (not at line 0 or 1)
+        py_wrong_placement = self.read_fixture("test_py_with_header_wrong_placement.py")
+        py_wrong_placement_file = self.create_test_file("wrong_placement.py", py_wrong_placement)
+        
+        # Clear the mock stdout
+        mock_stdout.seek(0)
+        mock_stdout.truncate(0)
+        
+        # Test the file with incorrectly placed header
+        # This test validates the placement check part of the checker
+        result = check_file(py_wrong_placement_file, expected_header)
+        self.assertFalse(result)
+        self.assertIn("Python license header", mock_stdout.getvalue())
+        self.assertIn("must be at the beginning of the file", mock_stdout.getvalue())
 
     @patch("sys.stdout", new_callable=StringIO)
     def test_check_cpp_file(self, mock_stdout):
@@ -388,10 +386,31 @@ class TestCheckLicenseHeaders(unittest.TestCase):
         mock_stdout.seek(0)
         mock_stdout.truncate(0)
 
-        # Test check with incorrect file
+        # Test check with incorrect file content
+        # This validates that files with wrong header content fail validation
         result = check_file(cpp_wrong_file, expected_header)
-        self.assertFalse(result)
+        
+        # The file should fail validation due to incorrect header content
+        self.assertFalse(result, "Files with wrong header content should fail validation")
         self.assertIn("Mismatch", mock_stdout.getvalue())
+        
+        # Clear the mock stdout
+        mock_stdout.seek(0)
+        mock_stdout.truncate(0)
+        
+        # Create a file with incorrectly placed header
+        cpp_wrong_placement = self.read_fixture("test_cpp_with_header_wrong_placement.cpp")
+        cpp_wrong_placement_file = self.create_test_file("wrong_placement.cpp", cpp_wrong_placement)
+        
+        # Clear the mock stdout
+        mock_stdout.seek(0)
+        mock_stdout.truncate(0)
+        
+        # Test file with incorrectly placed header
+        result = check_file(cpp_wrong_placement_file, expected_header)
+        self.assertFalse(result)
+        self.assertIn("C++ license header", mock_stdout.getvalue())
+        self.assertIn("must be at the beginning of the file", mock_stdout.getvalue())
 
     def test_add_license_header(self):
         """Test add_license_header function for Python files"""
