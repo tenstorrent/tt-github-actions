@@ -41,6 +41,7 @@ COMMENT_STYLES = {
 
 # Slow but reliable fallback
 def get_git_year(path: Path) -> str:
+    # get the year of the first commit for the file
     try:
         result = subprocess.run(
             [
@@ -50,6 +51,7 @@ def get_git_year(path: Path) -> str:
                 "--follow",
                 "--format=%ad",
                 "--date=format:%Y",
+                "--reverse",
                 "--",
                 str(path),
             ],
@@ -324,9 +326,10 @@ def check_git_requirements():
 
 
 def get_file_years() -> dict[Path, int | None]:
+    # get the year of the first commit for each file
     try:
         result = subprocess.Popen(
-            ["git", "log", "--name-status", "--format=%cs", "--date=short"],
+            ["git", "log", "--name-only", "--format=%cs", "--date=short", "--reverse"],
             stdout=subprocess.PIPE,
             universal_newlines=True,
         )
@@ -334,6 +337,7 @@ def get_file_years() -> dict[Path, int | None]:
         print(ex)
         sys.exit(1)
 
+    # Parse the first line and get the year
     year: int = 0
     files: dict[str, int | Path] = {}
     for line in result.stdout:
