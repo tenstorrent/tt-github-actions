@@ -5,8 +5,8 @@
 import os
 import enum
 from datetime import datetime
-from typing import Optional, Union, List, Dict, Any
-
+from typing import Any, Dict, List, Optional, Tuple, Union
+import subprocess
 from loguru import logger
 
 
@@ -112,20 +112,85 @@ def get_pipeline_row_from_github_info(
     }
 
 
-def get_job_failure_signature_(github_job: Dict[str, Any]) -> Optional[Union[InfraErrorV1, str]]:
+def get_job_failure_signature(github_job: Dict[str, Any]) -> Optional[Union[InfraErrorV1, str]]:
     if github_job["conclusion"] == "success":
         return None
-    for step in github_job["steps"]:
-        is_generic_setup_failure = (
-            step["name"] == "Set up runner"
-            and step["status"] in ("completed", "cancelled")
-            and step["conclusion"] != "success"
-            and step["started_at"] is not None
-            and step["completed_at"] is None
-        )
-        if is_generic_setup_failure:
-            return str(InfraErrorV1.GENERIC_SET_UP_FAILURE)
+    failed_steps = get_failed_steps(github_job)
+    if failed_steps:
+        return failed_steps[0]
     return None
+
+
+def get_failed_steps(github_job: Dict[str, Any]) -> List[str]:
+    """
+    Find all steps with 'status': 'completed' and 'conclusion': 'failure'
+    """
+    failed_steps = []
+    for step in github_job.get("steps", []):
+        if step.get("status") == "completed" and step.get("conclusion") == "failure":
+            failed_steps.append(step["name"])
+    return failed_steps
+
+
+def get_failure_description(github_job: Dict[str, Any], repository: str = None) -> Optional[str]:
+    """
+    Get failure description for a job by extracting error messages from logs
+    of failed steps.
+    """
+    failed_steps = get_failed_steps(github_job)
+    if not failed_steps:
+        return None
+    error_descriptions = ""
+    if len(failed_steps) > 1:
+        error_descriptions = f"Failed steps: {', '.join(step for step in failed_steps)}\n"
+    job_id = github_job.get("id")
+    # Try to get logs if possible
+    try:
+        logs = get_job_logs(repository, job_id)
+        error_lines = extract_error_lines_from_logs(logs)
+        if error_lines:
+            # Limit to first 5 error lines to keep description concise
+            error_descriptions += "\n".join(error_lines[:5])
+        else:
+            error_descriptions += "No specific error message found"
+    except Exception as e:
+        return error_descriptions + f"Error fetching logs: {str(e)}"
+    return error_descriptions
+
+
+def get_job_logs(repository: str, job_id: int) -> str:
+    """
+    Get logs for a specific job using GitHub CLI.
+    """
+    cmd = ["gh", "api", f"/repos/{repository}/actions/jobs/{job_id}/logs"]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error fetching logs for job {job_id}: {e}")
+        raise
+
+
+def extract_error_lines_from_logs(logs: str) -> List[str]:
+    """
+    Extract error messages from job logs, keeping only the part after error markers.
+    """
+    error_lines = []
+    error_markers = ["##[error]", "error:", "exception:", "failed:", "fatal:", "crash:"]
+
+    for line in logs.splitlines():
+        # Check if the line contains any error marker
+        for marker in error_markers:
+            if marker in line:
+                # Extract only the part after the error marker
+                parts = line.split(marker, 1)
+                if len(parts) > 1:
+                    error_message = parts[1].strip()
+                    if error_message:  # Only add if there's actual content after the marker
+                        error_lines.append(error_message)
+                break  # Once we find a marker, no need to check others
+
+    return error_lines
 
 
 def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
@@ -197,7 +262,20 @@ def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
 
     github_job_link = github_job.get("html_url")
 
-    failure_signature = get_job_failure_signature_(github_job)
+    # Get the repository from github_job_link if available
+    repository = None
+    github_job_link_str = github_job.get("html_url", "")
+    if github_job_link_str:
+        # Extract repository from URL format like: https://github.com/owner/repo/actions/runs/...
+        parts = github_job_link_str.split("/")
+        if len(parts) >= 5 and parts[2] == "github.com":
+            repository = f"{parts[3]}/{parts[4]}"
+
+    failure_signature = None
+    failure_description = None
+    if not job_success:
+        failure_signature = get_job_failure_signature(github_job)
+        failure_description = get_failure_description(github_job, repository)
 
     return {
         "github_job_id": github_job_id,
@@ -216,6 +294,7 @@ def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
         "docker_image": docker_image,
         "github_job_link": github_job_link,
         "failure_signature": failure_signature,
+        "failure_description": failure_description,
     }
 
 
