@@ -273,7 +273,7 @@ def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
 
     failure_signature = None
     failure_description = None
-    if not job_success:
+    if job_status == "failure":
         failure_signature = get_job_failure_signature(github_job)
         failure_description = get_failure_description(github_job, repository)
 
