@@ -162,6 +162,7 @@ def get_job_logs(repository: str, job_id: int) -> str:
     """
     Get logs for a specific job using GitHub CLI.
     """
+    logger.info(f"Fetching logs for job {job_id} to inspect failures")
     cmd = ["gh", "api", f"/repos/{repository}/actions/jobs/{job_id}/logs"]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
@@ -173,21 +174,24 @@ def get_job_logs(repository: str, job_id: int) -> str:
 
 def extract_error_lines_from_logs(logs: str) -> List[str]:
     """
-    Extract error messages from job logs, keeping only the part after error markers.
+    Extract error messages from job logs, removing timestamps and keeping error messages.
+    Lines longer than 200 characters are truncated with '...' appended.
     """
     error_lines = []
-    error_markers = ["##[error]", "error:", "exception:", "failed:", "fatal:", "crash:"]
+    error_markers = ["##[error]", "error:", "exception:", "failed"]
+    max_length = 300
 
     for line in logs.splitlines():
+        line_lower = line.lower()
         # Check if the line contains any error marker
         for marker in error_markers:
-            if marker in line:
-                # Extract only the part after the error marker
-                parts = line.split(marker, 1)
-                if len(parts) > 1:
-                    error_message = parts[1].strip()
-                    if error_message:  # Only add if there's actual content after the marker
-                        error_lines.append(error_message)
+            if marker in line_lower:
+                clean_line = line[29:]
+                clean_line = clean_line.replace("##[error]", "")
+                # Truncate line if it's too long
+                if len(clean_line) > max_length:
+                    clean_line = clean_line[:max_length] + "..."
+                error_lines.append(clean_line)
                 break  # Once we find a marker, no need to check others
 
     return error_lines
@@ -219,7 +223,6 @@ def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
             os = "ubuntu-24.04"
 
     if location == "tt_cloud":
-        logger.warning("Assuming ubuntu-20.04 for tt cloud, but may not be the case soon")
         os = "ubuntu-20.04"
 
     name = github_job.get("name")
