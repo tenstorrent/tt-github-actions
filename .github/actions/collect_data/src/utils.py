@@ -162,8 +162,9 @@ def get_job_logs(repository: str, job_id: int) -> str:
     """
     Get logs for a specific job using GitHub CLI.
     """
-    logger.info(f"Fetching logs for job {job_id} to inspect failures")
     cmd = ["gh", "api", f"/repos/{repository}/actions/jobs/{job_id}/logs"]
+    logger.info(f"Fetching logs for job {job_id} to inspect failures")
+    logger.info(" ".join(cmd))
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         return result.stdout
@@ -176,21 +177,36 @@ def extract_error_lines_from_logs(logs: str) -> List[str]:
     """
     Extract error messages from job logs, removing timestamps and keeping error messages.
     Lines longer than 200 characters are truncated with '...' appended.
+    Ignores lines between ##[group] and ##[endgroup] markers.
     """
     error_lines = []
     error_markers = ["##[error]", "error:", "exception:", "failed"]
     max_length = 300
+    in_group_section = False
 
     for line in logs.splitlines():
+        # Check if we're entering or exiting a group section.
+        if "##[group]" in line:
+            in_group_section = True
+            continue
+        elif "##[endgroup]" in line:
+            in_group_section = False
+            continue
+
+        # Skip processing lines within group sections
+        if in_group_section:
+            continue
+
         line_lower = line.lower()
         # Check if the line contains any error marker
         for marker in error_markers:
             if marker in line_lower:
-                clean_line = line[29:]
+                clean_line = line[29:] if len(line) > 29 else line
                 clean_line = clean_line.replace("##[error]", "")
                 # Truncate line if it's too long
                 if len(clean_line) > max_length:
                     clean_line = clean_line[:max_length] + "..."
+                logger.info(f"Error line: {clean_line}")
                 error_lines.append(clean_line)
                 break  # Once we find a marker, no need to check others
 
@@ -257,10 +273,8 @@ def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
 
     is_build_job = "build" in name or "build" in labels
 
-    logger.warning("Returning None for job_matrix_config because difficult to get right now")
     job_matrix_config = None
 
-    logger.warning("docker_image erroneously used in pipeline data model, but should be moved. Returning null")
     docker_image = None
 
     github_job_link = github_job.get("html_url")
