@@ -1,0 +1,97 @@
+-- get all workflows for tt-shield:
+SELECT DISTINCT p.name, COUNT(*) as run_count
+FROM sw_test.cicd_pipeline p
+INNER JOIN sw_test.benchmark_run r ON p.github_pipeline_id = r.github_pipeline_id
+WHERE r.git_repo_name = 'tt-shield'
+GROUP BY p.name
+ORDER BY run_count DESC;
+
+
+-- get devices for selected workflow
+-- List devices from tt-shield nightly workflows
+SELECT DISTINCT 
+    r.device_info->>'device_name' as device_name,
+    r.device_hostname,
+    r.device_ip,
+    COUNT(*) as run_count,
+    MIN(r.run_start_ts) as first_run,
+    MAX(r.run_start_ts) as latest_run
+FROM sw_test.benchmark_run r
+INNER JOIN sw_test.cicd_pipeline p ON r.github_pipeline_id = p.github_pipeline_id
+WHERE r.git_repo_name = 'tt-shield'
+  AND r.device_info->>'device_name' IS NOT NULL
+  AND (
+    p.name ILIKE '%nightly%' 
+    OR p.name ILIKE '%scheduled%'
+    OR p.trigger = 'schedule'  -- if trigger field indicates scheduled runs
+  )
+GROUP BY r.device_info->>'device_name', r.device_hostname, r.device_ip
+ORDER BY device_name;
+
+-- Or just list of device:
+SELECT DISTINCT r.device_info->>'device_name' as device_name
+FROM sw_test.benchmark_run r
+INNER JOIN sw_test.cicd_pipeline p ON r.github_pipeline_id = p.github_pipeline_id
+WHERE r.git_repo_name = 'tt-shield'
+  AND r.device_info->>'device_name' IS NOT NULL
+  AND p.name ILIKE '%nightly%'
+ORDER BY device_name;
+
+
+-- benchmark metrics
+-- Query to get benchmark metrics
+SELECT DISTINCT m.name 
+FROM sw_test.benchmark_measurement m
+INNER JOIN sw_test.benchmark_run r ON m.benchmark_run_id = r.benchmark_run_id
+WHERE r.run_type = 'benchmark'
+ORDER BY m.name;
+
+-- Query to get target_check_functional metrics
+SELECT DISTINCT m.name 
+FROM sw_test.benchmark_measurement m
+INNER JOIN sw_test.benchmark_run r ON m.benchmark_run_id = r.benchmark_run_id
+WHERE r.run_type = 'target_check_functional'
+ORDER BY m.name;
+
+-- Query to get target_check_functional metrics
+SELECT DISTINCT m.name 
+FROM sw_test.benchmark_measurement m
+INNER JOIN sw_test.benchmark_run r ON m.benchmark_run_id = r.benchmark_run_id
+WHERE r.run_type = 'target_check_functional'
+ORDER BY m.name;
+
+-- Query to get target_check_complete metrics
+SELECT DISTINCT m.name 
+FROM sw_test.benchmark_measurement m
+INNER JOIN sw_test.benchmark_run r ON m.benchmark_run_id = r.benchmark_run_id
+WHERE r.run_type = 'target_check_complete'
+ORDER BY m.name;
+
+-- Query to get target_check_target metrics
+SELECT DISTINCT m.name 
+FROM sw_test.benchmark_measurement m
+INNER JOIN sw_test.benchmark_run r ON m.benchmark_run_id = r.benchmark_run_id
+WHERE r.run_type = 'target_check_target'
+ORDER BY m.name;
+
+-- Query to get eval metrics
+SELECT DISTINCT m.name 
+FROM sw_test.benchmark_measurement m
+INNER JOIN sw_test.benchmark_run r ON m.benchmark_run_id = r.benchmark_run_id
+WHERE r.run_type = 'eval'
+ORDER BY m.name;
+
+
+-- Get all metrics organized by run type
+SELECT 
+    r.run_type,
+    m.name as metric_name,
+    COUNT(*) as measurement_count,
+    MIN(m.value) as min_value,
+    MAX(m.value) as max_value,
+    AVG(m.value) as avg_value
+FROM sw_test.benchmark_measurement m
+INNER JOIN sw_test.benchmark_run r ON m.benchmark_run_id = r.benchmark_run_id
+WHERE r.git_repo_name = 'tt-shield'
+GROUP BY r.run_type, m.name
+ORDER BY r.run_type, m.name;

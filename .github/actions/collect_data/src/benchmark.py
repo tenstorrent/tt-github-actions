@@ -143,8 +143,9 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
 
         try:
             benchmark_runs = self._process_benchmarks(pipeline, job, report_data.get("benchmarks", []))
+            benchmark_summary_runs = self._process_benchmarks_summary(pipeline, job, report_data.get("benchmarks_summary", []))
             eval_runs = self._process_evals(pipeline, job, report_data.get("evals", []))
-            return benchmark_runs + eval_runs
+            return benchmark_runs + benchmark_summary_runs + eval_runs
         except ValidationError as e:
             failure_happened()
             logger.error(f"Validation error: {e}")
@@ -198,6 +199,60 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     output_seq_length=benchmark.get("output_sequence_length"),
                     dataset_name=benchmark.get("model_id", None),
                     batch_size=benchmark.get("max_con"),
+                )
+            )
+        return results
+
+    def _process_benchmarks_summary(self, pipeline, job, benchmarks_summary):
+        """
+        Processes benchmark summary entries and creates CompleteBenchmarkRun objects for each entry.
+        """
+        results = []
+        for benchmark in benchmarks_summary:
+            # Extract the basic measurements
+            measurements = self._create_measurements(
+                job,
+                "benchmark_summary",
+                benchmark,
+                [
+                    "ttft",
+                    "tput_user", 
+                    "tput",
+                ],
+            )
+            
+            # Process target_checks if they exist
+            target_checks = benchmark.get("target_checks", {})
+            for target_name, target_data in target_checks.items():
+                target_measurements = self._create_measurements(
+                    job,
+                    f"benchmark_summary_{target_name}",
+                    target_data,
+                    [
+                        "ttft",
+                        "ttft_ratio",
+                        "ttft_check",
+                        "tput_user",
+                        "tput_user_ratio", 
+                        "tput_user_check",
+                        "tput_check",
+                    ],
+                )
+                measurements.extend(target_measurements)
+            
+            results.append(
+                self._create_complete_benchmark_run(
+                    pipeline=pipeline,
+                    job=job,
+                    data=benchmark,
+                    run_type="benchmark_summary",
+                    measurements=measurements,
+                    device_info=None,  # Not available in summary
+                    model_name=None,   # Not available in summary
+                    input_seq_length=benchmark.get("isl"),
+                    output_seq_length=benchmark.get("osl"),
+                    dataset_name=None,
+                    batch_size=benchmark.get("max_concurrency"),
                 )
             )
         return results
