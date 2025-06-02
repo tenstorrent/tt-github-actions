@@ -255,7 +255,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     data=benchmark,
                     run_type="benchmark_summary",
                     measurements=measurements,
-                    device_info={"device_name": device},  # Match benchmarks format
+                    device_info=device,  # Store as plain string, not JSON object
                     model_name=model_name,  # Extract model name from model_id
                     input_seq_length=benchmark.get("isl"),
                     output_seq_length=benchmark.get("osl"),
