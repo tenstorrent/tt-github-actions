@@ -240,6 +240,14 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 )
                 measurements.extend(target_measurements)
             
+            # Extract model_id (should now be included in benchmarks_summary)
+            model_id = benchmark.get("model_id", "unknown")
+            # Extract just the model name from the full model_id
+            model_name = model_id.split("/")[-1] if "/" in model_id else model_id
+            
+            # Extract device (should now be included in benchmarks_summary)  
+            device = benchmark.get("device", "unknown")
+            
             results.append(
                 self._create_complete_benchmark_run(
                     pipeline=pipeline,
@@ -247,11 +255,11 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     data=benchmark,
                     run_type="benchmark_summary",
                     measurements=measurements,
-                    device_info=None,  # Not available in summary
-                    model_name=None,   # Not available in summary
+                    device_info={"device_name": device},  # Match benchmarks format
+                    model_name=model_name,  # Extract model name from model_id
                     input_seq_length=benchmark.get("isl"),
                     output_seq_length=benchmark.get("osl"),
-                    dataset_name=None,
+                    dataset_name=model_id,  # Use full model_id as dataset_name
                     batch_size=benchmark.get("max_concurrency"),
                 )
             )
