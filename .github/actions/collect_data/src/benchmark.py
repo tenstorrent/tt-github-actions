@@ -143,7 +143,9 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
 
         try:
             benchmark_runs = self._process_benchmarks(pipeline, job, report_data.get("benchmarks", []))
-            benchmark_summary_runs = self._process_benchmarks_summary(pipeline, job, report_data.get("benchmarks_summary", []))
+            benchmark_summary_runs = self._process_benchmarks_summary(
+                pipeline, job, report_data.get("benchmarks_summary", [])
+            )
             eval_runs = self._process_evals(pipeline, job, report_data.get("evals", []))
             return benchmark_runs + benchmark_summary_runs + eval_runs
         except ValidationError as e:
@@ -215,11 +217,11 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 benchmark,
                 [
                     "ttft",
-                    "tput_user", 
+                    "tput_user",
                     "tput",
                 ],
             )
-            
+
             target_checks = benchmark.get("target_checks", {})
             for target_name, target_data in target_checks.items():
                 target_measurements = self._create_measurements(
@@ -231,21 +233,20 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                         "ttft_ratio",
                         "ttft_check",
                         "tput_user",
-                        "tput_user_ratio", 
+                        "tput_user_ratio",
                         "tput_user_check",
                         "tput_check",
                     ],
                 )
                 measurements.extend(target_measurements)
-            
+
             model_name = benchmark.get("model")
             if model_name and "/" in model_name:
                 model_name = model_name.split("/", 1)[1]
-            
-            
-            # Extract device (should now be included in benchmarks_summary)  
+
+            # Extract device (should now be included in benchmarks_summary)
             device = benchmark.get("device", "unknown")
-            
+
             results.append(
                 self._create_complete_benchmark_run(
                     pipeline=pipeline,
