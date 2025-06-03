@@ -209,7 +209,6 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         """
         results = []
         for benchmark in benchmarks_summary:
-            # Extract the basic measurements
             measurements = self._create_measurements(
                 job,
                 "benchmark_summary",
@@ -221,7 +220,6 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 ],
             )
             
-            # Process target_checks if they exist
             target_checks = benchmark.get("target_checks", {})
             for target_name, target_data in target_checks.items():
                 target_measurements = self._create_measurements(
@@ -240,10 +238,10 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 )
                 measurements.extend(target_measurements)
             
-            # Extract model_id (should now be included in benchmarks_summary)
-            model_id = benchmark.get("model_id", "unknown")
-            # Extract just the model name from the full model_id
-            model_name = model_id.split("/")[-1] if "/" in model_id else model_id
+            model_name = benchmark.get("model")
+            if model_name and "/" in model_name:
+                model_name = model_name.split("/", 1)[1]
+            
             
             # Extract device (should now be included in benchmarks_summary)  
             device = benchmark.get("device", "unknown")
@@ -255,11 +253,11 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     data=benchmark,
                     run_type="benchmark_summary",
                     measurements=measurements,
-                    device_info=device,  # Store as plain string, not JSON object
-                    model_name=model_name,  # Extract model name from model_id
+                    device_info=device,
+                    model_name=model_name,
                     input_seq_length=benchmark.get("isl"),
                     output_seq_length=benchmark.get("osl"),
-                    dataset_name=model_id,  # Use full model_id as dataset_name
+                    dataset_name=model_name,
                     batch_size=benchmark.get("max_concurrency"),
                 )
             )
