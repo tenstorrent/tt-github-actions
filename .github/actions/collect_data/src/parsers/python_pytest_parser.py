@@ -5,7 +5,7 @@
 from loguru import logger
 from functools import partial
 from pydantic_models import Test
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 from .parser import Parser
 from . import junit_xml_utils
@@ -73,13 +73,16 @@ def get_pydantic_test_from_pytest_testcase_(testcase, default_timestamp=datetime
     except:
         pass
 
+    test_duration = float(testcase.attrib["time"])
+
     # Error at the beginning of a test can prevent pytest from recording timestamps at all
-    if not (skipped or error) and "start_timestamp" in properties and "end_timestamp" in properties:
+    if not (skipped or error) and "start_timestamp" in properties:
         test_start_ts = parse_timestamp(properties["start_timestamp"])
-        test_end_ts = parse_timestamp(properties["end_timestamp"])
+        # Calculate end timestamp by adding duration to start timestamp
+        test_end_ts = test_start_ts + timedelta(seconds=test_duration)
     else:
         test_start_ts = default_timestamp
-        test_end_ts = default_timestamp
+        test_end_ts = default_timestamp + timedelta(seconds=test_duration)
 
     test_case_name = testcase.attrib["name"].split("[")[0]
 
