@@ -1,0 +1,30 @@
+name: Comment link to bounty terms on assignment
+
+on:
+  workflow_call:
+
+jobs:
+  add-comment:
+    runs-on: ubuntu-latest
+
+    permissions:
+      issues: write
+
+    steps:
+      - name: Add comment if issue is a bounty
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          COMMENT: |
+            Hi @${{ github.event.assignee.login }}, this bounty has been assigned to you!
+
+            Be sure that you read over the [BOUNTY TERMS](https://docs.tenstorrent.com/bounty_terms.html), as you agree to all of them by picking up this issue.
+            If we haven't received any communication from you in a two week period, we will re-assign the issue, and you will no longer be eligible for completion of this bounty.
+
+            If you have any questions, feel free to ping someone here on this issue. Looking forward to seeing your submission!
+
+        run: |
+          if gh api repos/$GH_REPO/issues/${{ github.event.issue.number }} --jq '.labels[].name' | grep -qx "bounty"; then
+            echo "Adding comment with bounty terms."
+            gh issue comment ${{ github.event.issue.number }} --body "$COMMENT"
+          fi
