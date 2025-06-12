@@ -1,0 +1,61 @@
+name: Acknowlege bounty PR with comment
+
+on:
+  workflow_call:
+
+jobs:
+  add-comment:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+      issues: read
+
+    steps:
+      - name: Add comment if linked issues are in the Bounty Program
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_REPO: ${{ github.repository }}
+          COMMENT: |
+            Hi there @${{ github.event.pull_request.user.login }} 👋
+            
+            Thanks for submitting your PR!
+            
+            We try to respond within 48 hours and aim to provide an initial review within 7 days.
+            If your PR is linked to a bounty issue, please make sure it is mentioned in the description.
+            Someone from our team will get back to you shortly. We appreciate your contribution!
+        run: |
+          linked_issues=$(gh pr view "$PR_NUMBER" --json closingIssuesReferences -q '.closingIssuesReferences[].id')
+
+          if [[ -z "$linked_issues" ]]; then
+            echo "No linked issues found."
+            exit 0
+          fi
+
+          for issue_id in $linked_issues; do
+            query='
+              query($issueId: ID!) {
+                node(id: $issueId) {
+                  ... on Issue {
+                    labels(first: 20) {
+                      nodes {
+                        name
+                      }
+                    }
+                  }
+                }
+              }'
+
+            result=$(gh api graphql -f query="$query" -F issueId="$issue_id")
+            labels=$(echo "$result" | jq -r '.data.node.labels.nodes[].name')
+
+            echo "$result"
+
+            if echo "$labels" | grep -qx "bounty"; then
+              echo "Bounty label found on linked issue $issue_id, commenting on PR."
+              gh pr comment "$PR_NUMBER" --body "$COMMENT"
+              exit 0
+            fi
+          done
