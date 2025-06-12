@@ -21,6 +21,8 @@ jobs:
             Be sure that you read over the [BOUNTY TERMS](https://docs.tenstorrent.com/bounty_terms.html), as you agree to all of them by picking up this issue.
             If we haven't received any communication from you in a two week period, we will re-assign the issue, and you will no longer be eligible for completion of this bounty.
 
+            When making a pull request, ensure there are [closing keywords](https://docs.github.com/articles/closing-issues-using-keywords) in the description to automatically link the bounty issue.
+
             If you have any questions, feel free to ping someone here on this issue. Looking forward to seeing your submission!
 
         run: |
