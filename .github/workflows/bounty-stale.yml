@@ -1,0 +1,28 @@
+name: Follow-up on Stale Bounties
+
+on:
+  workflow_call:
+  # schedule:
+  #   - cron: '30 1 * * *'  # every day at 1:30 UTC
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+
+    permissions:
+      issues: write
+
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-close: -1
+          days-before-pr-stale: -1
+          days-before-issue-stale: 14
+          only-labels: "bounty"
+          include-only-assigned: true
+          stale-issue-message: |
+            Stale Bounty Notice 🚨
+
+            This bounty has not received an update in two weeks and is being marked as stale.  If you are still working on this, please provide a quick update.
+
+            Otherwise, this bounty will be reopened for someone else to claim.
