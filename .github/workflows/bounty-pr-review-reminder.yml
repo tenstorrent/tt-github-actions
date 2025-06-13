@@ -69,6 +69,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_REPO: ${{ github.repository }}
         run: |
           PR_CREATED_AT=$(gh pr view "$PR_NUMBER" --json createdAt -q '.createdAt')
           PR_CREATED_DATE=$(date -d "$PR_CREATED_AT" "+%Y-%m-%d %H:%M:%S")
