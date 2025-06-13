@@ -18,6 +18,7 @@ jobs:
     outputs:
       is_bounty: ${{ steps.check-bounty.outputs.is_bounty }}
       has_reviewers: ${{ steps.check-reviewers.outputs.has_reviewers }}
+      pr_old_enough: ${{ steps.check-pr-age.outputs.pr_old_enough }}
 
     steps:
       - name: Check if linked issues are in the Bounty Program
@@ -31,6 +32,7 @@ jobs:
 
           if [[ -z "$linked_issues" ]]; then
             echo "No linked issues found."
+            echo "is_bounty=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -61,8 +63,30 @@ jobs:
           echo "No bounty label found on linked issues."
           echo "is_bounty=false" >> "$GITHUB_OUTPUT"
 
-      - name: Check if there are reviewers
+      - name: Check if PR is older than 24 hours
         if: steps.check-bounty.outputs.is_bounty == 'true'
+        id: check-pr-age
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          PR_CREATED_AT=$(gh pr view "$PR_NUMBER" --json createdAt -q '.createdAt')
+          PR_CREATED_DATE=$(date -d "$PR_CREATED_AT" "+%Y-%m-%d %H:%M:%S")
+          NOW_DATE=$(date "+%Y-%m-%d %H:%M:%S")
+
+          echo "PR created at: $PR_CREATED_DATE"
+          echo "Current time: $NOW_DATE"
+
+          TIME_DIFF_HOURS=$(echo "($(date -d "$NOW_DATE" +%s) - $(date -d "$PR_CREATED_DATE" +%s)) / 3600" | bc)
+
+          if [ "$TIME_DIFF_HOURS" -ge 24 ]; then
+            echo "pr_old_enough=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "pr_old_enough=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check if there are reviewers
+        if: steps.check-pr-age.outputs.pr_old_enough == 'true'
         id: check-reviewers
         env:
           GH_TOKEN: ${{ github.token }}
