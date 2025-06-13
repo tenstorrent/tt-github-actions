@@ -1,0 +1,104 @@
+name: Remind internal team on Slack to respond to bounty PR
+
+on:
+  workflow_call:
+    secrets:
+      SLACK_WEBHOOK_URL:
+        required: true
+
+jobs:
+  bounty-pr-alert:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: read
+      issues: read
+
+    outputs:
+      is_bounty: ${{ steps.check-bounty.outputs.is_bounty }}
+      has_reviewers: ${{ steps.check-reviewers.outputs.has_reviewers }}
+
+    steps:
+      - name: Check if linked issues are in the Bounty Program
+        id: check-bounty
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          linked_issues=$(gh pr view "$PR_NUMBER" --json closingIssuesReferences -q '.closingIssuesReferences[].id')
+
+          if [[ -z "$linked_issues" ]]; then
+            echo "No linked issues found."
+            exit 0
+          fi
+
+          for issue_id in $linked_issues; do
+            query='
+              query($issueId: ID!) {
+                node(id: $issueId) {
+                  ... on Issue {
+                    labels(first: 20) {
+                      nodes {
+                        name
+                      }
+                    }
+                  }
+                }
+              }'
+
+            result=$(gh api graphql -f query="$query" -F issueId="$issue_id")
+            labels=$(echo "$result" | jq -r '.data.node.labels.nodes[].name')
+
+            if echo "$labels" | grep -qx "bounty"; then
+              echo "Bounty label found on linked issue $issue_id."
+              echo "is_bounty=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+
+          echo "No bounty label found on linked issues."
+          echo "is_bounty=false" >> "$GITHUB_OUTPUT"
+
+      - name: Check if there are reviewers
+        if: steps.check-bounty.outputs.is_bounty == 'true'
+        id: check-reviewers
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          reviewers=$(gh pr view "$PR_NUMBER" --json reviewRequests -q '.reviewRequests[].requestedReviewer.login')
+
+          if [[ -z "$reviewers" ]]; then
+            echo "No reviewers."
+            echo "has_reviewers=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Reviewers:"
+            echo "$reviewers"
+            echo "has_reviewers=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Debug webhook secret
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "Slack webhook secret is empty"
+          else
+            echo "Slack webhook secret is set"
+          fi
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send Slack notification
+        if: steps.check-reviewers.outputs.has_reviewers == 'false'
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: |
+              :alarm_clock: *Reminder: Please Assign a Reviewer to Bounty PR*
+              *Title:* ${{ github.event.pull_request.title }}
+              *URL:* ${{ github.event.pull_request.html_url }}
+              *Author:* ${{ github.event.pull_request.user.login }}
