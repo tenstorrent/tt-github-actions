@@ -1,0 +1,96 @@
+name: Acknowlege bounty PR with comment and notify internal team on Slack
+
+on:
+  workflow_call:
+    secrets:
+      SLACK_WEBHOOK_URL:
+        required: true
+
+jobs:
+  bounty-pr-alert:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+      issues: read
+
+    outputs:
+      is_bounty: ${{ steps.check-bounty.outputs.is_bounty }}
+
+    steps:
+      - name: Add comment if linked issues are in the Bounty Program
+        id: check-bounty
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_REPO: ${{ github.repository }}
+          COMMENT: |
+            Hi there @${{ github.event.pull_request.user.login }} 👋
+
+            Thanks for submitting your PR!
+
+            We try to respond within 48 hours and aim to provide an initial review within 7 days.
+            If your PR is linked to a bounty issue, please make sure it is mentioned in the description.
+            Someone from our team will get back to you shortly. We appreciate your contribution!
+        run: |
+          linked_issues=$(gh pr view "$PR_NUMBER" --json closingIssuesReferences -q '.closingIssuesReferences[].id')
+
+          if [[ -z "$linked_issues" ]]; then
+            echo "No linked issues found."
+            exit 0
+          fi
+
+          for issue_id in $linked_issues; do
+            query='
+              query($issueId: ID!) {
+                node(id: $issueId) {
+                  ... on Issue {
+                    labels(first: 20) {
+                      nodes {
+                        name
+                      }
+                    }
+                  }
+                }
+              }'
+
+            result=$(gh api graphql -f query="$query" -F issueId="$issue_id")
+            labels=$(echo "$result" | jq -r '.data.node.labels.nodes[].name')
+
+            echo "$result"
+
+            if echo "$labels" | grep -qx "bounty"; then
+              echo "Bounty label found on linked issue $issue_id, commenting on PR."
+              echo "is_bounty=true" >> "$GITHUB_OUTPUT"
+              gh pr comment "$PR_NUMBER" --body "$COMMENT"
+              exit 0
+            fi
+          done
+
+          echo "No bounty label found on linked issues."
+          echo "is_bounty=false" >> "$GITHUB_OUTPUT"
+
+      - name: Debug webhook secret
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "Slack webhook secret is empty"
+          else
+            echo "Slack webhook secret is set"
+          fi
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send Slack notification
+        if: steps.check-bounty.outputs.is_bounty == 'true'
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: |
+              :money_with_wings: *New Bounty PR Submitted*
+              Please respond or assign a reviewer within the next 24 hours to meet our SLA.
+              *Title:* ${{ github.event.pull_request.title }}
+              *URL:* ${{ github.event.pull_request.html_url }}
+              *Author:* ${{ github.event.pull_request.user.login }}
