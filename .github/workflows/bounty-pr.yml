@@ -88,4 +88,9 @@ jobs:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload: |
-            text: ":money_with_wings: *New Bounty PR Submitted*\n*Title:* ${{ github.event.pull_request.title }}\n*URL:* ${{ github.event.pull_request.html_url }}\n*Author:* ${{ github.event.pull_request.user.login }}"
+            text: |
+              :money_with_wings: *New Bounty PR Submitted*
+              Please respond or assign a reviewer within the next 24 hours to meet our SLA.
+              *Title:* ${{ github.event.pull_request.title }}
+              *URL:* ${{ github.event.pull_request.html_url }}
+              *Author:* ${{ github.event.pull_request.user.login }}
