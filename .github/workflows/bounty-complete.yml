@@ -1,0 +1,28 @@
+name: Send message on Bounty Issue Completion
+
+on:
+  workflow_call:
+
+jobs:
+  add-comment:
+    runs-on: ubuntu-latest
+
+    permissions:
+      issues: write
+
+    steps:
+      - name: Add comment when bounty is completed.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+
+        run: |
+          if gh api repos/$GH_REPO/issues/${{ github.event.issue.number }} --jq '.labels[].name' | grep -qx "bounty"; then
+            echo "Adding comment with bounty completion."
+            ASSIGNEE=$(gh api repos/$GH_REPO/issues/${{ github.event.issue.number }} --jq '.assignee.login')
+            COMMENT="Hi @$ASSIGNEE, great work on completing this bounty!
+            Please send an email to cguerrero@tenstorrent.com to start the payment process.
+            Also, please complete our bounty feedback survey: https://forms.gle/hCxn3ExtuYL2mkZ19"
+
+            gh issue comment ${{ github.event.issue.number }} --body "$COMMENT"
+          fi
