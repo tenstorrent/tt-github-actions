@@ -219,6 +219,9 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "ttft",
                     "tput_user",
                     "tput",
+                    "average_clip",
+                    "deviation_clip",
+                    "fid_score",
                 ],
             )
 
