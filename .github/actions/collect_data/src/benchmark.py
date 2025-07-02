@@ -278,8 +278,8 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 "eval",
                 eval_entry,
                 [
-                    "score",
                     "task_name",
+                    "score",
                     "published_score",
                     "gpu_reference_score",
                     "accuracy_check",
