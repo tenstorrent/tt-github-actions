@@ -271,7 +271,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         results = []
         for eval_entry in evals:
             measurements = self._create_measurements(
-                job, "eval", eval_entry, ["score", "published_score", "gpu_reference_score"]
+                job, "eval", eval_entry, ["score", "published_score", "gpu_reference_score", "accuracy_check"]
             )
             results.append(
                 self._create_complete_benchmark_run(
