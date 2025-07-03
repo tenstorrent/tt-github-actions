@@ -282,7 +282,6 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 "eval",
                 eval_entry,
                 [
-                    "task_name",
                     "score",
                     "published_score",
                     "gpu_reference_score",
@@ -302,7 +301,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     model_name=eval_entry.get("model"),
                     input_seq_length=None,
                     output_seq_length=None,
-                    dataset_name=eval_entry.get("metadata", {}).get("dataset_path"),
+                    dataset_name=eval_entry.get("task_name"),
                     batch_size=None,
                 )
             )
