@@ -183,6 +183,10 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "tps_prefill_throughput",
                     "mean_e2el_ms",
                     "request_throughput",
+                    "num_requests",
+                    "total_input_tokens",
+                    "total_output_tokens",
+                    "num_prompts",
                 ],
             )
             model_name = benchmark.get("model_id")
@@ -274,7 +278,17 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         results = []
         for eval_entry in evals:
             measurements = self._create_measurements(
-                job, "eval", eval_entry, ["score", "published_score", "gpu_reference_score", "accuracy_check"]
+                job,
+                "eval",
+                eval_entry,
+                [
+                    "score",
+                    "published_score",
+                    "gpu_reference_score",
+                    "accuracy_check",
+                    "ratio_to_reference",
+                    "ratio_to_published",
+                ],
             )
             results.append(
                 self._create_complete_benchmark_run(
@@ -287,7 +301,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     model_name=eval_entry.get("model"),
                     input_seq_length=None,
                     output_seq_length=None,
-                    dataset_name=eval_entry.get("metadata", {}).get("dataset_path"),
+                    dataset_name=eval_entry.get("task_name"),
                     batch_size=None,
                 )
             )
