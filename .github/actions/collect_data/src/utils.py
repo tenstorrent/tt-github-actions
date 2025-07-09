@@ -259,19 +259,15 @@ def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
     job_submission_ts = github_job.get("created_at")
     job_start_ts = github_job.get("started_at")
     job_end_ts = github_job.get("completed_at")
-    job_submission_ts_dt = parse_timestamp(job_submission_ts)
-    job_start_ts_dt = parse_timestamp(job_start_ts)
 
     # make corrections to timestamps
-    if job_submission_ts_dt > job_start_ts_dt:
-        logger.warning(
-            f"Job {github_job_id} seems to have a start time that's earlier than submission. Setting equal for data"
-        )
-        job_submission_ts = job_start_ts
-
-    if job_status == "skipped":
-        logger.warning(f"Job {github_job_id} is skipped, setting start time equal to submission time for data")
-        job_start_ts = job_submission_ts
+    if parse_timestamp(job_submission_ts) > parse_timestamp(job_start_ts):
+        if job_status == "skipped":
+            logger.warning(f"Job {github_job_id} is skipped, setting start time equal to submission time")
+            job_start_ts = job_submission_ts
+        else:
+            logger.warning(f"Job {github_job_id} seems to have a start time that's earlier than submission")
+            job_submission_ts = job_start_ts
 
     is_build_job = "build" in name or "build" in labels
 
