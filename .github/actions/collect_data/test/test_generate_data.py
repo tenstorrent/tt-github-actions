@@ -38,7 +38,7 @@ def test_create_pipeline_json(run_id, expected):
         pipeline_json = json.load(file)
 
         # assert pipeline json has the correct card types
-        expected_card_types = ["N300", "N150", "E150", None]
+        expected_card_types = ["N300", "N150", "E150", "P150", None]
         for job in pipeline_json["jobs"]:
             assert job["card_type"] in expected_card_types
             assert "job_status" in job

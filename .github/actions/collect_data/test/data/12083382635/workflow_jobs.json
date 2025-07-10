@@ -1539,7 +1539,7 @@
       "created_at": "2024-11-29T11:22:29Z",
       "started_at": "2024-11-29T11:22:34Z",
       "completed_at": "2024-11-29T11:27:15Z",
-      "name": "build-and-test / run-tests (n150, OFF, run)",
+      "name": "build-and-test / run-tests (p150, OFF, run)",
       "steps": [
         {
           "name": "Set up job",
@@ -1721,10 +1721,10 @@
       "check_run_url": "https://api.github.com/repos/tenstorrent/tt-mlir/check-runs/33697889018",
       "labels": [
         "in-service",
-        "n150"
+        "p150"
       ],
       "runner_id": 26,
-      "runner_name": "n150-3",
+      "runner_name": "mlir-p150-3",
       "runner_group_id": 1,
       "runner_group_name": "Default"
     },
@@ -1744,7 +1744,7 @@
       "created_at": "2024-11-29T11:22:29Z",
       "started_at": "2024-11-29T11:22:42Z",
       "completed_at": "2024-11-29T11:29:54Z",
-      "name": "build-and-test / run-tests (n150, ON, perf)",
+      "name": "build-and-test / run-tests (p150, ON, perf)",
       "steps": [
         {
           "name": "Set up job",
@@ -1926,10 +1926,10 @@
       "check_run_url": "https://api.github.com/repos/tenstorrent/tt-mlir/check-runs/33697889294",
       "labels": [
         "in-service",
-        "n150"
+        "tt-beta-ubuntu-2204-p150b-viommu-large-stable"
       ],
       "runner_id": 28,
-      "runner_name": "n150-1",
+      "runner_name": "tt-beta-ubuntu-2204-p150b-viommu-large-stable",
       "runner_group_id": 1,
       "runner_group_name": "Default"
     },
