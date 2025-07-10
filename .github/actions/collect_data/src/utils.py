@@ -248,7 +248,7 @@ def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
     # Determine card type based on runner name
     runner_name = (github_job.get("runner_name") or "").upper()
     card_type = None
-    for card in ["E150", "N150", "N300", "BH"]:
+    for card in ["E150", "N150", "N300", "P150"]:
         if card in runner_name:
             card_type = card
             break
