@@ -6,6 +6,7 @@
 Definition of the pydantic models used for data production.
 """
 
+from enum import Enum
 from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, Field
@@ -244,11 +245,28 @@ class TensorDesc(BaseModel):
         "meaning each core has a 64x64 slice."
     )
 
+class TestStatus(Enum):
+    """
+    Status of the test execution.
+    """
+
+    compile_failed = "compile_failed"
+    run_failed = "run_failed"
+    golden_failed = "golden_failed"
+    success = "success"
+
+class Backend(Enum):
+    """
+    Backend used for the ML kernel operation test.
+    """
+
+    ttmetal = "ttmetal"
+    ttnn = "ttnn"
 
 class OpTest(BaseModel):
     """
-    Contains information about ML kernel operation tests, such as test execution,
-    results, configuration.
+    Contains information about ML kernel operation  & builder tests, such as
+    test execution, results, configuration.
     """
 
     github_job_id: int = Field(
@@ -274,4 +292,14 @@ class OpTest(BaseModel):
         default=None,
         description="Parametrization criteria for the operation, based on its kind, "
         "as key/value pairs, e.g. stride, padding, etc.",
+    )
+    git_sha: Optional[str] = Field(
+        description="Git commit SHA of the code being tested."
+    )
+    status: Optional[TestStatus] = Field(description="Status of the test execution.")
+    card_type: Optional[str] = Field(
+        description="Type of hardware card used for testing."
+    )
+    backend: Optional[Backend] = Field(
+        description="Backend used for the ML kernel operation test."
     )
