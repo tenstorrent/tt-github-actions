@@ -7,8 +7,10 @@ from pydantic_models import Test, OpTest
 
 from parsers.python_unittest_parser import PythonUnittestParser
 from parsers.python_pytest_parser import PythonPytestParser
+from parsers.builder_pytest_parser import BuilderPytestParser
 
 parsers = [
+    BuilderPytestParser(),
     PythonPytestParser(),
     PythonUnittestParser(),
 ]
