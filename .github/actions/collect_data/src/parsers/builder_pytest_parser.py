@@ -55,15 +55,17 @@ def get_tests(filepath, project=None, github_job_id=None):
     testsuite = report_root[0]
     default_timestamp = parse_timestamp(testsuite.attrib["timestamp"])
     
-    # Extract card type from testsuite properties
+    # Extract card type and git SHA from testsuite properties
     card_type = _get_card_type(testsuite)
+    git_sha = _get_git_sha(testsuite)
     
     get_pydantic_test = partial(
         get_pydantic_optest_from_pytest_testcase_, 
         default_timestamp=default_timestamp,
         project=project,
         github_job_id=github_job_id,
-        card_type=card_type
+        card_type=card_type,
+        git_sha=git_sha
     )
     tests = []
     for testcase in testsuite:
@@ -84,12 +86,23 @@ def _get_card_type(testsuite):
     return None
 
 
+def _get_git_sha(testsuite):
+    """Extract git SHA from testsuite properties."""
+    properties = testsuite.find('properties')
+    if properties is not None:
+        for prop in properties.findall('property'):
+            if prop.get('name') == 'git_sha':
+                return prop.get('value')
+    return None
+
+
 def get_pydantic_optest_from_pytest_testcase_(
     testcase, 
     default_timestamp=datetime.now(),
     project=None,
     github_job_id=None,
-    card_type=None
+    card_type=None,
+    git_sha=None
 ):
     skipped = junit_xml_utils.get_pytest_testcase_is_skipped(testcase)
     failed = junit_xml_utils.get_pytest_testcase_is_failed(testcase)
@@ -98,21 +111,25 @@ def get_pydantic_optest_from_pytest_testcase_(
 
     error_message = None
 
-    # Error is scarier than failure, expose that first
-    if failed:
-        error_message = junit_xml_utils.get_pytest_failure_message(testcase)
-
-    if error:
-        error_message = junit_xml_utils.get_pytest_error_message(testcase)
-
-    if skipped:
-        error_message = junit_xml_utils.get_pytest_skipped_message(testcase)
-
+    # First try to get error message from XML properties if it exists
     properties = {}
     try:
         properties = junit_xml_utils.get_pytest_testcase_properties(testcase)
+        error_message = properties.get("error_message")
     except:
         pass
+
+    # Fallback to junit XML error/failure messages if no error_message property
+    if error_message is None:
+        # Error is scarier than failure, expose that first
+        if failed:
+            error_message = junit_xml_utils.get_pytest_failure_message(testcase)
+
+        if error:
+            error_message = junit_xml_utils.get_pytest_error_message(testcase)
+
+        if skipped:
+            error_message = junit_xml_utils.get_pytest_skipped_message(testcase)
 
     test_duration = float(testcase.attrib["time"])
 
@@ -132,80 +149,96 @@ def get_pydantic_optest_from_pytest_testcase_(
 
     full_test_name = f"{filepath}::{test_name}"
 
-    # Extract test parameters as config if present
-    config = None
-    try:
-        config_string = properties.get("config")
-        if config_string is not None:
-            config = ast.literal_eval(html.unescape(config_string))
-        elif '[' in test_name and ']' in test_name:
-            # Extract parameters from test name for builder tests
-            param_part = test_name[test_name.find('[') + 1:test_name.rfind(']')]
-            if param_part:
-                config = {'parameters': param_part.split('-')}
-    except (ValueError, SyntaxError, TypeError) as e:
-        logger.debug(f"Error parsing config: {e}")
+    # Extract test parameters from prefixed properties (param_*)
+    config = {}
+    for key, value in properties.items():
+        if key.startswith("param_"):
+            param_name = key[6:]  # Remove "param_" prefix
+            config[param_name] = value
 
-    # Determine backend from test parameters
-    backend = None
-    if config and 'parameters' in config:
-        params = config['parameters']
-        if 'ttnn' in params:
-            backend = Backend.ttnn
-        elif 'ttmetal' in params:
-            backend = Backend.ttmetal
-
-    # Determine test status
-    status = None
-    if skipped:
-        status = None  # Skipped tests don't have a specific status in the enum
-    elif failed or error:
-        if "compile" in (error_message or "").lower():
-            status = TestStatus.compile_failed
-        elif "run" in (error_message or "").lower():
-            status = TestStatus.run_failed
-        elif "golden" in (error_message or "").lower():
-            status = TestStatus.golden_failed
-        else:
-            status = TestStatus.run_failed  # Default for failures
+    # Determine backend from XML properties
+    backend_str = properties.get("backend")
+    if not backend_str:
+        raise ValueError("Missing 'backend' property in XML")
+    
+    if backend_str == "ttnn":
+        backend = Backend.ttnn
+    elif backend_str == "ttmetal":
+        backend = Backend.ttmetal
+    elif backend_str == "ttnn-standalone":
+        backend = Backend.ttnn  # Map ttnn-standalone to ttnn enum
     else:
-        status = TestStatus.success
+        raise ValueError(f"Invalid backend string: {backend_str}")
 
-    # Extract operation information from test name and config
-    op_name = test_case_name
-    framework_op_name = test_case_name
+    # Determine test status from failure_stage property
+    failure_stage = properties.get("failure_stage")
+    
+    if failure_stage == "compile":
+        status = TestStatus.compile_failed
+    elif failure_stage == "runtime":
+        status = TestStatus.run_failed
+    elif failure_stage == "golden":
+        status = TestStatus.golden_failed
+    elif failure_stage == "success":
+        status = TestStatus.success
+    elif failure_stage is None:
+        # No failure_stage property means test was skipped before execution
+        if skipped:
+            status = None  # Skipped tests don't have a meaningful status
+        elif failed or error:
+            status = TestStatus.run_failed  # Fallback for failed tests without failure_stage
+        else:
+            status = TestStatus.success  # Fallback for successful tests without failure_stage
+    else:
+        # Unknown failure stage
+        if failed or error:
+            status = TestStatus.run_failed
+        elif skipped:
+            status = None
+        else:
+            status = TestStatus.success
+
+    # Extract operation information from XML properties or fallback to test name
+    op_name = properties.get("op_name", test_case_name)
+    framework_op_name = properties.get("framework_op_name", test_case_name)
     op_kind = "builder_op"  # Default for builder tests
     
-    # Parse tensor information from test parameters if available
+    # Parse tensor information from XML properties (preferred) or test parameters
     inputs = []
     outputs = []
-    if config and 'parameters' in config:
-        params = config['parameters']
-        # Look for shape information in parameters
-        for param in params:
-            if 'x' in param and param.replace('x', '').replace('128', '').replace('256', '').replace('512', '').isdigit():
-                # This looks like a shape parameter
-                shape_parts = param.split('x')
-                if all(part.isdigit() for part in shape_parts):
-                    shape = [int(part) for part in shape_parts]
-                    # Determine data type from parameters
-                    data_type = "f32"  # default
-                    for p in params:
-                        if p in ['f32', 'f16', 'bf16', 'i32', 'i16', 'i8']:
-                            data_type = p
-                            break
-                    
-                    tensor_desc = TensorDesc(
-                        shape=shape,
-                        data_type=data_type,
-                        buffer_type="DRAM",  # default
-                        layout="ROW_MAJOR",  # default
-                        grid_shape=[1, 1]    # default
-                    )
-                    inputs.append(tensor_desc)
-                    outputs.append(tensor_desc)  # Assume same output shape for now
-                break
-
+    
+    # First try to extract from XML properties we added
+    input_shapes_str = properties.get("input_shapes")
+    input_dtypes_str = properties.get("input_dtypes")
+    
+    if input_shapes_str and input_dtypes_str:
+        try:
+            # Parse shapes and dtypes from XML properties
+            shapes_list = ast.literal_eval(input_shapes_str)
+            dtypes_list = ast.literal_eval(input_dtypes_str)
+            
+            for i, (shape_str, dtype_str) in enumerate(zip(shapes_list, dtypes_list)):
+                # Parse shape string like "(32, 32)" to [32, 32]
+                shape = ast.literal_eval(shape_str)
+                if not isinstance(shape, (list, tuple)):
+                    shape = [shape]  # Handle single dimension
+                
+                tensor_desc = TensorDesc(
+                    shape=list(shape),
+                    data_type=dtype_str,
+                    buffer_type="DRAM",  # default
+                    layout="ROW_MAJOR",  # default
+                    grid_shape=[1, 1]    # default
+                )
+                inputs.append(tensor_desc)
+                # For now, assume output has same shape as last input
+                if i == len(shapes_list) - 1:
+                    outputs.append(tensor_desc)
+        except (ValueError, SyntaxError, TypeError) as e:
+            logger.debug(f"Error parsing tensor info from XML properties: {e}")
+            # Fallback to parameter parsing if XML properties fail
+            pass
+    
     try:
         return OpTest(
             github_job_id=github_job_id or 0,
@@ -226,7 +259,7 @@ def get_pydantic_optest_from_pytest_testcase_(
             inputs=inputs,
             outputs=outputs,
             op_params=config,
-            git_sha=None,  # Not available in pytest XML
+            git_sha=git_sha,
             status=status,
             card_type=card_type,
             backend=backend,
