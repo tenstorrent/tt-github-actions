@@ -65,4 +65,7 @@ jobs:
           echo "==== ENVIRONMENT ===="
           env
           echo "==== GITHUB CONTEXT ===="
-          echo "${{ toJson(github) }}"
+          echo "==== GITHUB CONTEXT (selected fields) ===="
+          echo "event_name: ${{ github.event_name }}"
+          echo "repository: ${{ github.repository }}"
+          echo "actor: ${{ github.actor }}"
