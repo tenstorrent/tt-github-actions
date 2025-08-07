@@ -9,10 +9,10 @@ on:
   # should not be activated here
   #
 
-  #issues:
-  #  types: [opened]
-  #pull_request:
-  #  types: [opened]
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
 
 
 jobs:
@@ -60,3 +60,9 @@ jobs:
       #    GH_TOKEN: ${{ github.token }}
       #    GH_REPO: ${{ github.repository }}
       #    LABELS: community
+      - name: Dump GitHub context and environment
+        run: |
+          echo "==== ENVIRONMENT ===="
+          env
+          echo "==== GITHUB CONTEXT ===="
+          echo "${{ toJson(github) }}"
