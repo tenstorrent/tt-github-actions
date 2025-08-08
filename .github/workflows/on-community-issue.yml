@@ -9,10 +9,10 @@ on:
   # should not be activated here
   #
 
-  #issues:
-  #  types: [opened]
-  #pull_request:
-  #  types: [opened]
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
 
 
 jobs:
@@ -60,3 +60,22 @@ jobs:
       #    GH_TOKEN: ${{ github.token }}
       #    GH_REPO: ${{ github.repository }}
       #    LABELS: community
+      - name: Dump GitHub context and environment
+        run: |
+          echo "==== community issue workflow debugging ===="
+          echo "==== GITHUB CONTEXT (selected fields) ===="
+          echo "repository: ${{ github.repository }}"
+          echo "event_name: ${{ github.event_name }}"
+          if [ "${{ github.event_name }}" = "issues" ]; then
+            echo "USERNAME=${{ github.event.issue.user.login }}" 
+            echo "NUMBER=${{ github.event.issue.number }}" 
+            echo "GH_COMMAND=issue" 
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "USERNAME=${{ github.event.pull_request.user.login }}" 
+            echo "NUMBER=${{ github.event.pull_request.number }}" 
+            echo "GH_COMMAND=pr" 
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            echo "USERNAME=${{ github.actor }}" 
+          fi
+          echo "actor: ${{ github.actor }}"
+          echo "is-member: ${{ steps.is_organization_member.outputs.is_member }}"
