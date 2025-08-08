@@ -245,6 +245,7 @@ class TensorDesc(BaseModel):
         "meaning each core has a 64x64 slice."
     )
 
+
 class TestStatus(Enum):
     """
     Status of the test execution.
@@ -255,6 +256,7 @@ class TestStatus(Enum):
     golden_failed = "golden_failed"
     success = "success"
 
+
 class Backend(Enum):
     """
     Backend used for the ML kernel operation test.
@@ -262,6 +264,7 @@ class Backend(Enum):
 
     ttmetal = "ttmetal"
     ttnn = "ttnn"
+
 
 class OpTest(BaseModel):
     """
@@ -293,13 +296,7 @@ class OpTest(BaseModel):
         description="Parametrization criteria for the operation, based on its kind, "
         "as key/value pairs, e.g. stride, padding, etc.",
     )
-    git_sha: Optional[str] = Field(
-        description="Git commit SHA of the code being tested."
-    )
+    git_sha: Optional[str] = Field(description="Git commit SHA of the code being tested.")
     status: Optional[TestStatus] = Field(description="Status of the test execution.")
-    card_type: Optional[str] = Field(
-        description="Type of hardware card used for testing."
-    )
-    backend: Optional[Backend] = Field(
-        description="Backend used for the ML kernel operation test."
-    )
+    card_type: Optional[str] = Field(description="Type of hardware card used for testing.")
+    backend: Optional[Backend] = Field(description="Backend used for the ML kernel operation test.")

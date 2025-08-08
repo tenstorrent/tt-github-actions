@@ -10,7 +10,9 @@ def failure_happened():
 
 
 def is_failure():
+
     return report_failure
+
 
 def is_valid_testcase_(testcase) -> bool:
     """
