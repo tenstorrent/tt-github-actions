@@ -13,13 +13,27 @@ from utils import parse_timestamp
 import ast
 import html
 from pydantic import ValidationError
-from shared import failure_happened
+from shared import failure_happened, is_valid_testcase_
+
+# Mapping from backend string to backend enum
+BACKEND_STR_TO_ENUM: dict[str, Backend] = {
+        "ttnn": Backend.ttnn,
+        "ttmetal": Backend.ttmetal,
+        "ttnn-standalone": Backend.ttnn
+        }
+
+FAILURE_STAGE_TO_STATUS_ENUM: dict[str, TestStatus] = {
+        "compile": TestStatus.compile_failed,
+        "golden": TestStatus.golden_failed,
+        "runtime": TestStatus.run_failed,
+        "success": TestStatus.success
+        }
 
 
 class BuilderPytestParser(Parser):
     """Parser for builder pytest report files."""
 
-    def can_parse(self, filepath: str):
+    def can_parse(self, filepath: str) -> bool:
         if not filepath.endswith(".xml"):
             return False
         try:
@@ -45,11 +59,11 @@ class BuilderPytestParser(Parser):
         filepath: str,
         project: Optional[str] = None,
         github_job_id: Optional[int] = None,
-    ):
+    ) -> list:
         return get_tests(filepath, project, github_job_id)
 
 
-def get_tests(filepath, project=None, github_job_id=None):
+def get_tests(filepath, project: Optional[str] = None, github_job_id: Optional[int] = None):
     report_root_tree = junit_xml_utils.get_xml_file_root_element_tree(filepath)
     report_root = report_root_tree.getroot()
     testsuite = report_root[0]
@@ -76,33 +90,38 @@ def get_tests(filepath, project=None, github_job_id=None):
     return tests
 
 
-def _get_card_type(testsuite):
+def _get_card_type(testsuite) -> str:
     """Extract card type from testsuite properties."""
     properties = testsuite.find('properties')
-    if properties is not None:
+    try:
         for prop in properties.findall('property'):
-            if prop.get('name') == 'card':
-                return prop.get('value')
-    return None
+                if prop.get('name') == 'card':
+                    return prop.get('value')
+        raise KeyError
+    except Exception:
+        raise KeyError("Unable to find 'card' property in suite")
 
 
-def _get_git_sha(testsuite):
+
+def _get_git_sha(testsuite) -> str:
     """Extract git SHA from testsuite properties."""
     properties = testsuite.find('properties')
-    if properties is not None:
+    try:
         for prop in properties.findall('property'):
-            if prop.get('name') == 'git_sha':
-                return prop.get('value')
-    return None
+                if prop.get('name') == 'git_sha':
+                    return prop.get('value')
+        raise KeyError
+    except Exception:
+        raise KeyError("Unable to find 'git_sha' property in suite")
 
 
 def get_pydantic_optest_from_pytest_testcase_(
     testcase, 
-    default_timestamp=datetime.now(),
-    project=None,
-    github_job_id=None,
-    card_type=None,
-    git_sha=None
+    card_type: str,
+    git_sha: str,
+    github_job_id: Optional[int] = None,
+    default_timestamp: Optional[datetime] = datetime.now(),
+    project: Optional[str] = None,
 ):
     skipped = junit_xml_utils.get_pytest_testcase_is_skipped(testcase)
     failed = junit_xml_utils.get_pytest_testcase_is_failed(testcase)
@@ -158,30 +177,23 @@ def get_pydantic_optest_from_pytest_testcase_(
 
     # Determine backend from XML properties
     backend_str = properties.get("backend")
-    if not backend_str:
+    if backend_str is None:
         raise ValueError("Missing 'backend' property in XML")
     
-    if backend_str == "ttnn":
-        backend = Backend.ttnn
-    elif backend_str == "ttmetal":
-        backend = Backend.ttmetal
-    elif backend_str == "ttnn-standalone":
-        backend = Backend.ttnn  # Map ttnn-standalone to ttnn enum
-    else:
+    try:
+        backend = BACKEND_STR_TO_ENUM[backend_str]
+    except KeyError:
         raise ValueError(f"Invalid backend string: {backend_str}")
 
     # Determine test status from failure_stage property
     failure_stage = properties.get("failure_stage")
     
-    if failure_stage == "compile":
-        status = TestStatus.compile_failed
-    elif failure_stage == "runtime":
-        status = TestStatus.run_failed
-    elif failure_stage == "golden":
-        status = TestStatus.golden_failed
-    elif failure_stage == "success":
-        status = TestStatus.success
-    elif failure_stage is None:
+    if failure_stage is not None:
+        try:
+            status = FAILURE_STAGE_TO_STATUS_ENUM[failure_stage]
+        except KeyError:
+            raise ValueError("Invalid status string: {failure_stage}")
+    else: # TODO: think about how to handle tests with null failure_stage
         # No failure_stage property means test was skipped before execution
         if skipped:
             status = None  # Skipped tests don't have a meaningful status
@@ -189,14 +201,6 @@ def get_pydantic_optest_from_pytest_testcase_(
             status = TestStatus.run_failed  # Fallback for failed tests without failure_stage
         else:
             status = TestStatus.success  # Fallback for successful tests without failure_stage
-    else:
-        # Unknown failure stage
-        if failed or error:
-            status = TestStatus.run_failed
-        elif skipped:
-            status = None
-        else:
-            status = TestStatus.success
 
     # Extract operation information from XML properties or fallback to test name
     op_name = properties.get("op_name", test_case_name)
@@ -205,39 +209,41 @@ def get_pydantic_optest_from_pytest_testcase_(
     
     # Parse tensor information from XML properties (preferred) or test parameters
     inputs = []
-    outputs = []
+
+    # For now, assume no outputs until golden checking is implemented into pytest. 
+    outputs = None
     
     # First try to extract from XML properties we added
     input_shapes_str = properties.get("input_shapes")
+    if input_shapes_str is None:
+        raise ValueError("Missing 'input_shapes' property in XML")
+
     input_dtypes_str = properties.get("input_dtypes")
+    if input_dtypes_str is None:
+        raise ValueError("Missing 'input_dtypes' property in XML")
     
-    if input_shapes_str and input_dtypes_str:
-        try:
-            # Parse shapes and dtypes from XML properties
-            shapes_list = ast.literal_eval(input_shapes_str)
-            dtypes_list = ast.literal_eval(input_dtypes_str)
+    try:
+        # Parse shapes and dtypes from XML properties
+        shapes_list = ast.literal_eval(input_shapes_str)
+        dtypes_list = ast.literal_eval(input_dtypes_str)
+        
+        for (shape_str, dtype_str) in zip(shapes_list, dtypes_list):
+            # Parse shape string like "(32, 32)" to [32, 32]
+            shape = ast.literal_eval(shape_str)
+            if not isinstance(shape, (list, tuple)):
+                shape = [shape]  # Handle single dimension
             
-            for i, (shape_str, dtype_str) in enumerate(zip(shapes_list, dtypes_list)):
-                # Parse shape string like "(32, 32)" to [32, 32]
-                shape = ast.literal_eval(shape_str)
-                if not isinstance(shape, (list, tuple)):
-                    shape = [shape]  # Handle single dimension
-                
-                tensor_desc = TensorDesc(
-                    shape=list(shape),
-                    data_type=dtype_str,
-                    buffer_type="DRAM",  # default
-                    layout="ROW_MAJOR",  # default
-                    grid_shape=[1, 1]    # default
-                )
-                inputs.append(tensor_desc)
-                # For now, assume output has same shape as last input
-                if i == len(shapes_list) - 1:
-                    outputs.append(tensor_desc)
-        except (ValueError, SyntaxError, TypeError) as e:
-            logger.debug(f"Error parsing tensor info from XML properties: {e}")
-            # Fallback to parameter parsing if XML properties fail
-            pass
+            tensor_desc = TensorDesc(
+                shape=list(shape),
+                data_type=dtype_str,
+                buffer_type="DRAM",  # default
+                layout="ROW_MAJOR",  # default
+                grid_shape=[1, 1]    # default
+            )
+            inputs.append(tensor_desc)
+    except (ValueError, SyntaxError, TypeError) as e:
+        logger.error(f"Error parsing tensor info from XML properties: {e}")
+        pass
     
     try:
         return OpTest(
@@ -270,17 +276,3 @@ def get_pydantic_optest_from_pytest_testcase_(
         return None
 
 
-def is_valid_testcase_(testcase):
-    """
-    Some cases of invalid tests include:
-
-    - GitHub times out pytest so it records something like this:
-        </testcase>
-        <testcase time="0.032"/>
-    """
-    if "name" not in testcase.attrib or "classname" not in testcase.attrib:
-        # This should be able to capture all cases where there's no info
-        logger.warning("Found invalid test case with: no name nor classname")
-        return False
-    else:
-        return True
