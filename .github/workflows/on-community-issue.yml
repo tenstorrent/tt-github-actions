@@ -60,6 +60,9 @@ jobs:
       #    GH_TOKEN: ${{ github.token }}
       #    GH_REPO: ${{ github.repository }}
       #    LABELS: community
+#
+#  Jonathan Baker - looking for information about the community-issue process failing.  Debugging only.
+#
       - name: Dump GitHub context and environment
         run: |
           echo "==== community issue workflow debugging ===="
