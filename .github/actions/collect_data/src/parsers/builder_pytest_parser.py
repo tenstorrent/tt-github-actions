@@ -4,7 +4,7 @@
 
 from loguru import logger
 from functools import partial
-from pydantic_models import OpTest, TensorDesc, TestStatus, Backend
+from pydantic_models import OpTest, TensorDesc, TestStatus
 from datetime import datetime, timedelta
 from typing import Optional
 from .parser import Parser
@@ -13,13 +13,6 @@ from utils import parse_timestamp
 import ast
 from pydantic import ValidationError
 from shared import failure_happened, is_valid_testcase_
-
-# Mapping from backend string to backend enum
-BACKEND_STR_TO_ENUM: dict[str, Backend] = {
-    "ttnn": Backend.ttnn,
-    "ttmetal": Backend.ttmetal,
-    "ttnn-standalone": Backend.ttnn,
-}
 
 FAILURE_STAGE_TO_STATUS_ENUM: dict[str, TestStatus] = {
     "compile": TestStatus.compile_failed,
@@ -249,7 +242,7 @@ def get_pydantic_optest_from_pytest_testcase_(
             skipped=skipped,
             error_message=error_message,
             config=config,
-            frontend=project or "builder",
+            frontend=properties.get("frontend", project or "builder"),
             model_name="builder_ops",  # Default model name for builder tests
             op_kind=op_kind,
             op_name=op_name,

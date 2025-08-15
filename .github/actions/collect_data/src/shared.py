@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+from loguru import logger
+
 report_failure = False
 
 

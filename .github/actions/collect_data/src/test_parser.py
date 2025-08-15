@@ -10,7 +10,6 @@ from parsers.python_pytest_parser import PythonPytestParser
 from parsers.builder_pytest_parser import BuilderPytestParser
 
 parsers = [
-    BuilderPytestParser(),
     PythonPytestParser(),
     PythonUnittestParser(),
 ]
