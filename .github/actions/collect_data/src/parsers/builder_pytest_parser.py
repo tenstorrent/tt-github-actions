@@ -178,11 +178,6 @@ def get_pydantic_optest_from_pytest_testcase_(
     if backend_str is None:
         raise ValueError("Missing 'backend' property in XML")
 
-    try:
-        backend = BACKEND_STR_TO_ENUM[backend_str]
-    except KeyError:
-        raise ValueError(f"Invalid backend string: {backend_str}")
-
     # Determine test status from failure_stage property
     failure_stage = properties.get("failure_stage")
 
@@ -265,7 +260,7 @@ def get_pydantic_optest_from_pytest_testcase_(
             git_sha=git_sha,
             status=status,
             card_type=card_type,
-            backend=backend,
+            backend=backend_str,
         )
     except ValidationError as e:
         failure_happened()
