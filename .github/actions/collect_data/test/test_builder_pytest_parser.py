@@ -11,7 +11,7 @@ from typing import Any
 REPORTS_PATH: str = "test/data/builder_reports/"
 
 
-@pytest.mark.parametrize("filename,expected", "binoptests.xml", {"num_tests": 33})
+@pytest.mark.parametrize("filename,expected", [("binoptests.xml", {"num_tests": 33})])
 def test_builder_pytest_parser(filename: str, expected: dict[str, Any]):
     filepath = os.path.join(REPORTS_PATH, filename)
     parser = BuilderPytestParser()
