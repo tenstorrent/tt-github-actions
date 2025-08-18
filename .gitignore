@@ -10,3 +10,5 @@
 .github/actions/show_telemtery/*.out
 .github/actions/show_telemtery/*.log
 .github/actions/show_telemtery/telemetry/
+
+venv*
