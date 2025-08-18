@@ -36,7 +36,7 @@ download_artifacts() {
     for artifact in $(gh api --paginate /repos/$REPOSITORY/actions/runs/$RUN_ID/artifacts | jq '.artifacts[] | .name' | grep report); do
         artifact=${artifact//\"/} # strip quotes
         echo "[Info] Downloading artifacts $artifact"
-        gh run download --repo $REPOSITORY -D generated/cicd/$RUN_ID/artifacts --name $artifact $RUN_ID
+        gh run download --repo $REPOSITORY -D generated/cicd/$RUN_ID/artifacts/$artifact --name $artifact $RUN_ID
     done
 }
 
