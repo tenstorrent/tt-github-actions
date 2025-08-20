@@ -49,6 +49,9 @@ def create_cicd_json_for_data_analysis(
     project = raw_pipeline["project"]
 
     jobs = []
+    git_branch = raw_pipeline.get("git_branch_name", "")
+    logger.info(f"Processing pipeline on branch: {git_branch}")
+
     for raw_job in raw_jobs:
         tests = []
         github_job_id = raw_job["github_job_id"]
@@ -58,7 +61,11 @@ def create_cicd_json_for_data_analysis(
             for test_report_path in github_job_id_to_test_reports[github_job_id]:
                 logger.info(f"Processing test report {test_report_path}")
                 tests_in_report = parse_file(
-                    test_report_path, project=project, github_job_id=github_job_id, job_name=job_name
+                    test_report_path,
+                    project=project,
+                    github_job_id=github_job_id,
+                    job_name=job_name,
+                    git_branch=git_branch,
                 )
                 logger.info(f"Found {len(tests_in_report)} tests in report {test_report_path}")
                 tests.extend(tests_in_report)
