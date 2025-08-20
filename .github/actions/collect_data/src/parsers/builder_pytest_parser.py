@@ -194,41 +194,43 @@ def get_pydantic_optest_from_pytest_testcase_(
 
     op_kind = "builder_op"  # Default for builder tests
 
-    # Parse tensor information from XML properties (preferred) or test parameters
-    inputs = []
-
-    # For now, assume no outputs until golden checking is implemented into pytest.
-    outputs = []
-
-    # First try to extract from XML properties we added
+    # Attempt to read the input/output tensor metadata.
     input_shapes_str = properties.get("input_shapes")
-    if input_shapes_str is None:
-        raise ValueError("Missing 'input_shapes' property in XML")
+    if input_shapes_str is not None:
 
-    input_dtypes_str = properties.get("input_dtypes")
-    if input_dtypes_str is None:
-        raise ValueError("Missing 'input_dtypes' property in XML")
+        # Parse tensor information from XML properties (preferred) or test parameters
+        inputs = []
 
-    try:
-        # Parse shapes and dtypes from XML properties
-        shapes_list = ast.literal_eval(input_shapes_str)
-        dtypes_list = ast.literal_eval(input_dtypes_str)
+        # For now, assume no outputs until golden checking is implemented into pytest.
+        outputs = []
 
-        for (shape, dtype) in zip(shapes_list, dtypes_list):
-            if not isinstance(shape, (list, tuple)):
-                shape = [shape]  # Handle single dimension
+        input_dtypes_str = properties.get("input_dtypes")
+        if input_dtypes_str is None:
+            raise ValueError("Missing 'input_dtypes' property in XML when `input_shapes` is supplied")
 
-            tensor_desc = TensorDesc(
-                shape=list(shape),
-                data_type=dtype,
-                buffer_type="DRAM",  # default
-                layout="ROW_MAJOR",  # default
-                grid_shape=[1, 1],  # default
-            )
-            inputs.append(tensor_desc)
-    except (ValueError, SyntaxError, TypeError) as e:
-        logger.error(f"Error parsing tensor info from XML properties: {e}")
-        pass
+        try:
+            # Parse shapes and dtypes from XML properties
+            shapes_list = ast.literal_eval(input_shapes_str)
+            dtypes_list = ast.literal_eval(input_dtypes_str)
+
+            for (shape, dtype) in zip(shapes_list, dtypes_list):
+                if not isinstance(shape, (list, tuple)):
+                    shape = [shape]  # Handle single dimension
+
+                tensor_desc = TensorDesc(
+                    shape=list(shape),
+                    data_type=dtype,
+                    buffer_type="DRAM",  # default
+                    layout="ROW_MAJOR",  # default
+                    grid_shape=[1, 1],  # default
+                )
+                inputs.append(tensor_desc)
+        except (ValueError, SyntaxError, TypeError) as e:
+            logger.error(f"Error parsing tensor info from XML properties: {e}")
+            pass
+    else:  # Default to input and output being `None`
+        inputs = None
+        outputs = None
 
     try:
         return OpTest(

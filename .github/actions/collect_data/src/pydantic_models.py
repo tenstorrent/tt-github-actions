@@ -280,8 +280,8 @@ class OpTest(BaseModel):
     op_kind: str = Field(description="Kind of operation, e.g. Eltwise.")
     op_name: str = Field(description="Name of the operation, e.g. ttnn.conv2d")
     framework_op_name: str = Field(description="Name of the operation within the framework, e.g. torch.conv2d")
-    inputs: List[TensorDesc] = Field(description="List of input tensors.")
-    outputs: List[TensorDesc] = Field(description="List of output tensors.")
+    inputs: Optional[List[TensorDesc]] = Field(description="List of input tensors.")
+    outputs: Optional[List[TensorDesc]] = Field(description="List of output tensors.")
     op_params: Optional[dict] = Field(
         default=None,
         description="Parametrization criteria for the operation, based on its kind, "
