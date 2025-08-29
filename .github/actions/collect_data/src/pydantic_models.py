@@ -7,7 +7,7 @@ Definition of the pydantic models used for data production.
 """
 
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 from pydantic import BaseModel, Field
 
@@ -268,7 +268,8 @@ class OpTest(BaseModel):
     )
     full_test_name: str = Field(description="Test name plus config.")
     test_start_ts: datetime = Field(description="Timestamp with timezone when the test execution started.")
-    test_end_ts: datetime = Field(description="Timestamp with timezone when the test execution ended.")
+    test_end_ts: Optional[datetime] = Field(None, description="Timestamp with timezone when the test execution ended.")
+    test_duration: Optional[timedelta] = Field(description="Duration of the test")
     test_case_name: str = Field(description="Name of the pytest function.")
     filepath: str = Field(description="Test file path and name.")
     success: bool = Field(description="Test execution success.")

@@ -141,15 +141,16 @@ def get_pydantic_optest_from_pytest_testcase_(
         if skipped:
             error_message = junit_xml_utils.get_pytest_skipped_message(testcase)
 
-    test_duration = float(testcase.attrib["time"])
+    test_duration_seconds = float(testcase.attrib["time"])
+    test_duration = timedelta(seconds=test_duration_seconds)
 
     # Error at the beginning of a test can prevent pytest from recording timestamps at all
     if not (skipped or error) and "start_timestamp" in properties:
         test_start_ts = parse_timestamp(properties["start_timestamp"])
-        test_end_ts = test_start_ts + timedelta(seconds=test_duration)
     else:
         test_start_ts = default_timestamp
-        test_end_ts = default_timestamp + timedelta(seconds=test_duration)
+
+    test_end_ts = None
 
     test_name = testcase.attrib["name"]
     test_case_name = test_name.split("[")[0]
@@ -238,6 +239,7 @@ def get_pydantic_optest_from_pytest_testcase_(
             full_test_name=full_test_name,
             test_start_ts=test_start_ts,
             test_end_ts=test_end_ts,
+            test_duration=test_duration,
             test_case_name=test_case_name,
             filepath=filepath,
             success=success,
