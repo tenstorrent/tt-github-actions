@@ -294,7 +294,6 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "fid_score",
                     "average_clip_accuracy_check",
                     "fid_score_accuracy_check",
-                    "accuracy_check",
                 ],
             )
             results.append(
