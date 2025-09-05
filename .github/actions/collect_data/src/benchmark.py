@@ -223,9 +223,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "ttft",
                     "tput_user",
                     "tput",
-                    "average_clip",
-                    "deviation_clip",
-                    "fid_score",
+                    "avg_gen_time",
                 ],
             )
 
@@ -243,6 +241,9 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                         "tput_user_ratio",
                         "tput_user_check",
                         "tput_check",
+                        "avg_gen_time",
+                        "avg_gen_time_ratio",
+                        "avg_gen_time_check",
                     ],
                 )
                 measurements.extend(target_measurements)
@@ -288,6 +289,12 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "accuracy_check",
                     "ratio_to_reference",
                     "ratio_to_published",
+                    "average_clip",
+                    "deviation_clip",
+                    "fid_score",
+                    "average_clip_accuracy_check",
+                    "fid_score_accuracy_check",
+                    "accuracy_check",
                 ],
             )
             results.append(
