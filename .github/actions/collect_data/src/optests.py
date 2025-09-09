@@ -4,7 +4,7 @@
 
 from loguru import logger
 from cicd import get_github_job_id_to_test_reports
-from utils import get_data_pipeline_datetime_from_datetime, get_job_rows_from_github_info
+from utils import get_data_pipeline_datetime_from_datetime
 import json
 from parsers.tt_torch_model_tests_parser import TTTorchModelTestsParser
 from parsers.builder_pytest_parser import BuilderPytestParser

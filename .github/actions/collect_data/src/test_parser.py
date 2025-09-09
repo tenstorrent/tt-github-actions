@@ -7,7 +7,6 @@ from pydantic_models import Test, OpTest
 
 from parsers.python_unittest_parser import PythonUnittestParser
 from parsers.python_pytest_parser import PythonPytestParser
-from optests import should_use_builder_pytest_parser
 
 parsers = [
     PythonPytestParser(),
@@ -33,11 +32,6 @@ def parse_file(
     :return: List of tests.
     """
     filepath = str(filepath)
-
-    # Skip files handled by optests.py
-    if should_use_builder_pytest_parser(job_name, git_branch):
-        logger.info(f"Skipping file '{filepath}' - handled by optests.py")
-        return []
 
     # Use default parsers for other jobs
     for parser in parsers:
