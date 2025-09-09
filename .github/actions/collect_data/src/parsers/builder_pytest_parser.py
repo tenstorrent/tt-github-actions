@@ -244,7 +244,7 @@ def get_pydantic_optest_from_pytest_testcase_(
             filepath=filepath,
             success=success,
             skipped=skipped,
-            error_message=error_message,
+            message=error_message,
             config=config,
             frontend=properties.get("frontend", project or "builder"),
             model_name="builder_ops",  # Default model name for builder tests

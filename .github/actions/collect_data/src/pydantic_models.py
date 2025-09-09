@@ -274,7 +274,7 @@ class OpTest(BaseModel):
     filepath: str = Field(description="Test file path and name.")
     success: bool = Field(description="Test execution success.")
     skipped: bool = Field(description="Some tests in a job can be skipped.")
-    error_message: Optional[str] = Field(None, description="Succinct error string, such as exception type.")
+    message: Optional[str] = Field(None, description="Succinct error string, such as exception type.")
     config: Optional[dict] = Field(default=None, description="Test configuration, as key/value pairs.")
     frontend: str = Field(description="ML frontend or framework used to run the test.")
     model_name: str = Field(description="Name of the ML model in which this operation is used.")
