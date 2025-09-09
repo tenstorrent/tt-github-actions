@@ -4,8 +4,32 @@
 
 from loguru import logger
 from cicd import get_github_job_id_to_test_reports
-from utils import get_data_pipeline_datetime_from_datetime
+from utils import get_data_pipeline_datetime_from_datetime, get_job_rows_from_github_info
+import json
 from parsers.tt_torch_model_tests_parser import TTTorchModelTestsParser
+from parsers.builder_pytest_parser import BuilderPytestParser
+from typing import Optional
+
+
+def should_use_builder_pytest_parser(job_name: Optional[str], git_branch: Optional[str]) -> bool:
+    """
+    Determine if BuilderPytestParser should be used based on job name and git branch.
+
+    :param job_name: Job name to check for 'builder' keyword.
+    :param git_branch: Git branch name, must be 'main' for builder parsing.
+    :return: True if BuilderPytestParser should be used, False otherwise.
+    """
+    if not job_name or not git_branch:
+        return False
+
+    # Use BuilderPytestParser only for jobs with "builder" in the name on main branch
+    if "builder" in job_name.lower() and git_branch == "main":
+        logger.info(f"Should use BuilderPytestParser for builder job '{job_name}' on main branch")
+        return True
+    elif "builder" in job_name.lower() and git_branch != "main":
+        logger.info(f"Skipping BuilderPytestParser for builder job '{job_name}' on branch '{git_branch}' (not main)")
+
+    return False
 
 
 def create_optest_reports(pipeline, workflow_outputs_dir):
@@ -13,10 +37,33 @@ def create_optest_reports(pipeline, workflow_outputs_dir):
     github_job_id_to_test_reports = get_github_job_id_to_test_reports(
         workflow_outputs_dir, pipeline.github_pipeline_id, ".tar"
     )
-    parser = TTTorchModelTestsParser()
+
+    # Load job information to get job names
+    github_jobs_json_filename = f"{workflow_outputs_dir}/{pipeline.github_pipeline_id}/workflow_jobs.json"
+    logger.info(f"Load jobs info from: {github_jobs_json_filename}")
+    with open(github_jobs_json_filename) as github_jobs_json_file:
+        github_jobs_json = json.load(github_jobs_json_file)
+
+    # Create a mapping from job_id to job_name
+    job_id_to_name = {}
+    for job in github_jobs_json:
+        job_id_to_name[job["id"]] = job.get("name", "")
+
+    git_branch = getattr(pipeline, "git_branch_name", "")
+    logger.info(f"Processing OpTest pipeline on branch: {git_branch}")
 
     for github_job_id, test_reports in github_job_id_to_test_reports.items():
         tests = []
+        job_name = job_id_to_name.get(github_job_id, "")
+
+        # Select parser based on job name and git branch
+        if should_use_builder_pytest_parser(job_name, git_branch):
+            parser = BuilderPytestParser()
+            logger.info(f"Using BuilderPytestParser for job '{job_name}' on branch '{git_branch}'")
+        else:
+            parser = TTTorchModelTestsParser()
+            logger.info(f"Using TTTorchModelTestsParser for job '{job_name}'")
+
         for test_report in test_reports:
             tests = parser.parse(test_report, project=pipeline.project, github_job_id=github_job_id)
             tests.extend(tests)
