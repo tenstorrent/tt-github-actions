@@ -33,10 +33,9 @@ set_up_dirs() {
 # Download artifacts for the given run id
 # Test report artfacts must include "report" in their name
 download_artifacts() {
-    for artifact in $(gh api --paginate /repos/$REPOSITORY/actions/runs/$RUN_ID/artifacts | jq '.artifacts[] | .name' | grep report); do
-        artifact=${artifact//\"/} # strip quotes
-        echo "[Info] Downloading artifacts $artifact"
-        gh run download --repo $REPOSITORY -D generated/cicd/$RUN_ID/artifacts/$artifact --name $artifact $RUN_ID
+    gh api --paginate /repos/$REPOSITORY/actions/runs/$RUN_ID/artifacts | jq -r '.artifacts[] | .name' | grep report | while IFS= read -r artifact; do
+        echo "[Info] Downloading artifacts '$artifact'"
+        gh run download --repo $REPOSITORY -D "generated/cicd/$RUN_ID/artifacts/$artifact" --name "$artifact" $RUN_ID
     done
 }
 
