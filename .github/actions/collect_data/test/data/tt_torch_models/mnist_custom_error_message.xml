@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites name="pytest tests">
+    <testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="31.086"
+        timestamp="2025-09-09T21:12:13.835275+00:00"
+        hostname="yyzc-wh-05-special-jameszianxu-for-reservation-35077">
+        <testcase classname="tests.models.mnist.test_mnist"
+            name="test_mnist_train[single_device-full-eval]" time="30.378">
+            <properties>
+                <property name="start_timestamp" value="2025-09-09T21:12:14.538541+00:00" />
+                <property name="error_message" value="This is a custom error message." />
+                <property name="model_name" value="pytorch_mnist_base_cv_image_cls_custom" />
+                <property name="frontend" value="tt-torch" />
+                <property name="owner" value="tt-torch" />
+                <property name="group" value="generality" />
+                <property name="config"
+                    value="{'compiler_config': {'compile_depth': 'CompileDepth.EXECUTE', 'profile_ops': True, 'torch_mlir_module': None, 'stablehlo_mlir_module': None, 'unique_ops': {}, 'stable_hlo_ops': [], 'model_name': 'pytorch_mnist_base_cv_image_cls_custom', 'results_path': 'results/models/', 'single_op_timeout': 30, 'enable_consteval': True, 'enable_optimizer': False, '_consteval_parameters': True, '_enable_intermediate_verification': False, '_verify_op_by_op': False}}" />
+                <property name="achieved_compile_depth" value="EXECUTE" />
+                <property name="tags"
+                    value="{'backend': 'tt-experimental', 'model_name': 'pytorch_mnist_base_cv_image_cls_custom', 'frontend': 'tt-torch', 'required_pcc': 0.99, 'required_atol': 0.01, 'is_asserting_pcc': True, 'is_asserting_atol': False, 'parallelism': 'single_device', 'forge_models_test': False, 'pccs': [0.997628057770618], 'atols': [0.015625], 'avg_pccs': 0.997628057770618, 'min_pccs': 0.997628057770618, 'max_pccs': 0.997628057770618, 'avg_atols': 0.015625, 'min_atols': 0.015625, 'max_atols': 0.015625, 'pcc': 0.997628057770618, 'atol': 0.015625, 'bringup_status': 'PASSED'}" />
+                <property name="end_timestamp" value="2025-09-09T21:12:44.707614+00:00" />
+            </properties>
+        </testcase>
+		<testcase classname="tests.models.mnist.test_mnist"
+            name="test_mnist_train[single_device-full-eval]" time="0.000">
+            <skipped type="pytest.skip" message="Skip error message.">/localdev/jameszianxu/daily/tt-torch/tests/models/mnist/test_mnist.py:20:
+                Skip error message.</skipped>
+        </testcase>
+        <testcase classname="tests.models.mnist.test_mnist"
+            name="test_mnist_train[single_device-full-eval]" time="0.000">
+            <properties>
+                <property name="error_message" value="This is a custom error message, but should not be shown because pytest.skip takes precedence" />
+            </properties>
+            <skipped type="pytest.skip" message="Skip error message.">/localdev/jameszianxu/daily/tt-torch/tests/models/mnist/test_mnist.py:20:
+                Skip error message.</skipped>
+        </testcase>
+    </testsuite>
+</testsuites>
+
+<!-- Generated from tt-torch, pytest -svv tests/models/mnist/test_mnist.py::test_mnist_train[single_device-full-eval] -->

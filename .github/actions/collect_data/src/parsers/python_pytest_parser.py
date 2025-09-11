@@ -73,6 +73,12 @@ def get_pydantic_test_from_pytest_testcase_(testcase, default_timestamp=datetime
     except:
         pass
 
+    # Fallback to manual error_message if provided and not set automatically
+    if error_message is None:
+        error_message = properties.get("error_message", None)
+        if error_message:
+            logger.info("Using manual error_message from properties.")
+
     test_duration = float(testcase.attrib["time"])
 
     # Error at the beginning of a test can prevent pytest from recording timestamps at all
