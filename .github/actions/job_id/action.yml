@@ -56,4 +56,7 @@ runs:
           exit 1
       fi
 
+      echo job_id = $job_id
+      echo job.check_run_id = ${{ job.check_run_id }}
+
       echo "job_id=$job_id" >> $GITHUB_OUTPUT
