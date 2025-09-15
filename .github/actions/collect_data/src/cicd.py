@@ -64,8 +64,6 @@ def create_cicd_json_for_data_analysis(
                     test_report_path,
                     project=project,
                     github_job_id=github_job_id,
-                    job_name=job_name,
-                    git_branch=git_branch,
                 )
                 logger.info(f"Found {len(tests_in_report)} tests in report {test_report_path}")
                 tests.extend(tests_in_report)

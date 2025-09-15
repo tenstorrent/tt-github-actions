@@ -38,16 +38,8 @@ def create_optest_reports(pipeline, workflow_outputs_dir):
         workflow_outputs_dir, pipeline.github_pipeline_id, ".tar"
     )
 
-    # Load job information to get job names
-    github_jobs_json_filename = f"{workflow_outputs_dir}/{pipeline.github_pipeline_id}/workflow_jobs.json"
-    logger.info(f"Load jobs info from: {github_jobs_json_filename}")
-    with open(github_jobs_json_filename) as github_jobs_json_file:
-        github_jobs_json = json.load(github_jobs_json_file)
-
     # Create a mapping from job_id to job_name
-    job_id_to_name = {}
-    for job in github_jobs_json:
-        job_id_to_name[job["id"]] = job.get("name", "")
+    job_id_to_name = {j.github_job_id: j.name for j in pipeline.jobs}
 
     git_branch = getattr(pipeline, "git_branch_name", "")
     logger.info(f"Processing OpTest pipeline on branch: {git_branch}")

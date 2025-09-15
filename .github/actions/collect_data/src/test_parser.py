@@ -18,22 +18,14 @@ def parse_file(
     filepath: str,
     project: Optional[str] = None,
     github_job_id: Optional[int] = None,
-    job_name: Optional[str] = None,
-    git_branch: Optional[str] = None,
 ) -> List[Union[Test, OpTest]]:
     """
     Parse a file using the appropriate parser.
 
     :param filepath: Path to the file to parse.
-    :param project: Project name.
-    :param github_job_id: GitHub job ID.
-    :param job_name: Job name for parser selection.
-    :param git_branch: Git branch name for filtering builder parser usage.
     :return: List of tests.
     """
     filepath = str(filepath)
-
-    # Use default parsers for other jobs
     for parser in parsers:
         if parser.can_parse(filepath):
             try:
