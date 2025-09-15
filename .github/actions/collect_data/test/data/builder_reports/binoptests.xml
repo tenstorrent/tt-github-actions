@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites name="pytest tests">
+  <testsuite name="pytest" errors="0" failures="0" skipped="12" tests="33" time="1.230" timestamp="2025-08-15T19:35:14.733323+00:00" hostname="localhost">
+    <properties>
+      <property name="card" value="n300" />
+      <property name="git_sha" value="6b2250083df737e61ea92ed313f52f44b51779c0" />
+    </properties>
+    <testcase classname="test_stablehlo_ops" name="test_binary_ops[add-f32-128x128]" time="0.062">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="add" />
+        <property name="framework_op_name" value="add" />
+        <property name="backend" value="ttnn" />
+        <property name="frontend" value="shlo" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[add-ttmetal-f32-128x128]" time="0.078">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="add" />
+        <property name="framework_op_name" value="add" />
+        <property name="backend" value="ttmetal" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[add-ttnn-f32-128x128]" time="0.035">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="add" />
+        <property name="framework_op_name" value="add" />
+        <property name="backend" value="ttnn" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[eq-ttmetal-f32-128x128]" time="0.000">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="eq" />
+        <property name="framework_op_name" value="eq" />
+        <property name="backend" value="ttmetal" />
+        <property name="frontend" value="ttir" />
+      </properties>
+      <skipped type="pytest.skip" message="Operation not supported on following platform/target combination: {'ttmetal'}.">
+        /localdev/ctod/tt-mlir/test/python/golden/test_ttir_ops.py:2270: Operation
+        not supported on following platform/target combination: {'ttmetal'}.
+      </skipped>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[eq-ttnn-f32-128x128]" time="0.033">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="eq" />
+        <property name="framework_op_name" value="eq" />
+        <property name="backend" value="ttnn" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[ge-ttmetal-f32-128x128]" time="0.000">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="ge" />
+        <property name="framework_op_name" value="ge" />
+        <property name="backend" value="ttmetal" />
+        <property name="frontend" value="ttir" />
+      </properties>
+      <skipped type="pytest.skip" message="Operation not supported on following platform/target combination: {'ttmetal'}.">
+        /localdev/ctod/tt-mlir/test/python/golden/test_ttir_ops.py:2270: Operation
+        not supported on following platform/target combination: {'ttmetal'}.
+      </skipped>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[ge-ttnn-f32-128x128]" time="0.035">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="ge" />
+        <property name="framework_op_name" value="ge" />
+        <property name="backend" value="ttnn" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[gt-ttmetal-f32-128x128]" time="0.000">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="gt" />
+        <property name="framework_op_name" value="gt" />
+        <property name="backend" value="ttmetal" />
+        <property name="frontend" value="ttir" />
+      </properties>
+      <skipped type="pytest.skip" message="Operation not supported on following platform/target combination: {'ttmetal'}.">
+        /localdev/ctod/tt-mlir/test/python/golden/test_ttir_ops.py:2270: Operation
+        not supported on following platform/target combination: {'ttmetal'}.
+      </skipped>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[gt-ttnn-f32-128x128]" time="0.031">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="gt" />
+        <property name="framework_op_name" value="gt" />
+        <property name="backend" value="ttnn" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[le-ttmetal-f32-128x128]" time="0.000">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="le" />
+        <property name="framework_op_name" value="le" />
+        <property name="backend" value="ttmetal" />
+        <property name="frontend" value="ttir" />
+      </properties>
+      <skipped type="pytest.skip" message="Operation not supported on following platform/target combination: {'ttmetal'}.">
+        /localdev/ctod/tt-mlir/test/python/golden/test_ttir_ops.py:2270: Operation
+        not supported on following platform/target combination: {'ttmetal'}.
+      </skipped>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[le-ttnn-f32-128x128]" time="0.035">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="le" />
+        <property name="framework_op_name" value="le" />
+        <property name="backend" value="ttnn" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[logical_and-ttmetal-f32-128x128]" time="0.000">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="logical_and" />
+        <property name="framework_op_name" value="logical_and" />
+        <property name="backend" value="ttmetal" />
+        <property name="frontend" value="ttir" />
+      </properties>
+      <skipped type="pytest.skip" message="Operation not supported on following platform/target combination: {'ttmetal'}.">
+        /localdev/ctod/tt-mlir/test/python/golden/test_ttir_ops.py:2270: Operation
+        not supported on following platform/target combination: {'ttmetal'}.
+      </skipped>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[logical_and-ttnn-f32-128x128]" time="0.031">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="logical_and" />
+        <property name="framework_op_name" value="logical_and" />
+        <property name="backend" value="ttnn" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[logical_or-ttmetal-f32-128x128]" time="0.000">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="logical_or" />
+        <property name="framework_op_name" value="logical_or" />
+        <property name="backend" value="ttmetal" />
+        <property name="frontend" value="ttir" />
+      </properties>
+      <skipped type="pytest.skip" message="Operation not supported on following platform/target combination: {'ttmetal'}.">
+        /localdev/ctod/tt-mlir/test/python/golden/test_ttir_ops.py:2270: Operation
+        not supported on following platform/target combination: {'ttmetal'}.
+      </skipped>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[logical_or-ttnn-f32-128x128]" time="0.035">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="logical_or" />
+        <property name="framework_op_name" value="logical_or" />
+        <property name="backend" value="ttnn" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[logical_xor-ttmetal-f32-128x128]" time="0.000">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="logical_xor" />
+        <property name="framework_op_name" value="logical_xor" />
+        <property name="backend" value="ttmetal" />
+        <property name="frontend" value="ttir" />
+      </properties>
+      <skipped type="pytest.skip" message="Operation not supported on following platform/target combination: {'ttmetal'}.">
+        /localdev/ctod/tt-mlir/test/python/golden/test_ttir_ops.py:2270: Operation
+        not supported on following platform/target combination: {'ttmetal'}.
+      </skipped>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[logical_xor-ttnn-f32-128x128]" time="0.031">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="logical_xor" />
+        <property name="framework_op_name" value="logical_xor" />
+        <property name="backend" value="ttnn" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[lt-ttmetal-f32-128x128]" time="0.000">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="lt" />
+        <property name="framework_op_name" value="lt" />
+        <property name="backend" value="ttmetal" />
+        <property name="frontend" value="ttir" />
+      </properties>
+      <skipped type="pytest.skip" message="Operation not supported on following platform/target combination: {'ttmetal'}.">
+        /localdev/ctod/tt-mlir/test/python/golden/test_ttir_ops.py:2270: Operation
+        not supported on following platform/target combination: {'ttmetal'}.
+      </skipped>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[lt-ttnn-f32-128x128]" time="0.035">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="lt" />
+        <property name="framework_op_name" value="lt" />
+        <property name="backend" value="ttnn" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[matmul-ttmetal-f32-128x128]" time="0.000">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="matmul" />
+        <property name="framework_op_name" value="matmul" />
+        <property name="backend" value="ttmetal" />
+        <property name="frontend" value="ttir" />
+      </properties>
+      <skipped type="pytest.skip" message="Operation not supported on following platform/target combination: {'ttmetal'}.">
+        /localdev/ctod/tt-mlir/test/python/golden/test_ttir_ops.py:2270: Operation
+        not supported on following platform/target combination: {'ttmetal'}.
+      </skipped>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[matmul-ttnn-f32-128x128]" time="0.046">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="matmul" />
+        <property name="framework_op_name" value="matmul" />
+        <property name="backend" value="ttnn" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[maximum-ttmetal-f32-128x128]" time="0.077">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="maximum" />
+        <property name="framework_op_name" value="maximum" />
+        <property name="backend" value="ttmetal" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[maximum-ttnn-f32-128x128]" time="0.031">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="maximum" />
+        <property name="framework_op_name" value="maximum" />
+        <property name="backend" value="ttnn" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[minimum-ttmetal-f32-128x128]" time="0.000">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="minimum" />
+        <property name="framework_op_name" value="minimum" />
+        <property name="backend" value="ttmetal" />
+        <property name="frontend" value="ttir" />
+      </properties>
+      <skipped type="pytest.skip" message="Operation not supported on following platform/target combination: {'ttmetal'}.">
+        /localdev/ctod/tt-mlir/test/python/golden/test_ttir_ops.py:2270: Operation
+        not supported on following platform/target combination: {'ttmetal'}.
+      </skipped>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[minimum-ttnn-f32-128x128]" time="0.041">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="minimum" />
+        <property name="framework_op_name" value="minimum" />
+        <property name="backend" value="ttnn" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[multiply-ttmetal-f32-128x128]" time="0.071">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="multiply" />
+        <property name="framework_op_name" value="multiply" />
+        <property name="backend" value="ttmetal" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[multiply-ttnn-f32-128x128]" time="0.031">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="multiply" />
+        <property name="framework_op_name" value="multiply" />
+        <property name="backend" value="ttnn" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[ne-ttmetal-f32-128x128]" time="0.000">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="ne" />
+        <property name="framework_op_name" value="ne" />
+        <property name="backend" value="ttmetal" />
+        <property name="frontend" value="ttir" />
+      </properties>
+      <skipped type="pytest.skip" message="Operation not supported on following platform/target combination: {'ttmetal'}.">
+        /localdev/ctod/tt-mlir/test/python/golden/test_ttir_ops.py:2270: Operation
+        not supported on following platform/target combination: {'ttmetal'}.
+      </skipped>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[ne-ttnn-f32-128x128]" time="0.036">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="ne" />
+        <property name="framework_op_name" value="ne" />
+        <property name="backend" value="ttnn" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[remainder-ttmetal-f32-128x128]" time="0.000">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="remainder" />
+        <property name="framework_op_name" value="remainder" />
+        <property name="backend" value="ttmetal" />
+        <property name="frontend" value="ttir" />
+      </properties>
+      <skipped type="pytest.skip" message="Operation not supported on following platform/target combination: {'ttmetal'}.">
+        /localdev/ctod/tt-mlir/test/python/golden/test_ttir_ops.py:2270: Operation
+        not supported on following platform/target combination: {'ttmetal'}.
+      </skipped>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[remainder-ttnn-f32-128x128]" time="0.031">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="remainder" />
+        <property name="framework_op_name" value="remainder" />
+        <property name="backend" value="ttnn" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[subtract-ttmetal-f32-128x128]" time="0.076">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="subtract" />
+        <property name="framework_op_name" value="subtract" />
+        <property name="backend" value="ttmetal" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+    <testcase classname="test_ttir_ops" name="test_binary_ops[subtract-ttnn-f32-128x128]" time="0.032">
+      <properties>
+        <property name="input_shapes" value="[[128, 128]]" />
+        <property name="input_dtypes" value="['f32']" />
+        <property name="op_name" value="subtract" />
+        <property name="framework_op_name" value="subtract" />
+        <property name="backend" value="ttnn" />
+        <property name="frontend" value="ttir" />
+        <property name="failure_stage" value="success" />
+      </properties>
+    </testcase>
+  </testsuite>
+</testsuites>

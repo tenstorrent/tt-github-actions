@@ -15,7 +15,9 @@ parsers = [
 
 
 def parse_file(
-    filepath: str, project: Optional[str] = None, github_job_id: Optional[int] = None
+    filepath: str,
+    project: Optional[str] = None,
+    github_job_id: Optional[int] = None,
 ) -> List[Union[Test, OpTest]]:
     """
     Parse a file using the appropriate parser.

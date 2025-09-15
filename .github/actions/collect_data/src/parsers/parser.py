@@ -15,7 +15,7 @@ class Parser(ABC):
     """Abstract base class for parsers."""
 
     @abstractmethod
-    def can_parse(self, filepath: str):
+    def can_parse(self, filepath: str) -> bool:
         """
         Check if the parser can parse the file.
         :param filepath: Path to the file to check.
@@ -29,7 +29,7 @@ class Parser(ABC):
         filepath: str,
         project: Optional[str] = None,
         github_job_id: Optional[int] = None,
-    ):
+    ) -> list:
         """
         Parse a file and return a list of tests.
         :param filepath: Path to the file to parse.

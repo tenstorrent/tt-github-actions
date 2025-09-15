@@ -6,7 +6,8 @@
 Definition of the pydantic models used for data production.
 """
 
-from datetime import datetime
+from enum import Enum
+from datetime import datetime, timedelta
 from typing import List, Optional
 from pydantic import BaseModel, Field
 
@@ -245,10 +246,21 @@ class TensorDesc(BaseModel):
     )
 
 
+class TestStatus(Enum):
+    """
+    Status of the test execution.
+    """
+
+    compile_failed = "compile_failed"
+    run_failed = "run_failed"
+    golden_failed = "golden_failed"
+    success = "success"
+
+
 class OpTest(BaseModel):
     """
-    Contains information about ML kernel operation tests, such as test execution,
-    results, configuration.
+    Contains information about ML kernel operation  & builder tests, such as
+    test execution, results, configuration.
     """
 
     github_job_id: int = Field(
@@ -256,22 +268,27 @@ class OpTest(BaseModel):
     )
     full_test_name: str = Field(description="Test name plus config.")
     test_start_ts: datetime = Field(description="Timestamp with timezone when the test execution started.")
-    test_end_ts: datetime = Field(description="Timestamp with timezone when the test execution ended.")
+    test_end_ts: Optional[datetime] = Field(None, description="Timestamp with timezone when the test execution ended.")
+    test_duration: Optional[timedelta] = Field(description="Duration of the test")
     test_case_name: str = Field(description="Name of the pytest function.")
     filepath: str = Field(description="Test file path and name.")
     success: bool = Field(description="Test execution success.")
     skipped: bool = Field(description="Some tests in a job can be skipped.")
-    error_message: Optional[str] = Field(None, description="Succinct error string, such as exception type.")
+    message: Optional[str] = Field(None, description="Succinct error string, such as exception type.")
     config: Optional[dict] = Field(default=None, description="Test configuration, as key/value pairs.")
     frontend: str = Field(description="ML frontend or framework used to run the test.")
     model_name: str = Field(description="Name of the ML model in which this operation is used.")
     op_kind: str = Field(description="Kind of operation, e.g. Eltwise.")
     op_name: str = Field(description="Name of the operation, e.g. ttnn.conv2d")
     framework_op_name: str = Field(description="Name of the operation within the framework, e.g. torch.conv2d")
-    inputs: List[TensorDesc] = Field(description="List of input tensors.")
-    outputs: List[TensorDesc] = Field(description="List of output tensors.")
+    inputs: Optional[List[TensorDesc]] = Field(description="List of input tensors.")
+    outputs: Optional[List[TensorDesc]] = Field(description="List of output tensors.")
     op_params: Optional[dict] = Field(
         default=None,
         description="Parametrization criteria for the operation, based on its kind, "
         "as key/value pairs, e.g. stride, padding, etc.",
     )
+    git_sha: Optional[str] = Field(description="Git commit SHA of the code being tested.")
+    status: Optional[TestStatus] = Field(description="Status of the test execution.")
+    card_type: Optional[str] = Field(description="Type of hardware card used for testing.")
+    backend: Optional[str] = Field(description="Backend used for the ML kernel operation test.")

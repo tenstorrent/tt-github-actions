@@ -13,7 +13,7 @@ from utils import parse_timestamp
 import ast
 import html
 from pydantic import ValidationError
-from shared import failure_happened
+from shared import failure_happened, is_valid_testcase_
 
 
 class PythonPytestParser(Parser):
@@ -151,19 +151,3 @@ def get_pydantic_test_from_pytest_testcase_(testcase, default_timestamp=datetime
         failure_happened()
         logger.error(f"Validation error: {e}")
         return None
-
-
-def is_valid_testcase_(testcase):
-    """
-    Some cases of invalid tests include:
-
-    - GitHub times out pytest so it records something like this:
-        </testcase>
-        <testcase time="0.032"/>
-    """
-    if "name" not in testcase.attrib or "classname" not in testcase.attrib:
-        # This should be able to capture all cases where there's no info
-        logger.warning("Found invalid test case with: no name nor classname")
-        return False
-    else:
-        return True
