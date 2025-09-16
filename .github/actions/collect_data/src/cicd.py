@@ -105,6 +105,9 @@ def get_github_job_id_to_test_reports(workflow_outputs_dir, workflow_run_id: int
                 report_paths = job_paths_map.get(job_id, [])
                 report_paths.append(file_path)
                 job_paths_map[job_id] = report_paths
+
+    if len(job_paths_map) == 0:
+        logger.info(f"No test reports with the extension {extension} found in {artifacts_dir}")
     return job_paths_map
 
 
