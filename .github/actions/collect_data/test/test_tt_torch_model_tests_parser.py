@@ -17,4 +17,5 @@ def test_tt_torch_model_tests_parser(tar, project, github_job_id, expected):
     parser = TTTorchModelTestsParser()
     assert parser.can_parse(filepath)
     tests = parser.parse(filepath, project=project, github_job_id=github_job_id)
-    assert len(tests) == expected["tests_cnt"]
+    # If the parser fails, it returns a list of None.
+    assert len(list(filter(None, tests))) == expected["tests_cnt"]
