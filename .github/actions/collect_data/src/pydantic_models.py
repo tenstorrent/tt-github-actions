@@ -269,7 +269,7 @@ class OpTest(BaseModel):
     full_test_name: str = Field(description="Test name plus config.")
     test_start_ts: datetime = Field(description="Timestamp with timezone when the test execution started.")
     test_end_ts: Optional[datetime] = Field(None, description="Timestamp with timezone when the test execution ended.")
-    test_duration: Optional[timedelta] = Field(description="Duration of the test")
+    test_duration: Optional[timedelta] = Field(default=None, description="Duration of the test")
     test_case_name: str = Field(description="Name of the pytest function.")
     filepath: str = Field(description="Test file path and name.")
     success: bool = Field(description="Test execution success.")
@@ -288,7 +288,7 @@ class OpTest(BaseModel):
         description="Parametrization criteria for the operation, based on its kind, "
         "as key/value pairs, e.g. stride, padding, etc.",
     )
-    git_sha: Optional[str] = Field(description="Git commit SHA of the code being tested.")
-    status: Optional[TestStatus] = Field(description="Status of the test execution.")
-    card_type: Optional[str] = Field(description="Type of hardware card used for testing.")
-    backend: Optional[str] = Field(description="Backend used for the ML kernel operation test.")
+    git_sha: Optional[str] = Field(default=None, description="Git commit SHA of the code being tested.")
+    status: Optional[TestStatus] = Field(default=None, description="Status of the test execution.")
+    card_type: Optional[str] = Field(default=None, description="Type of hardware card used for testing.")
+    backend: Optional[str] = Field(default=None, description="Backend used for the ML kernel operation test.")
