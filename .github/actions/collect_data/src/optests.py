@@ -52,7 +52,7 @@ def create_optest_reports(pipeline, workflow_outputs_dir):
 
     for github_job_id, test_reports in github_job_id_to_test_reports.items():
         tests = []
-        job_name = job_id_to_name.get(github_job_id, "")
+        job_name = str(job_id_to_name.get(github_job_id, ""))
 
         # Select parser based on job name and git branch
         if should_use_builder_pytest_parser(job_name, git_branch):
