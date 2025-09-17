@@ -37,8 +37,8 @@ def create_optest_reports(pipeline, workflow_outputs_dir):
 
     # Search for reports with both `.tar` & `.xml` extensions.
     github_job_id_to_test_reports = get_github_job_id_to_test_reports(
-        workflow_outputs_dir, pipeline.github_pipeline_id, ".tar"
-    ) | get_github_job_id_to_test_reports(workflow_outputs_dir, pipeline.github_pipeline_id, ".xml")
+        workflow_outputs_dir, pipeline.github_pipeline_id, [".tar", ".xml"]
+    )
 
     # Create a mapping from job_id to job_name
     job_id_to_name = {j.github_job_id: j.name for j in pipeline.jobs}
