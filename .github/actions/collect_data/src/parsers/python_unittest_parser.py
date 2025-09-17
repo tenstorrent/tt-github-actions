@@ -30,7 +30,7 @@ def get_tests(test_report_path):
     tests = []
     with open(test_report_path) as f:
         data = f.read()
-        dict_data = xmltodict.parse(data)
+        dict_data = xmltodict.parse(data, disable_entities=False)
         previous_test_end_ts = None
 
         testsuites = dict_data["testsuites"]["testsuite"]
