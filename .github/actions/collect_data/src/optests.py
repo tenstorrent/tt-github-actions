@@ -11,14 +11,19 @@ from parsers.builder_pytest_parser import BuilderPytestParser
 from typing import Optional
 
 
-def should_use_builder_pytest_parser(job_name: Optional[str], git_branch: Optional[str]) -> bool:
+def should_use_builder_pytest_parser(test_report: str, job_name: Optional[str], git_branch: Optional[str]) -> bool:
     """
     Determine if BuilderPytestParser should be used based on job name and git branch.
 
+    :param test_report: Filename of the test report
     :param job_name: Job name to check for 'builder' keyword.
     :param git_branch: Git branch name, must be 'main' for builder parsing.
     :return: True if BuilderPytestParser should be used, False otherwise.
     """
+
+    if not str(test_report).endswith(".xml"):
+        return False
+
     if not job_name or not git_branch:
         return False
 
@@ -32,19 +37,28 @@ def should_use_builder_pytest_parser(job_name: Optional[str], git_branch: Option
     return False
 
 
+def should_use_tt_torch_model_tests_parser(test_report: str) -> bool:
+    """
+    Determine if the `TTTorchModelTestsParser` should be used on `test_report`
+
+    :param test_report: Filename of the test report
+    """
+    return str(test_report).endswith(".tar")
+
+
 def create_optest_reports(pipeline, workflow_outputs_dir):
     reports = []
-
-    # Search for reports with both `.tar` & `.xml` extensions.
-    github_job_id_to_test_reports = get_github_job_id_to_test_reports(
-        workflow_outputs_dir, pipeline.github_pipeline_id, [".tar", ".xml"]
-    )
 
     # Create a mapping from job_id to job_name
     job_id_to_name = {j.github_job_id: j.name for j in pipeline.jobs}
 
     git_branch = getattr(pipeline, "git_branch_name", "")
     logger.info(f"Processing OpTest pipeline on branch: {git_branch}")
+
+    # Search for reports with both `.tar` & `.xml` extensions.
+    github_job_id_to_test_reports = get_github_job_id_to_test_reports(
+        workflow_outputs_dir, pipeline.github_pipeline_id, [".tar", ".xml"]
+    )
 
     if len(github_job_id_to_test_reports) == 0:
         logger.info(f"No test reports to parse, skipping...")
@@ -54,17 +68,23 @@ def create_optest_reports(pipeline, workflow_outputs_dir):
         tests = []
         job_name = str(job_id_to_name.get(github_job_id, ""))
 
-        # Select parser based on job name and git branch
-        if should_use_builder_pytest_parser(job_name, git_branch):
-            parser = BuilderPytestParser()
-            logger.info(f"Using BuilderPytestParser for job '{job_name}' on branch '{git_branch}'")
-        else:
-            parser = TTTorchModelTestsParser()
-            logger.info(f"Using TTTorchModelTestsParser for job '{job_name}'")
-
         for test_report in test_reports:
-            tests = parser.parse(test_report, project=pipeline.project, github_job_id=github_job_id)
-            tests.extend(tests)
+
+            # Select parser based on report name, job name and git branch
+            if should_use_builder_pytest_parser(test_report, job_name, git_branch):
+                parser = BuilderPytestParser()
+                logger.info(f"Using BuilderPytestParser for job '{job_name}' on branch '{git_branch}'")
+            elif should_use_tt_torch_model_tests_parser(test_report):
+                parser = TTTorchModelTestsParser()
+                logger.info(f"Using TTTorchModelTestsParser for job '{job_name}'")
+            else:
+                logger.info(f"No suitable parser found for {test_report}")
+                continue
+            try:
+                parsed_tests = parser.parse(test_report, project=pipeline.project, github_job_id=github_job_id)
+                tests.extend(parsed_tests)
+            except Exception as e:
+                logger.error(f"Failed to parse {test_report} with {type(parser)}: {e}")
         reports.append((github_job_id, tests))
     return reports
 

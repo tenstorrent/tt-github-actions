@@ -29,15 +29,18 @@ def test_report_discovery(pipeline, workflow_outputs_dir: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "job_name,branch,result",
+    "report_name,job_name,branch,result",
     [
-        ("builder", "main", True),
-        ("blah_blah_builder_blah_blah", "main", True),
-        ("other_job_name", "main", False),
-        (None, None, False),
-        ("builder", "feature_branch", False),
-        ("other_job_name", "feature_branch", False),
+        ("report.xml", "builder", "main", True),
+        ("report.tar", "builder", "main", False),
+        ("blah_blah.xml", "blah_blah_builder_blah_blah", "main", True),
+        ("report.xml", "other_job_name", "main", False),
+        ("report.xml", None, None, False),
+        ("report.xml", "builder", "feature_branch", False),
+        ("report.xml", "other_job_name", "feature_branch", False),
     ],
 )
-def test_should_use_builder_parser(job_name: Optional[str], branch: Optional[str], result: bool) -> None:
-    assert should_use_builder_pytest_parser(job_name, branch) == result
+def test_should_use_builder_parser(
+    report_name: str, job_name: Optional[str], branch: Optional[str], result: bool
+) -> None:
+    assert should_use_builder_pytest_parser(report_name, job_name, branch) == result
