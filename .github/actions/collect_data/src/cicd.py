@@ -10,6 +10,7 @@ from datetime import timedelta
 import random
 from pydantic import ValidationError
 from shared import failure_happened
+from typing import Union, List, Dict
 
 from utils import (
     get_pipeline_row_from_github_info,
@@ -80,12 +81,18 @@ def create_cicd_json_for_data_analysis(
     return pydantic_models.Pipeline(**raw_pipeline, jobs=jobs)
 
 
-def get_github_job_id_to_test_reports(workflow_outputs_dir, workflow_run_id: int, extension=".xml"):
+def get_github_job_id_to_test_reports(
+    workflow_outputs_dir, workflow_run_id: int, extensions: Union[List[str], str] = ".xml"
+) -> Dict[int, List[str]]:
     """
     This function searches for test reports in the artifacts directory
     and returns a mapping of job IDs to the paths of the test reports.
     We expect that report filename is in format `<report_name>_<job_id>.xml`.
     """
+
+    if not isinstance(extensions, list):
+        extensions = [extensions]
+
     job_paths_map = {}
     artifacts_dir = f"{workflow_outputs_dir}/{workflow_run_id}/artifacts"
 
@@ -93,7 +100,8 @@ def get_github_job_id_to_test_reports(workflow_outputs_dir, workflow_run_id: int
 
     for root, _, files in os.walk(artifacts_dir):
         for file in files:
-            if file.endswith(extension):
+            file_extension = os.path.splitext(file)[1]
+            if file_extension in extensions:
                 logger.debug(f"Found test report {file}")
                 file_path = pathlib.Path(root) / file
                 filename = file_path.name
@@ -105,6 +113,9 @@ def get_github_job_id_to_test_reports(workflow_outputs_dir, workflow_run_id: int
                 report_paths = job_paths_map.get(job_id, [])
                 report_paths.append(file_path)
                 job_paths_map[job_id] = report_paths
+
+    if len(job_paths_map) == 0:
+        logger.info(f"No test reports with the extension in {extensions} found in {artifacts_dir}")
     return job_paths_map
 
 
