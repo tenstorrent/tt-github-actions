@@ -50,6 +50,9 @@ def create_benchmark_jsonl(pipeline, workflow_outputs_dir) -> str:
 def create_optest_json(pipeline, workflow_outputs_dir):
     reports = create_optest_reports(pipeline, workflow_outputs_dir)
     for job_id, optests in reports:
+        if len(optests) == 0 or optests is None:
+            logger.info(f"Skipping empty OpTest report for job {job_id}")
+            continue
         report_filename = get_optest_filename(pipeline, job_id)
         logger.info(f"Writing OpTest JSON to {report_filename}")
         with open(report_filename, "w") as f:
