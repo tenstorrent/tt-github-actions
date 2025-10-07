@@ -1,0 +1,249 @@
+name: "Community Issue Auto-Tagging"
+
+on:
+  workflow_call:
+    secrets:
+      AUTOLABEL_COMMUNITY_ISSUES:
+        description: 'Token for checking organization membership and managing labels'
+        required: true
+
+env:
+  LABEL_NAME: "community"
+  LABEL_COLOR: "2DEB44"
+  LABEL_DESCRIPTION: "External contributor issue/PR"
+
+jobs:
+  community-labeling:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Initialize workflow variables
+        id: init
+        run: |
+          set -e
+
+          echo "🚀 Starting community labeling workflow"
+          echo "Repository: ${{ github.repository }}"
+          echo "Event: ${{ github.event_name }}"
+          echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+
+          # Extract organization name dynamically
+          ORG_NAME="${{ github.repository_owner }}"
+          echo "org_name=${ORG_NAME}" >> $GITHUB_OUTPUT
+          echo "Organization: ${ORG_NAME}"
+
+          # Set variables based on event type
+          if [ "${{ github.event_name }}" = "issues" ]; then
+            USERNAME="${{ github.event.issue.user.login }}"
+            NUMBER="${{ github.event.issue.number }}"
+            ITEM_TYPE="issue"
+            ITEM_URL="${{ github.event.issue.html_url }}"
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            USERNAME="${{ github.event.pull_request.user.login }}"
+            NUMBER="${{ github.event.pull_request.number }}"
+            ITEM_TYPE="pr"
+            ITEM_URL="${{ github.event.pull_request.html_url }}"
+          else
+            echo "❌ ERROR: Unsupported event type: ${{ github.event_name }}"
+            exit 1
+          fi
+
+          echo "username=${USERNAME}" >> $GITHUB_OUTPUT
+          echo "number=${NUMBER}" >> $GITHUB_OUTPUT
+          echo "item_type=${ITEM_TYPE}" >> $GITHUB_OUTPUT
+          echo "item_url=${ITEM_URL}" >> $GITHUB_OUTPUT
+
+          echo "User: ${USERNAME}"
+          echo "Item: ${ITEM_TYPE} #${NUMBER}"
+          echo "URL: ${ITEM_URL}"
+
+      - name: Check organization membership
+        id: check_membership
+        env:
+          GITHUB_TOKEN: ${{ secrets.AUTOLABEL_COMMUNITY_ISSUES }}
+          USERNAME: ${{ steps.init.outputs.username }}
+          ORG_NAME: ${{ steps.init.outputs.org_name }}
+        run: |
+          set -e
+
+          echo "🔍 Checking if user '${USERNAME}' is a member of organization '${ORG_NAME}'"
+
+          # Check if user is a public or private member of the organization
+          # This will return 204 for members (including private members) and 404 for non-members
+          MEMBERSHIP_STATUS=$(curl -s -w "%{http_code}" -o /tmp/membership_response.json \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/orgs/${ORG_NAME}/members/${USERNAME}")
+
+          echo "API Response Status: ${MEMBERSHIP_STATUS}"
+
+          if [ -f /tmp/membership_response.json ]; then
+            echo "API Response Body:"
+            cat /tmp/membership_response.json
+            rm -f /tmp/membership_response.json
+          fi
+
+          case "${MEMBERSHIP_STATUS}" in
+            204)
+              echo "✅ User is an organization member"
+              echo "is_member=true" >> $GITHUB_OUTPUT
+              echo "reason=organization_member" >> $GITHUB_OUTPUT
+              ;;
+            404)
+              echo "❓ User is not an organization member, checking collaborator status..."
+
+              # Check if user is an external collaborator
+              COLLAB_STATUS=$(curl -s -w "%{http_code}" -o /tmp/collab_response.json \
+                -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+                -H "Accept: application/vnd.github.v3+json" \
+                "https://api.github.com/repos/${{ github.repository }}/collaborators/${USERNAME}")
+
+              echo "Collaborator API Response Status: ${COLLAB_STATUS}"
+
+              if [ -f /tmp/collab_response.json ]; then
+                echo "Collaborator API Response Body:"
+                cat /tmp/collab_response.json
+                rm -f /tmp/collab_response.json
+              fi
+
+              if [ "${COLLAB_STATUS}" = "204" ]; then
+                echo "🏷️ User is an external collaborator - should be labeled as community"
+                echo "is_member=false" >> $GITHUB_OUTPUT
+                echo "reason=external_collaborator" >> $GITHUB_OUTPUT
+              else
+                echo "🏷️ User is not a collaborator - should be labeled as community"
+                echo "is_member=false" >> $GITHUB_OUTPUT
+                echo "reason=external_user" >> $GITHUB_OUTPUT
+              fi
+              ;;
+            401)
+              echo "❌ ERROR: Authentication failed - check GITHUB_TOKEN permissions"
+              exit 1
+              ;;
+            403)
+              echo "❌ ERROR: Forbidden - insufficient permissions to check membership"
+              exit 1
+              ;;
+            *)
+              echo "❌ ERROR: Unexpected API response: ${MEMBERSHIP_STATUS}"
+              exit 1
+              ;;
+          esac
+
+      - name: Ensure community label exists
+        if: steps.check_membership.outputs.is_member == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.AUTOLABEL_COMMUNITY_ISSUES }}
+        run: |
+          set -e
+
+          echo "🏷️ Ensuring '${LABEL_NAME}' label exists in repository"
+
+          # Check if label exists
+          LABEL_CHECK=$(curl -s -w "%{http_code}" -o /tmp/label_check.json \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/labels/${LABEL_NAME}")
+
+          echo "Label check status: ${LABEL_CHECK}"
+
+          if [ "${LABEL_CHECK}" = "200" ]; then
+            echo "✅ Label '${LABEL_NAME}' already exists"
+            if [ -f /tmp/label_check.json ]; then
+              echo "Existing label details:"
+              jq '.' /tmp/label_check.json
+            fi
+          elif [ "${LABEL_CHECK}" = "404" ]; then
+            echo "📝 Creating label '${LABEL_NAME}'"
+
+            CREATE_RESPONSE=$(curl -s -w "%{http_code}" -o /tmp/label_create.json \
+              -X POST \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              -H "Content-Type: application/json" \
+              "https://api.github.com/repos/${{ github.repository }}/labels" \
+              -d "{
+                \"name\": \"${LABEL_NAME}\",
+                \"color\": \"${LABEL_COLOR}\",
+                \"description\": \"${LABEL_DESCRIPTION}\"
+              }")
+
+            echo "Label creation status: ${CREATE_RESPONSE}"
+
+            if [ "${CREATE_RESPONSE}" = "201" ]; then
+              echo "✅ Successfully created label '${LABEL_NAME}'"
+              if [ -f /tmp/label_create.json ]; then
+                echo "Created label details:"
+                jq '.' /tmp/label_create.json
+              fi
+            else
+              echo "❌ ERROR: Failed to create label. Response:"
+              if [ -f /tmp/label_create.json ]; then
+                cat /tmp/label_create.json
+              fi
+              exit 1
+            fi
+          else
+            echo "❌ ERROR: Unexpected response when checking for label: ${LABEL_CHECK}"
+            if [ -f /tmp/label_check.json ]; then
+              cat /tmp/label_check.json
+            fi
+            exit 1
+          fi
+
+          # Clean up temp files
+          rm -f /tmp/label_check.json /tmp/label_create.json
+
+      - name: Apply community label
+        if: steps.check_membership.outputs.is_member == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.AUTOLABEL_COMMUNITY_ISSUES }}
+        run: |
+          set -e
+
+          USERNAME="${{ steps.init.outputs.username }}"
+          NUMBER="${{ steps.init.outputs.number }}"
+          ITEM_TYPE="${{ steps.init.outputs.item_type }}"
+          ITEM_URL="${{ steps.init.outputs.item_url }}"
+          REASON="${{ steps.check_membership.outputs.reason }}"
+
+          echo "🏷️ Applying '${LABEL_NAME}' label to ${ITEM_TYPE} #${NUMBER}"
+          echo "User: ${USERNAME} (${REASON})"
+          echo "URL: ${ITEM_URL}"
+
+          # Apply label using GitHub CLI
+          if [ "${ITEM_TYPE}" = "issue" ]; then
+            gh issue edit "${NUMBER}" --add-label "${LABEL_NAME}" --repo "${{ github.repository }}"
+          elif [ "${ITEM_TYPE}" = "pr" ]; then
+            gh pr edit "${NUMBER}" --add-label "${LABEL_NAME}" --repo "${{ github.repository }}"
+          else
+            echo "❌ ERROR: Unknown item type: ${ITEM_TYPE}"
+            exit 1
+          fi
+
+          echo "✅ Successfully applied '${LABEL_NAME}' label to ${ITEM_TYPE} #${NUMBER}"
+
+      - name: Workflow summary
+        if: always()
+        run: |
+          echo "📊 === Workflow Summary ==="
+          echo "Repository: ${{ github.repository }}"
+          echo "Organization: ${{ steps.init.outputs.org_name }}"
+          echo "Event: ${{ github.event_name }}"
+          echo "User: ${{ steps.init.outputs.username }}"
+          echo "Item: ${{ steps.init.outputs.item_type }} #${{ steps.init.outputs.number }}"
+          echo "URL: ${{ steps.init.outputs.item_url }}"
+          echo "Is Organization Member: ${{ steps.check_membership.outputs.is_member }}"
+          echo "Reason: ${{ steps.check_membership.outputs.reason }}"
+          echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "Job Status: ${{ job.status }}"
+
+          if [ "${{ steps.check_membership.outputs.is_member }}" = "false" ]; then
+            echo "🏷️ Applied '${LABEL_NAME}' label to external contributor's ${{ steps.init.outputs.item_type }}"
+          else
+            echo "✅ No action needed - user is an organization member"
+          fi
