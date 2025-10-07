@@ -155,7 +155,7 @@ jobs:
             echo "✅ Label '${LABEL_NAME}' already exists"
             if [ -f /tmp/label_check.json ]; then
               echo "Existing label details:"
-              cat /tmp/label_check.json | jq '.'
+              jq '.' /tmp/label_check.json
             fi
           elif [ "${LABEL_CHECK}" = "404" ]; then
             echo "📝 Creating label '${LABEL_NAME}'"
@@ -178,7 +178,7 @@ jobs:
               echo "✅ Successfully created label '${LABEL_NAME}'"
               if [ -f /tmp/label_create.json ]; then
                 echo "Created label details:"
-                cat /tmp/label_create.json | jq '.'
+                jq '.' /tmp/label_create.json
               fi
             else
               echo "❌ ERROR: Failed to create label. Response:"
