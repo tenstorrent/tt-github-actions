@@ -22,14 +22,13 @@ def should_use_builder_pytest_parser(test_report: str, job_name: Optional[str], 
     """
 
     file_name = str(test_report).lower()
-    is_builder_job = "builder" in job_name.lower() or "_builder" in file_name
-
     if not file_name.endswith(".xml"):
         return False
 
     if not job_name or not git_branch:
         return False
 
+    is_builder_job = "builder" in job_name.lower() or "_builder" in file_name
     # Use BuilderPytestParser only for jobs with "builder" in the name on main branch
     if is_builder_job and git_branch == "main":
         logger.info(f"Should use BuilderPytestParser for builder job '{job_name}' on main branch")
