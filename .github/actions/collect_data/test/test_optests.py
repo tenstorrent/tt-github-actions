@@ -38,6 +38,8 @@ def test_report_discovery(pipeline, workflow_outputs_dir: str) -> None:
         ("report.xml", None, None, False),
         ("report.xml", "builder", "feature_branch", False),
         ("report.xml", "other_job_name", "feature_branch", False),
+        ("report_builder.xml", "other_job_name", "main", True),
+        ("report_builder.xml", "other_job_name", "feature_branch", False),
     ],
 )
 def test_should_use_builder_parser(
