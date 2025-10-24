@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Initialize workflow variables
         id: init
+        env:
+          GITHUB_TOKEN: ${{ secrets.AUTOLABEL_COMMUNITY_ISSUES }}
         run: |
           set -e
 
@@ -30,6 +32,18 @@ jobs:
           echo "Repository: ${{ github.repository }}"
           echo "Event: ${{ github.event_name }}"
           echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+
+          # Validate that the required token was passed
+          if [ -z "${GITHUB_TOKEN}" ] || [ "${GITHUB_TOKEN}" = "" ]; then
+            echo "❌ ERROR: AUTOLABEL_COMMUNITY_ISSUES secret is missing or empty"
+            echo "This workflow requires the AUTOLABEL_COMMUNITY_ISSUES secret to be passed from the calling workflow."
+            echo "Please ensure the calling workflow includes:"
+            echo "  secrets:"
+            echo "    AUTOLABEL_COMMUNITY_ISSUES: \${{ secrets.AUTOLABEL_COMMUNITY_ISSUES }}"
+            exit 1
+          fi
+
+          echo "✅ Token validation passed"
 
           # Extract organization name dynamically
           ORG_NAME="${{ github.repository_owner }}"
