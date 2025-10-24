@@ -121,7 +121,7 @@ jobs:
               fi
               ;;
             401)
-              echo "❌ ERROR: Authentication failed - check GITHUB_TOKEN permissions"
+              echo "❌ ERROR: Authentication failed - check AUTOLABEL_COMMUNITY_ISSUES permissions"
               exit 1
               ;;
             403)
