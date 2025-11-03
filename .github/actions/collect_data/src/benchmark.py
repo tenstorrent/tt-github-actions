@@ -72,7 +72,7 @@ class _BenchmarkDataMapper(ABC):
         pass
 
 
-class ForgeFeBenchmarkDataMapper(_BenchmarkDataMapper):
+class ForgeBenchmarkDataMapper(_BenchmarkDataMapper):
     def map_benchmark_data(self, pipeline, job_id, report_data) -> CompleteBenchmarkRun | None:
         job = next((job for job in pipeline.jobs if job.github_job_id == job_id), None)
         if job is None:
@@ -395,12 +395,11 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
 
 
 def _map_benchmark_data(pipeline, job_id, report_data):
-    if pipeline.project in ["tt-forge-fe", "tt-forge"]:
-        mapper = ForgeFeBenchmarkDataMapper()
+    if pipeline.project in ["tt-forge-fe", "tt-xla", "tt-forge"]:
+        mapper = ForgeBenchmarkDataMapper()
     elif pipeline.project == "tt-shield":
         mapper = ShieldBenchmarkDataMapper()
     else:
-        logger.error(f"Unsupported project: {pipeline.project}")
-        return None
+        raise ValueError(f"Unsupported project: {pipeline.project}")
 
     return mapper.map_benchmark_data(pipeline, job_id, report_data)
