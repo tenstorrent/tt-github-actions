@@ -12,6 +12,7 @@ company-wide license settings with repository-specific ignore patterns.
 import sys
 import yaml
 from pathlib import Path
+from copy import deepcopy
 
 # Default configuration with company-wide standards
 DEFAULT_CONFIG = {
@@ -36,7 +37,7 @@ DEFAULT_CONFIG = {
 
 def merge_configs(user_config_path=None):
     """Merge default config with user's ignore patterns."""
-    config = DEFAULT_CONFIG.copy()
+    config = deepcopy(DEFAULT_CONFIG)
 
     if user_config_path and Path(user_config_path).exists():
         with open(user_config_path, "r") as f:

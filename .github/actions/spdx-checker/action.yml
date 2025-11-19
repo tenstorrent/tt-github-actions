@@ -58,15 +58,16 @@ runs:
     - name: Check SPDX licenses
       shell: bash
       run: |
-        VERBOSE_FLAG=""
-        DRY_RUN_FLAG=""
+        ARGS=("--config" "spdx_check_config.yaml")
 
         if [ "${{ inputs.verbose }}" = "true" ]; then
-          VERBOSE_FLAG="--verbose"
+          ARGS+=("--verbose")
         fi
 
         if [ "${{ inputs.dry_run }}" = "true" ]; then
-          DRY_RUN_FLAG="--dry-run"
+          ARGS+=("--dry-run")
         fi
 
-        python -m check_copyright $VERBOSE_FLAG $DRY_RUN_FLAG --config "spdx_check_config.yaml" "${{ inputs.target_directory }}"
+        ARGS+=("${{ inputs.target_directory }}")
+
+        python -m check_copyright "${ARGS[@]}"
