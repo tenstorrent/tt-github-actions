@@ -1,0 +1,73 @@
+name: 'SPDX License Checker'
+description: 'Checks SPDX license headers in source files using check-copyright tool'
+
+inputs:
+  ignore_config_file:
+    description: 'Optional path to YAML file containing only "ignore" patterns. If not provided, uses an empty ignore list (no files are ignored by default).'
+    required: false
+    default: ''
+  target_directory:
+    description: 'Directory to check for SPDX headers (default: repository root)'
+    required: false
+    default: '.'
+  python_version:
+    description: 'Python version to use'
+    required: false
+    default: '3.10'
+  verbose:
+    description: 'Enable verbose output'
+    required: false
+    default: 'true'
+  dry_run:
+    description: 'Run in dry-run mode (report issues without failing)'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python_version }}
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install pyyaml
+        python -m pip install git+https://github.com/espressif/check-copyright.git@master
+
+    - name: Prepare configuration
+      shell: bash
+      run: |
+        ACTION_DIR="${{ github.action_path }}"
+
+        # Create merged configuration
+        if [ -n "${{ inputs.ignore_config_file }}" ] && [ -f "${{ inputs.ignore_config_file }}" ]; then
+          echo "Merging default config with user ignore patterns from ${{ inputs.ignore_config_file }}"
+          python "$ACTION_DIR/merge_config.py" "${{ inputs.ignore_config_file }}" "spdx_check_config.yaml"
+        else
+          echo "Using default configuration with no custom ignore patterns"
+          python "$ACTION_DIR/merge_config.py" "" "spdx_check_config.yaml"
+        fi
+
+        echo "Generated configuration:"
+        cat spdx_check_config.yaml
+
+    - name: Check SPDX licenses
+      shell: bash
+      run: |
+        ARGS=("--config" "spdx_check_config.yaml")
+
+        if [ "${{ inputs.verbose }}" = "true" ]; then
+          ARGS+=("--verbose")
+        fi
+
+        if [ "${{ inputs.dry_run }}" = "true" ]; then
+          ARGS+=("--dry-run")
+        fi
+
+        ARGS+=("${{ inputs.target_directory }}")
+
+        python -m check_copyright "${ARGS[@]}"

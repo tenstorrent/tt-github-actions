@@ -1,0 +1,40 @@
+# Example workflow for using the SPDX License Checker action
+#
+# This file is for reference only - copy the relevant parts to your repository's
+# .github/workflows directory and customize as needed.
+
+name: Check SPDX Licenses
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  pull_request:
+    branches:
+      - "main"
+  merge_group:
+
+jobs:
+  # Example 1: Basic usage with no custom ignore patterns
+  check-spdx-basic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check SPDX licenses
+        uses: tenstorrent/tt-github-actions/.github/actions/spdx-checker@main
+
+  # Example 2: With custom ignore patterns
+  check-spdx-with-ignores:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check SPDX licenses
+        uses: tenstorrent/tt-github-actions/.github/actions/spdx-checker@main
+        with:
+          # Reference your repository's ignore configuration
+          ignore_config_file: '.github/spdx_ignore.yaml'
+          target_directory: '.'
+          verbose: 'true'

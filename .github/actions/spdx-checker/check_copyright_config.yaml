@@ -1,0 +1,34 @@
+# Example ignore-only configuration file for SPDX License Checker
+#
+# This file should ONLY contain "ignore" section with patterns for files/directories
+# to skip during SPDX license checking.
+#
+# The standard license settings (allowed_licenses, license_for_new_files, etc.)
+# are built into the action and cannot be overridden to ensure consistency
+# across all Tenstorrent repositories.
+#
+# Usage: Create a file like this in your repository and reference it with the
+#        ignore_config_file input parameter.
+
+ignore:
+  perform_check: no  # Don't check files matching patterns below
+  include:
+    # Common directories to ignore
+    - .github/
+    - third_party/
+    - __pycache__
+    - build/
+    - env/
+    - eevenv/
+    - built/
+
+    # File types to ignore
+    - "*.ld"
+    - "*.S"
+
+    # Add your repository-specific ignore patterns here
+    # Examples:
+    # - vendor/
+    # - external/
+    # - generated/
+    # - "*.generated.cpp"
