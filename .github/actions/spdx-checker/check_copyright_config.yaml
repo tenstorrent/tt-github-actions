@@ -21,11 +21,11 @@ ignore:
     - env/
     - eevenv/
     - built/
-    
+
     # File types to ignore
     - "*.ld"
     - "*.S"
-    
+
     # Add your repository-specific ignore patterns here
     # Examples:
     # - vendor/

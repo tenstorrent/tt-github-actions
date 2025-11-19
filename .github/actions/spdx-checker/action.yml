@@ -30,19 +30,19 @@ runs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.python_version }}
-    
+
     - name: Install dependencies
       shell: bash
       run: |
         python -m pip install --upgrade pip
         python -m pip install pyyaml
         python -m pip install git+https://github.com/espressif/check-copyright.git@master
-    
+
     - name: Prepare configuration
       shell: bash
       run: |
         ACTION_DIR="${{ github.action_path }}"
-        
+
         # Create merged configuration
         if [ -n "${{ inputs.ignore_config_file }}" ] && [ -f "${{ inputs.ignore_config_file }}" ]; then
           echo "Merging default config with user ignore patterns from ${{ inputs.ignore_config_file }}"
@@ -51,22 +51,22 @@ runs:
           echo "Using default configuration with no custom ignore patterns"
           python "$ACTION_DIR/merge_config.py" "" "spdx_check_config.yaml"
         fi
-        
+
         echo "Generated configuration:"
         cat spdx_check_config.yaml
-    
+
     - name: Check SPDX licenses
       shell: bash
       run: |
         VERBOSE_FLAG=""
         DRY_RUN_FLAG=""
-        
+
         if [ "${{ inputs.verbose }}" = "true" ]; then
           VERBOSE_FLAG="--verbose"
         fi
-        
+
         if [ "${{ inputs.dry_run }}" = "true" ]; then
           DRY_RUN_FLAG="--dry-run"
         fi
-        
+
         python -m check_copyright $VERBOSE_FLAG $DRY_RUN_FLAG --config "spdx_check_config.yaml" "${{ inputs.target_directory }}"

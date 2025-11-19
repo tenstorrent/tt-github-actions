@@ -1,5 +1,5 @@
 # Example workflow for using the SPDX License Checker action
-# 
+#
 # This file is for reference only - copy the relevant parts to your repository's
 # .github/workflows directory and customize as needed.
 
@@ -20,7 +20,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Check SPDX licenses
         uses: tenstorrent/tt-github-actions/.github/actions/spdx-checker@main
 
@@ -30,7 +30,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Check SPDX licenses
         uses: tenstorrent/tt-github-actions/.github/actions/spdx-checker@main
         with:

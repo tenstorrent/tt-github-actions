@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Check SPDX licenses
         uses: tenstorrent/tt-github-actions/.github/actions/spdx-checker@main
 ```
@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Check SPDX licenses
         uses: tenstorrent/tt-github-actions/.github/actions/spdx-checker@main
         with:
@@ -104,12 +104,12 @@ ignore:
     - vendor/
     - external/
     - generated/
-    
+
     # Build artifacts
     - build/
     - dist/
     - __pycache__
-    
+
     # File types that don't need SPDX headers
     - "*.ld"
     - "*.S"
