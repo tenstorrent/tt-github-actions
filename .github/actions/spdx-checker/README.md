@@ -6,7 +6,7 @@ This GitHub Action checks SPDX license headers in source files using the [check-
 
 - Validates SPDX license headers in source code files
 - Enforces standardized license settings across all Tenstorrent repositories
-- Supports multiple license types (Apache-2.0, MIT, BSD variants, etc.)
+- Supports Tenstorrent code and approved third-party licenses
 - Built-in default configuration with company-wide standards
 - Optional repository-specific ignore patterns
 - Can run in dry-run mode for reporting without failing
@@ -15,11 +15,24 @@ This GitHub Action checks SPDX license headers in source files using the [check-
 
 The action uses a **built-in default configuration** that enforces company-wide standards:
 
-- **Allowed Licenses**: Apache-2.0, Apache-2.0 WITH LLVM-exception, MIT, BSD-2-Clause, BSD-3-Clause
-- **Default License for New Files**: Apache-2.0
-- **Copyright Holder**: Tenstorrent AI ULC
+- **Default License for New Tenstorrent Files**: Apache-2.0
+- **Default Copyright Holder for New Tenstorrent Files**: Tenstorrent AI ULC
 
-These settings **cannot be overridden** to ensure consistency across all repositories. Repositories can only specify which files/directories to ignore.
+### Allowed Licenses
+
+The following licenses are approved for use in Tenstorrent repositories. Files with any of these licenses in their SPDX headers will pass validation:
+
+- **Apache-2.0** - Standard Tenstorrent license
+- **Apache-2.0 WITH LLVM-exception** - For LLVM-related code
+- **MIT** - Common third-party license
+- **BSD-2-Clause** - Common third-party license
+- **BSD-3-Clause** - Common third-party license
+
+Third-party code may use any of these licenses and retain their original copyright holders. The checker validates that files have proper SPDX headers with approved licenses, regardless of the copyright holder.
+
+> **Note**: If you need a license added to the approved list, please contact the Open Source Program Office (OSPO) on the Slack channel **#opensource**.
+
+These license settings **cannot be overridden** at the repository level to ensure consistency across all Tenstorrent repositories. Repositories can only specify which files/directories to ignore.
 
 ## Inputs
 
@@ -110,12 +123,9 @@ ignore:
 - License settings are standardized and cannot be changed per-repository
 - An example template is provided in this action's directory: `check_copyright_config.yaml`
 
-## Origin
-
-This action was extracted from the [tt-metal](https://github.com/tenstorrent/tt-metal) repository to standardize SPDX license checking across Tenstorrent repositories. See [PR #32654](https://github.com/tenstorrent/tt-metal/pull/32654) for the configuration updates that allowed third-party licenses.
-
 ## References
 
 - [SPDX License List](https://spdx.org/licenses/)
 - [check-copyright tool](https://github.com/espressif/check-copyright)
 - [SPDX Specification](https://spdx.dev/specifications/)
+- Contact OSPO on Slack: **#opensource**
