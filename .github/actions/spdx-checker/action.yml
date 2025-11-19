@@ -3,7 +3,7 @@ description: 'Checks SPDX license headers in source files using check-copyright 
 
 inputs:
   ignore_config_file:
-    description: 'Optional path to YAML file containing only "ignore" patterns. If not provided, uses minimal default ignores.'
+    description: 'Optional path to YAML file containing only "ignore" patterns. If not provided, uses an empty ignore list (no files are ignored by default).'
     required: false
     default: ''
   target_directory:
