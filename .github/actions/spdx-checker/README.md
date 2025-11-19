@@ -5,16 +5,27 @@ This GitHub Action checks SPDX license headers in source files using the [check-
 ## Features
 
 - Validates SPDX license headers in source code files
+- Enforces standardized license settings across all Tenstorrent repositories
 - Supports multiple license types (Apache-2.0, MIT, BSD variants, etc.)
-- Configurable via YAML configuration file
+- Built-in default configuration with company-wide standards
+- Optional repository-specific ignore patterns
 - Can run in dry-run mode for reporting without failing
-- Supports custom file patterns and ignore lists
+
+## Standard License Configuration
+
+The action uses a **built-in default configuration** that enforces company-wide standards:
+
+- **Allowed Licenses**: Apache-2.0, Apache-2.0 WITH LLVM-exception, MIT, BSD-2-Clause, BSD-3-Clause
+- **Default License for New Files**: Apache-2.0
+- **Copyright Holder**: Tenstorrent AI ULC
+
+These settings **cannot be overridden** to ensure consistency across all repositories. Repositories can only specify which files/directories to ignore.
 
 ## Inputs
 
 | Input | Description | Required | Default |
 |-------|-------------|----------|---------|
-| `config_file` | Path to the check_copyright_config.yaml file relative to repository root | No | `check_copyright_config.yaml` |
+| `ignore_config_file` | Path to YAML file containing only "ignore" patterns. Leave empty to use minimal defaults. | No | `` (empty) |
 | `target_directory` | Directory to check for SPDX headers | No | `.` (repository root) |
 | `python_version` | Python version to use | No | `3.10` |
 | `verbose` | Enable verbose output | No | `true` |
@@ -22,7 +33,9 @@ This GitHub Action checks SPDX license headers in source files using the [check-
 
 ## Usage
 
-### Basic Usage
+### Basic Usage (No Custom Ignores)
+
+For new repositories that don't need custom ignore patterns:
 
 ```yaml
 name: Check SPDX Licenses
@@ -39,7 +52,9 @@ jobs:
         uses: tenstorrent/tt-github-actions/.github/actions/spdx-checker@main
 ```
 
-### With Custom Configuration
+### With Custom Ignore Patterns
+
+For repositories that need to ignore specific files/directories:
 
 ```yaml
 name: Check SPDX Licenses
@@ -55,58 +70,45 @@ jobs:
       - name: Check SPDX licenses
         uses: tenstorrent/tt-github-actions/.github/actions/spdx-checker@main
         with:
-          config_file: '.github/check_copyright_config.yaml'
+          ignore_config_file: '.github/spdx_ignore.yaml'
           verbose: 'true'
-          dry_run: 'false'
 ```
 
-## Configuration File
+## Ignore Configuration File
 
-The action uses a YAML configuration file to specify which licenses are allowed and which files to check or ignore. A default configuration is provided in this directory as a template.
+If your repository needs to ignore specific files or directories, create a simple YAML file containing **only** an `ignore` section. The action will automatically merge this with the standard license configuration.
 
-### Example Configuration
+### Example Ignore Configuration
+
+Create a file (e.g., `.github/spdx_ignore.yaml`) in your repository:
 
 ```yaml
-DEFAULT:
-  perform_check: yes
-  
-  allowed_licenses:
-    - Apache-2.0
-    - Apache-2.0 WITH LLVM-exception
-    - MIT
-    - BSD-2-Clause
-    - BSD-3-Clause
-  
-  license_for_new_files: Apache-2.0
-  
-  new_notice_c: |
-    // SPDX-FileCopyrightText: © {years} Tenstorrent AI ULC
-    //
-    // SPDX-License-Identifier: {license}
-  
-  new_notice_python: |
-    """
-    SPDX-FileCopyrightText: © {years} Tenstorrent AI ULC
-
-    SPDX-License-Identifier: {license}
-    """
-
 ignore:
   perform_check: no
   include:
-    - .github/
+    # Version-controlled but should be ignored
     - third_party/
-    - __pycache__
+    - vendor/
+    - external/
+    - generated/
+    
+    # Build artifacts
     - build/
+    - dist/
+    - __pycache__
+    
+    # File types that don't need SPDX headers
+    - "*.ld"
+    - "*.S"
+    - "*.json"
+    - "*.md"
 ```
 
-### Configuration Options
+### Important Notes
 
-- **allowed_licenses**: List of SPDX license identifiers that are permitted
-- **license_for_new_files**: Default license to use when adding new files
-- **new_notice_c**: Template for C/C++/Header file copyright notices
-- **new_notice_python**: Template for Python file copyright notices
-- **ignore**: Patterns for files/directories to skip
+- **Only the `ignore` section is respected** - any other configuration options will be ignored
+- License settings are standardized and cannot be changed per-repository
+- An example template is provided in this action's directory: `check_copyright_config.yaml`
 
 ## Origin
 

@@ -14,7 +14,18 @@ on:
   merge_group:
 
 jobs:
-  check-spdx-licenses:
+  # Example 1: Basic usage with no custom ignore patterns
+  check-spdx-basic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check SPDX licenses
+        uses: tenstorrent/tt-github-actions/.github/actions/spdx-checker@main
+
+  # Example 2: With custom ignore patterns
+  check-spdx-with-ignores:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -23,8 +34,7 @@ jobs:
       - name: Check SPDX licenses
         uses: tenstorrent/tt-github-actions/.github/actions/spdx-checker@main
         with:
-          config_file: './check_copyright_config.yaml'
+          # Reference your repository's ignore configuration
+          ignore_config_file: '.github/spdx_ignore.yaml'
           target_directory: '.'
-          python_version: '3.10'
           verbose: 'true'
-          dry_run: 'false'
