@@ -146,7 +146,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 pipeline, job, report_data.get("benchmarks", []), report_data.get("metadata", {})
             )
             benchmark_summary_runs = self._process_benchmarks_summary(
-                pipeline, job, report_data.get("benchmarks_summary", [])
+                pipeline, job, report_data.get("benchmarks_summary", []), report_data.get("metadata", {})
             )
             eval_runs = self._process_evals(pipeline, job, report_data.get("evals", []))
             return benchmark_runs + benchmark_summary_runs + eval_runs
