@@ -142,7 +142,9 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             return None
 
         try:
-            benchmark_runs = self._process_benchmarks(pipeline, job, report_data.get("benchmarks", []))
+            benchmark_runs = self._process_benchmarks(
+                pipeline, job, report_data.get("benchmarks", []), report_data.get("metadata", {})
+            )
             benchmark_summary_runs = self._process_benchmarks_summary(
                 pipeline, job, report_data.get("benchmarks_summary", [])
             )
@@ -162,12 +164,15 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             logger.error(f"No job found with github_job_id: {job_id}")
         return job
 
-    def _process_benchmarks(self, pipeline, job, benchmarks):
+    def _process_benchmarks(self, pipeline, job, benchmarks, metadata=None):
         """
         Processes benchmark entries and creates CompleteBenchmarkRun objects for each entry.
         """
         results = []
         for benchmark in benchmarks:
+            if metadata is not None:
+                logger.debug(f"Processing benchmark with metadata included...")
+                benchmark = {**metadata, **benchmark} # benchmark values take precedence
             measurements = self._create_measurements(
                 job,
                 "benchmark",
@@ -201,6 +206,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     measurements=measurements,
                     device_info=benchmark.get("device"),
                     model_name=model_name,
+                    model_type=benchmark.get("inference_engine") + "_" + benchmark.get("backend"),
                     input_seq_length=benchmark.get("input_sequence_length"),
                     output_seq_length=benchmark.get("output_sequence_length"),
                     dataset_name=benchmark.get("model_id", None),
@@ -209,12 +215,15 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             )
         return results
 
-    def _process_benchmarks_summary(self, pipeline, job, benchmarks_summary):
+    def _process_benchmarks_summary(self, pipeline, job, benchmarks_summary, metadata=None):
         """
         Processes benchmark summary entries and creates CompleteBenchmarkRun objects for each entry.
         """
         results = []
         for benchmark in benchmarks_summary:
+            if metadata is not None:
+                logger.debug(f"Processing benchmark with metadata included...")
+                benchmark = {**metadata, **benchmark} # benchmark values take precedence
             measurements = self._create_measurements(
                 job,
                 "benchmark_summary",
@@ -272,12 +281,15 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             )
         return results
 
-    def _process_evals(self, pipeline, job, evals):
+    def _process_evals(self, pipeline, job, evals, metadata=None):
         """
         Processes evaluation entries and creates CompleteBenchmarkRun objects for each entry.
         """
         results = []
         for eval_entry in evals:
+            if metadata is not None:
+                logger.debug(f"Processing benchmark with metadata included...")
+                eval_entry = {**metadata, **eval_entry} # eval_entry values take precedence
             measurements = self._create_measurements(
                 job,
                 "eval",
@@ -351,6 +363,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         measurements,
         device_info,
         model_name,
+        model_type,
         input_seq_length=None,
         output_seq_length=None,
         dataset_name=None,
@@ -378,7 +391,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 "device_name": device_info,
             },
             ml_model_name=model_name,
-            ml_model_type=None,
+            ml_model_type=model_type,
             num_layers=None,
             batch_size=batch_size,
             config_params=None,
