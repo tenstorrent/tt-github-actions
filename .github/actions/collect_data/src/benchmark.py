@@ -164,6 +164,27 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             logger.error(f"No job found with github_job_id: {job_id}")
         return job
 
+    def _format_model_name(self, benchmark) -> str | None:
+        """
+        Formats the model name by removing any prefix before '/' from model_id.
+        """
+        model_name = benchmark.get("model_id")
+        if model_name and "/" in model_name:
+            model_name = model_name.split("/", 1)[1]
+        return model_name
+
+    def _format_model_type(self, benchmark) -> str:
+        """
+        Formats the model type by combining inference_engine and backend.
+        """
+        inference_engine = benchmark.get("inference_engine")
+        backend = benchmark.get("backend")
+        if inference_engine and backend:
+            model_type = f"{inference_engine}_{backend}"
+        else:
+            model_type = "unknown"
+        return model_type
+
     def _process_benchmarks(self, pipeline, job, benchmarks, metadata=None):
         """
         Processes benchmark entries and creates CompleteBenchmarkRun objects for each entry.
@@ -194,9 +215,10 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "num_prompts",
                 ],
             )
-            model_name = benchmark.get("model_id")
-            if model_name and "/" in model_name:
-                model_name = model_name.split("/", 1)[1]
+
+            model_name = self._format_model_name(benchmark)
+            model_type = self._format_model_type(benchmark)
+
             results.append(
                 self._create_complete_benchmark_run(
                     pipeline=pipeline,
@@ -206,7 +228,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     measurements=measurements,
                     device_info=benchmark.get("device"),
                     model_name=model_name,
-                    model_type=benchmark.get("inference_engine") + "_" + benchmark.get("backend"),
+                    model_type=model_type,
                     input_seq_length=benchmark.get("input_sequence_length"),
                     output_seq_length=benchmark.get("output_sequence_length"),
                     dataset_name=benchmark.get("model_id", None),
