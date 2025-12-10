@@ -244,7 +244,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         for benchmark in benchmarks_summary:
             if metadata is not None:
                 logger.debug(f"Processing benchmark with metadata included...")
-                eval_entry = {**metadata, **eval_entry}  # eval_entry values take precedence
+                benchmark = {**metadata, **benchmark}  # benchmark values take precedence
             measurements = self._create_measurements(
                 job,
                 "benchmark_summary",
