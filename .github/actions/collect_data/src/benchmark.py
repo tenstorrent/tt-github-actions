@@ -193,7 +193,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         for benchmark in benchmarks:
             if metadata is not None:
                 logger.debug(f"Processing benchmark with metadata included...")
-                benchmark = {**metadata, **benchmark} # benchmark values take precedence
+                benchmark = {**metadata, **benchmark}  # benchmark values take precedence
             measurements = self._create_measurements(
                 job,
                 "benchmark",
@@ -245,7 +245,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         for benchmark in benchmarks_summary:
             if metadata is not None:
                 logger.debug(f"Processing benchmark with metadata included...")
-                benchmark = {**metadata, **benchmark} # benchmark values take precedence
+                eval_entry = {**metadata, **eval_entry}  # eval_entry values take precedence
             measurements = self._create_measurements(
                 job,
                 "benchmark_summary",
@@ -279,9 +279,8 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 )
                 measurements.extend(target_measurements)
 
-            model_name = benchmark.get("model")
-            if model_name and "/" in model_name:
-                model_name = model_name.split("/", 1)[1]
+            model_name = self._format_model_name(benchmark)
+            model_type = self._format_model_type(benchmark)
 
             # Extract device (should now be included in benchmarks_summary)
             device = benchmark.get("device", "unknown")
@@ -295,6 +294,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     measurements=measurements,
                     device_info=device,
                     model_name=model_name,
+                    model_type=model_type,
                     input_seq_length=benchmark.get("isl"),
                     output_seq_length=benchmark.get("osl"),
                     dataset_name=model_name,
@@ -311,7 +311,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         for eval_entry in evals:
             if metadata is not None:
                 logger.debug(f"Processing benchmark with metadata included...")
-                eval_entry = {**metadata, **eval_entry} # eval_entry values take precedence
+                eval_entry = {**metadata, **eval_entry}  # eval_entry values take precedence
             measurements = self._create_measurements(
                 job,
                 "eval",
@@ -343,6 +343,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     measurements=measurements,
                     device_info=eval_entry.get("device"),
                     model_name=eval_entry.get("model"),
+                    model_type=None,
                     input_seq_length=None,
                     output_seq_length=None,
                     dataset_name=eval_entry.get("task_name"),
@@ -385,7 +386,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         measurements,
         device_info,
         model_name,
-        model_type,
+        model_type=None,
         input_seq_length=None,
         output_seq_length=None,
         dataset_name=None,
