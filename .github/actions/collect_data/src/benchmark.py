@@ -173,16 +173,15 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             model_name = model_name.split("/", 1)[1]
         return model_name
 
-    def _format_model_type(self, benchmark) -> str:
+    def _format_model_type(self, benchmark) -> str | None:
         """
         Formats the model type by combining inference_engine and backend.
         """
+        model_type = None
         inference_engine = benchmark.get("inference_engine")
         backend = benchmark.get("backend")
         if inference_engine and backend:
             model_type = f"{inference_engine}_{backend}"
-        else:
-            model_type = "unknown"
         return model_type
 
     def _process_benchmarks(self, pipeline, job, benchmarks, metadata=None):
