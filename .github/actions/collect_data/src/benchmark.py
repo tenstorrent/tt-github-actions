@@ -164,16 +164,16 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             logger.error(f"No job found with github_job_id: {job_id}")
         return job
 
-    def _format_model_name(self, benchmark) -> str | None:
+    def _format_model_name(self, benchmark):
         """
-        Formats the model name by removing any prefix before '/' from model_id.
+        Formats the model name by removing any prefix before '/' from model identifier.
         """
-        model_name = benchmark.get("model_id")
+        model_name = benchmark.get("model")
         if model_name and "/" in model_name:
             model_name = model_name.split("/", 1)[1]
         return model_name
 
-    def _format_model_type(self, benchmark) -> str | None:
+    def _format_model_type(self, benchmark):
         """
         Formats the model type by combining inference_engine and backend.
         """
@@ -190,7 +190,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         """
         results = []
         for benchmark in benchmarks:
-            if metadata is not None:
+            if metadata:
                 logger.debug(f"Processing benchmark with metadata included...")
                 benchmark = {**metadata, **benchmark}  # benchmark values take precedence
             measurements = self._create_measurements(
@@ -242,7 +242,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         """
         results = []
         for benchmark in benchmarks_summary:
-            if metadata is not None:
+            if metadata:
                 logger.debug(f"Processing benchmark summary with metadata included...")
                 benchmark = {**metadata, **benchmark}  # benchmark values take precedence
             measurements = self._create_measurements(
@@ -308,7 +308,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         """
         results = []
         for eval_entry in evals:
-            if metadata is not None:
+            if metadata:
                 logger.debug(f"Processing evals with metadata included...")
                 eval_entry = {**metadata, **eval_entry}  # eval_entry values take precedence
             measurements = self._create_measurements(
