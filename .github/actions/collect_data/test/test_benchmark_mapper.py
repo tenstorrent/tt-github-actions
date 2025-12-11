@@ -75,3 +75,51 @@ def test_process_evals(mapper, pipeline):
 def test_no_job_found(mapper, pipeline):
     result = mapper.map_benchmark_data(pipeline, 999, {})
     assert result is None
+
+
+def test_format_model_name_with_prefix(mapper):
+    benchmark = {"model_id": "meta-llama/Llama-3.2-1B"}
+    result = mapper._format_model_name(benchmark)
+    assert result == "Llama-3.2-1B"
+
+
+def test_format_model_name_none(mapper):
+    benchmark = {"model_id": None}
+    result = mapper._format_model_name(benchmark)
+    assert result is None
+
+
+def test_format_model_type_both_present(mapper):
+    benchmark = {"inference_engine": "vllm", "backend": "tt"}
+    result = mapper._format_model_type(benchmark)
+    assert result == "vllm_tt"
+
+
+def test_format_model_type_missing_inference_engine(mapper):
+    benchmark = {"backend": "tt"}
+    result = mapper._format_model_type(benchmark)
+    assert result is None
+
+
+def test_format_model_type_missing_backend(mapper):
+    benchmark = {"inference_engine": "vllm"}
+    result = mapper._format_model_type(benchmark)
+    assert result is None
+
+
+def test_format_model_type_both_missing(mapper):
+    benchmark = {}
+    result = mapper._format_model_type(benchmark)
+    assert result is None
+
+
+def test_format_model_type_backend_none(mapper):
+    benchmark = {"inference_engine": "vllm", "backend": None}
+    result = mapper._format_model_type(benchmark)
+    assert result is None
+
+
+def test_format_model_type_inference_engine_none(mapper):
+    benchmark = {"inference_engine": None, "backend": "tt"}
+    result = mapper._format_model_type(benchmark)
+    assert result is None

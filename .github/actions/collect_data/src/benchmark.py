@@ -168,7 +168,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         """
         Formats the model name by removing any prefix before '/' from model identifier.
         """
-        model_name = benchmark.get("model")
+        model_name = benchmark.get("model_id")
         if model_name and "/" in model_name:
             model_name = model_name.split("/", 1)[1]
         return model_name
