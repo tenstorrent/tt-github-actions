@@ -71,7 +71,7 @@ def test_process_benchmarks_with_metadata(mapper, pipeline):
                 "mean_ttft_ms": 100.0,
                 "std_ttft_ms": 10.0,
             }
-        ]
+        ],
     }
     result = mapper.map_benchmark_data(pipeline, 1, report_data)
     assert len(result) == 1
