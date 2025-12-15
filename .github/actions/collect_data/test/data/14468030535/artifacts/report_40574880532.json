@@ -2,6 +2,7 @@
     "benchmarks": [
         {
             "timestamp": "2025-04-15_16-18-39",
+            "model_name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "backend": "vllm",
             "device": "t3k",
@@ -26,6 +27,7 @@
         },
         {
             "timestamp": "2025-04-15_16-19-40",
+            "model_name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "backend": "vllm",
             "device": "t3k",
@@ -50,6 +52,7 @@
         },
         {
             "timestamp": "2025-04-15_16-23-17",
+            "model_name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "backend": "vllm",
             "device": "t3k",
@@ -74,6 +77,7 @@
         },
         {
             "timestamp": "2025-04-15_16-24-15",
+            "model_name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "backend": "vllm",
             "device": "t3k",
@@ -98,6 +102,7 @@
         },
         {
             "timestamp": "2025-04-15_16-25-18",
+            "model_name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "backend": "vllm",
             "device": "t3k",
@@ -122,6 +127,7 @@
         },
         {
             "timestamp": "2025-04-15_16-26-22",
+            "model_name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "backend": "vllm",
             "device": "t3k",
@@ -146,6 +152,7 @@
         },
         {
             "timestamp": "2025-04-15_16-27-33",
+            "model_name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "backend": "vllm",
             "device": "t3k",
@@ -170,6 +177,7 @@
         },
         {
             "timestamp": "2025-04-15_16-29-03",
+            "model_name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "backend": "vllm",
             "device": "t3k",
@@ -194,6 +202,7 @@
         },
         {
             "timestamp": "2025-04-15_16-30-58",
+            "model_name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "backend": "vllm",
             "device": "t3k",
@@ -218,6 +227,7 @@
         },
         {
             "timestamp": "2025-04-15_16-34-01",
+            "model_name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "backend": "vllm",
             "device": "t3k",
@@ -242,6 +252,7 @@
         },
         {
             "timestamp": "2025-04-15_16-35-24",
+            "model_name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "backend": "vllm",
             "device": "t3k",
@@ -266,6 +277,7 @@
         },
         {
             "timestamp": "2025-04-15_16-39-34",
+            "model_name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "backend": "vllm",
             "device": "t3k",
@@ -290,6 +302,7 @@
         },
         {
             "timestamp": "2025-04-15_16-42-09",
+            "model_name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "backend": "vllm",
             "device": "t3k",
@@ -314,6 +327,7 @@
         },
         {
             "timestamp": "2025-04-15_16-47-22",
+            "model_name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "backend": "vllm",
             "device": "t3k",
@@ -338,6 +352,7 @@
         },
         {
             "timestamp": "2025-04-15_16-49-34",
+            "model_name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "backend": "vllm",
             "device": "t3k",
@@ -362,6 +377,7 @@
         },
         {
             "timestamp": "2025-04-15_16-52-44",
+            "model_name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "backend": "vllm",
             "device": "t3k",
@@ -386,6 +402,7 @@
         },
         {
             "timestamp": "2025-04-15_16-55-55",
+            "model_name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "backend": "vllm",
             "device": "t3k",
@@ -410,6 +427,7 @@
         },
         {
             "timestamp": "2025-04-15_17-01-07",
+            "model_name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "backend": "vllm",
             "device": "t3k",

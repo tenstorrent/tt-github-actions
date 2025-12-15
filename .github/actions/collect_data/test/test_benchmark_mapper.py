@@ -40,6 +40,7 @@ def test_process_benchmarks(mapper, pipeline):
         "benchmarks": [
             {
                 "device": "test_device",
+                "model_name": "test_model",
                 "model_id": "test_model",
                 "input_sequence_length": 128,
                 "output_sequence_length": 128,
@@ -58,7 +59,8 @@ def test_process_benchmarks_with_metadata(mapper, pipeline):
     report_data = {
         "metadata": {
             "report_id": "test_report",
-            "model_id": "test_model",
+            "model_name": "test_model",
+            "model_id": "id_test_spec_test_model_test_device",
             "inference_engine": "vllm",
         },
         "benchmarks": [
@@ -105,19 +107,19 @@ def test_no_job_found(mapper, pipeline):
 
 
 def test_format_model_name(mapper):
-    benchmark = {"model_id": "Llama-3.2-1B"}
+    benchmark = {"model_name": "Llama-3.2-1B"}
     result = mapper._format_model_name(benchmark)
     assert result == "Llama-3.2-1B"
 
 
 def test_format_model_name_with_prefix(mapper):
-    benchmark = {"model_id": "meta-llama/Llama-3.2-1B"}
+    benchmark = {"model_name": "meta-llama/Llama-3.2-1B"}
     result = mapper._format_model_name(benchmark)
     assert result == "Llama-3.2-1B"
 
 
 def test_format_model_name_none(mapper):
-    benchmark = {"model_id": None}
+    benchmark = {"model_name": None}
     result = mapper._format_model_name(benchmark)
     assert result is None
 
