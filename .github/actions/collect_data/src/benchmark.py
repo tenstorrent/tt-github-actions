@@ -168,7 +168,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         """
         Formats the model name by removing any prefix before '/' from model identifier.
         """
-        model_name = benchmark.get("model_id")
+        model_name = benchmark.get("model_name")
         if model_name and "/" in model_name:
             model_name = model_name.split("/", 1)[1]
         return model_name
@@ -192,7 +192,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         for benchmark in benchmarks:
             if metadata:
                 logger.debug(f"Processing benchmark with metadata included...")
-                benchmark = {**metadata, **benchmark}  # benchmark values take precedence
+                benchmark = {**benchmark, **metadata}  # metadata values take precedence
             measurements = self._create_measurements(
                 job,
                 "benchmark",
@@ -244,7 +244,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         for benchmark in benchmarks_summary:
             if metadata:
                 logger.debug(f"Processing benchmark summary with metadata included...")
-                benchmark = {**metadata, **benchmark}  # benchmark values take precedence
+                benchmark = {**benchmark, **metadata}  # metadata values take precedence
             measurements = self._create_measurements(
                 job,
                 "benchmark_summary",
