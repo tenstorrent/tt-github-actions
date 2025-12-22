@@ -142,9 +142,11 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             return None
 
         try:
-            benchmark_runs = self._process_benchmarks(pipeline, job, report_data.get("benchmarks", []))
+            benchmark_runs = self._process_benchmarks(
+                pipeline, job, report_data.get("benchmarks", []), report_data.get("metadata", {})
+            )
             benchmark_summary_runs = self._process_benchmarks_summary(
-                pipeline, job, report_data.get("benchmarks_summary", [])
+                pipeline, job, report_data.get("benchmarks_summary", []), report_data.get("metadata", {})
             )
             eval_runs = self._process_evals(pipeline, job, report_data.get("evals", []))
             return benchmark_runs + benchmark_summary_runs + eval_runs
@@ -162,12 +164,35 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             logger.error(f"No job found with github_job_id: {job_id}")
         return job
 
-    def _process_benchmarks(self, pipeline, job, benchmarks):
+    def _format_model_name(self, benchmark):
+        """
+        Formats the model name by removing any prefix before '/' from model identifier.
+        """
+        model_name = benchmark.get("model_name")
+        if model_name and "/" in model_name:
+            model_name = model_name.split("/", 1)[1]
+        return model_name
+
+    def _format_model_type(self, benchmark):
+        """
+        Formats the model type by combining inference_engine and backend.
+        """
+        model_type = None
+        inference_engine = benchmark.get("inference_engine")
+        backend = benchmark.get("backend")
+        if inference_engine and backend:
+            model_type = f"{inference_engine}_{backend}"
+        return model_type
+
+    def _process_benchmarks(self, pipeline, job, benchmarks, metadata=None):
         """
         Processes benchmark entries and creates CompleteBenchmarkRun objects for each entry.
         """
         results = []
         for benchmark in benchmarks:
+            if metadata:
+                logger.debug(f"Processing benchmark with metadata included...")
+                benchmark = {**benchmark, **metadata}  # metadata values take precedence
             measurements = self._create_measurements(
                 job,
                 "benchmark",
@@ -189,9 +214,10 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "num_prompts",
                 ],
             )
-            model_name = benchmark.get("model_id")
-            if model_name and "/" in model_name:
-                model_name = model_name.split("/", 1)[1]
+
+            model_name = self._format_model_name(benchmark)
+            model_type = self._format_model_type(benchmark)
+
             results.append(
                 self._create_complete_benchmark_run(
                     pipeline=pipeline,
@@ -201,6 +227,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     measurements=measurements,
                     device_info=benchmark.get("device"),
                     model_name=model_name,
+                    model_type=model_type,
                     input_seq_length=benchmark.get("input_sequence_length"),
                     output_seq_length=benchmark.get("output_sequence_length"),
                     dataset_name=benchmark.get("model_id", None),
@@ -209,12 +236,15 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             )
         return results
 
-    def _process_benchmarks_summary(self, pipeline, job, benchmarks_summary):
+    def _process_benchmarks_summary(self, pipeline, job, benchmarks_summary, metadata=None):
         """
         Processes benchmark summary entries and creates CompleteBenchmarkRun objects for each entry.
         """
         results = []
         for benchmark in benchmarks_summary:
+            if metadata:
+                logger.debug(f"Processing benchmark summary with metadata included...")
+                benchmark = {**benchmark, **metadata}  # metadata values take precedence
             measurements = self._create_measurements(
                 job,
                 "benchmark_summary",
@@ -248,9 +278,8 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 )
                 measurements.extend(target_measurements)
 
-            model_name = benchmark.get("model")
-            if model_name and "/" in model_name:
-                model_name = model_name.split("/", 1)[1]
+            model_name = self._format_model_name(benchmark)
+            model_type = self._format_model_type(benchmark)
 
             # Extract device (should now be included in benchmarks_summary)
             device = benchmark.get("device", "unknown")
@@ -264,6 +293,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     measurements=measurements,
                     device_info=device,
                     model_name=model_name,
+                    model_type=model_type,
                     input_seq_length=benchmark.get("isl"),
                     output_seq_length=benchmark.get("osl"),
                     dataset_name=model_name,
@@ -272,12 +302,15 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             )
         return results
 
-    def _process_evals(self, pipeline, job, evals):
+    def _process_evals(self, pipeline, job, evals, metadata=None):
         """
         Processes evaluation entries and creates CompleteBenchmarkRun objects for each entry.
         """
         results = []
         for eval_entry in evals:
+            if metadata:
+                logger.debug(f"Processing evals with metadata included...")
+                eval_entry = {**metadata, **eval_entry}  # eval_entry values take precedence
             measurements = self._create_measurements(
                 job,
                 "eval",
@@ -292,10 +325,10 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "average_clip",
                     "deviation_clip",
                     "fid_score",
-                    "average_clip_accuracy_check",
-                    "fid_score_accuracy_check",
-                    "approx_clip_accuracy_check",
-                    "approx_fid_accuracy_check",
+                    "clip_accuracy_check_valid",
+                    "fid_accuracy_check_valid",
+                    "clip_accuracy_check_approx",
+                    "fid_accuracy_check_approx",
                     "delta_clip",
                     "delta_fid",
                 ],
@@ -309,6 +342,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     measurements=measurements,
                     device_info=eval_entry.get("device"),
                     model_name=eval_entry.get("model"),
+                    model_type=None,
                     input_seq_length=None,
                     output_seq_length=None,
                     dataset_name=eval_entry.get("task_name"),
@@ -351,6 +385,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         measurements,
         device_info,
         model_name,
+        model_type=None,
         input_seq_length=None,
         output_seq_length=None,
         dataset_name=None,
@@ -378,7 +413,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 "device_name": device_info,
             },
             ml_model_name=model_name,
-            ml_model_type=None,
+            ml_model_type=model_type,
             num_layers=None,
             batch_size=batch_size,
             config_params=None,
