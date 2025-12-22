@@ -21,7 +21,9 @@ DEFAULT_CONFIG = {
         "allowed_licenses": ["Apache-2.0", "Apache-2.0 WITH LLVM-exception", "MIT", "BSD-2-Clause", "BSD-3-Clause"],
         "license_for_new_files": "Apache-2.0",
         "new_notice_c": (
-            "// SPDX-FileCopyrightText: © {years} Tenstorrent USA, Inc.\n" "//\n" "// SPDX-License-Identifier: {license}\n"
+            "// SPDX-FileCopyrightText: © {years} Tenstorrent USA, Inc.\n"
+            "//\n"
+            "// SPDX-License-Identifier: {license}\n"
         ),
         "new_notice_python": (
             '"""\n'
