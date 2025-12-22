@@ -16,7 +16,9 @@ This GitHub Action checks SPDX license headers in source files using the [check-
 The action uses a **built-in default configuration** that enforces company-wide standards:
 
 - **Default License for New Tenstorrent Files**: Apache-2.0
-- **Default Copyright Holder for New Tenstorrent Files**: Tenstorrent AI ULC
+- **Default Copyright Holder for New Tenstorrent Files**: Tenstorrent USA, Inc.
+
+**Note**: During the company name transition, the checker accepts files with either "Tenstorrent AI ULC" or "Tenstorrent USA, Inc." as copyright holders. New files will use "Tenstorrent USA, Inc."
 
 ### Allowed Licenses
 
