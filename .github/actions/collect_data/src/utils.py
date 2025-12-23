@@ -4,8 +4,9 @@
 
 import os
 import enum
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+import re
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Union
 import subprocess
 from loguru import logger
 
@@ -14,34 +15,64 @@ class InfraErrorV1(enum.Enum):
     GENERIC_SET_UP_FAILURE = enum.auto()
 
 
+_FRACTION_RE = re.compile(r"\.(\d+)")
+
+
 def parse_timestamp(timestamp: str) -> Optional[datetime]:
     """
-    Parse a timestamp string into a datetime object.
-    Supports multiple formats with and without timezone and milliseconds.
+    Parse ISO-8601-like timestamps with optional timezone and fractional seconds.
 
-    Supported formats:
-    - "2024-12-23T02:56:37.036690+00:00"
-    - "2024-12-23T02:56:37.036690"
-    - "2024-12-23T02:56:37+00:00"
-    - "2024-12-23T02:56:37"
+    Supports:
+    - Z or +00:00 timezone
+    - 0–9 fractional second digits (truncated to microseconds)
 
-    :param timestamp: Timestamp string to parse.
-    :return: Parsed datetime object or None if parsing fails.
+    Examples:
+    - 2025-12-23T08:23:25.7346394Z
+    - 2024-12-23T02:56:37.036690+00:00
+    - 2024-12-23T02:56:37
     """
-    formats = [
-        "%Y-%m-%dT%H:%M:%S.%f%z",  # With microseconds and timezone
-        "%Y-%m-%dT%H:%M:%S.%f",  # With microseconds, no timezone
-        "%Y-%m-%dT%H:%M:%S%z",  # No microseconds, with timezone
-        "%Y-%m-%dT%H:%M:%S",  # No microseconds, no timezone
-    ]
+    if not timestamp:
+        return None
+
+    ts = timestamp
+
+    # Normalize Z → +00:00
+    if ts.endswith("Z"):
+        ts = ts[:-1] + "+00:00"
+
+    # Normalize fractional seconds to max 6 digits
+    m = _FRACTION_RE.search(ts)
+    if m:
+        frac = m.group(1)[:6].ljust(6, "0")
+        ts = ts[: m.start(1)] + frac + ts[m.end(1) :]
+
+    formats = (
+        "%Y-%m-%dT%H:%M:%S.%f%z",
+        "%Y-%m-%dT%H:%M:%S.%f",
+        "%Y-%m-%dT%H:%M:%S%z",
+        "%Y-%m-%dT%H:%M:%S",
+    )
 
     for fmt in formats:
         try:
-            return datetime.strptime(timestamp, fmt)
+            dt = datetime.strptime(ts, fmt)
+            # Make naive UTC explicit if original had Z
+            if dt.tzinfo is None and timestamp.endswith("Z"):
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt
         except ValueError:
-            continue  # Try the next format
+            pass
 
-    return None  # Return None if no format matches
+    return None
+
+
+def ensure_timezone(value: Optional[datetime]) -> Optional[datetime]:
+    """Attach UTC timezone information to naive datetime values."""
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value
 
 
 def get_data_pipeline_datetime_from_datetime(requested_datetime: datetime) -> str:
@@ -132,7 +163,7 @@ def get_failed_steps(github_job: Dict[str, Any]) -> List[str]:
     return failed_steps
 
 
-def get_failure_description(github_job: Dict[str, Any], repository: str = None) -> Optional[str]:
+def get_failure_description(github_job: Dict[str, Any], logs: Optional[str] = None) -> Optional[str]:
     """
     Get failure description for a job by extracting error messages from logs
     of failed steps.
@@ -144,9 +175,7 @@ def get_failure_description(github_job: Dict[str, Any], repository: str = None) 
     if len(failed_steps) > 1:
         error_descriptions = f"Failed steps: {', '.join(step for step in failed_steps)}\n"
     job_id = github_job.get("id")
-    # Try to get logs if possible
     try:
-        logs = get_job_logs(repository, job_id)
         error_lines = extract_error_lines_from_logs(logs)
         if error_lines:
             # Limit to first 5 error lines to keep description concise
@@ -163,14 +192,14 @@ def get_job_logs(repository: str, job_id: int) -> str:
     Get logs for a specific job using GitHub CLI.
     """
     cmd = ["gh", "api", f"/repos/{repository}/actions/jobs/{job_id}/logs"]
-    logger.info(f"Fetching logs for job {job_id} to inspect failures")
+    logger.info(f"Fetching logs for job {job_id}")
     logger.info(" ".join(cmd))
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         return result.stdout
     except subprocess.CalledProcessError as e:
         logger.error(f"Error fetching logs for job {job_id}: {e}")
-        raise
+        return None
 
 
 def extract_error_lines_from_logs(logs: str) -> List[str]:
@@ -211,6 +240,66 @@ def extract_error_lines_from_logs(logs: str) -> List[str]:
                 break  # Once we find a marker, no need to check others
 
     return error_lines
+
+
+def job_inputs_from_logs(logs: str) -> Dict[str, str]:
+    """Parse the Inputs section in the logs and return a mapping."""
+    inputs: Dict[str, str] = {}
+    in_inputs_section = False
+    for line in logs.splitlines():
+        payload_start = line.find(" ")
+        payload = line[payload_start + 1 :].strip()
+        if payload == "##[group] Inputs":
+            in_inputs_section = True
+            continue
+        if in_inputs_section:
+            if payload == "##[endgroup]":
+                break
+            key, value = payload.split(":", 1)
+            inputs[key.strip()] = value.strip()
+    return inputs
+
+
+def docker_image_from_logs(logs: str) -> Optional[str]:
+    """Extract the docker image from the docker pull command in the logs."""
+    if not logs:
+        return None
+    pull_pattern = re.compile(r"docker[^\n]*?\bpull\s+([^\s]+)", re.IGNORECASE)
+
+    for line in logs.splitlines():
+        match = pull_pattern.search(line)
+        if match:
+            return match.group(1).strip("\"'")
+
+    return None
+
+
+def get_step_logs(logs: str, steps: list, step_name: str) -> Optional[str]:
+    """
+    Extract logs for a specific step from the full job logs, based on step start and stop time.
+    """
+    step = next((item for item in steps if item.get("name") == step_name), None)
+    if not step:
+        return None
+
+    step_start = ensure_timezone(parse_timestamp(step.get("started_at") or ""))
+    step_end = ensure_timezone(parse_timestamp(step.get("completed_at") or ""))
+
+    if not step_start:
+        logger.warning(f"Could not find start time for step '{step_name}'")
+        return None
+
+    extracted_logs = []
+    for line in logs.splitlines():
+        timestamp_token = line.split()[0]
+        log_time = ensure_timezone(parse_timestamp(timestamp_token))
+        if not log_time:
+            continue
+        if step_end and log_time > step_end:
+            break  # Logs are chronologically sorted, so we can stop once we pass the step.
+        if log_time >= step_start:
+            extracted_logs.append(line)
+    return "\n".join(extracted_logs)
 
 
 def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
@@ -271,10 +360,6 @@ def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
 
     is_build_job = "build" in name or "build" in labels
 
-    job_matrix_config = None
-
-    docker_image = None
-
     github_job_link = github_job.get("html_url")
 
     # Get the repository from github_job_link if available
@@ -286,11 +371,18 @@ def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
         if len(parts) >= 5 and parts[2] == "github.com":
             repository = f"{parts[3]}/{parts[4]}"
 
+    job_matrix_config, docker_image = None, None
+    job_steps = github_job["steps"]
+    logs = get_job_logs(repository, github_job_id)
+    if logs:
+        job_matrix_config = job_inputs_from_logs(get_step_logs(logs, job_steps, "Set up job"))
+        docker_image = docker_image_from_logs(get_step_logs(logs, job_steps, "Initialize containers"))
+
     failure_signature = None
     failure_description = None
     if job_status == "failure":
         failure_signature = get_job_failure_signature(github_job)
-        failure_description = get_failure_description(github_job, repository)
+        failure_description = get_failure_description(github_job, logs)
 
     return {
         "github_job_id": github_job_id,
