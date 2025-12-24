@@ -274,34 +274,6 @@ def docker_image_from_logs(logs: str) -> Optional[str]:
     return None
 
 
-def get_step_logs(logs: str, steps: list, step_name: str) -> Optional[str]:
-    """
-    Extract logs for a specific step from the full job logs, based on step start and stop time.
-    """
-    step = next((item for item in steps if item.get("name") == step_name), None)
-    if not step:
-        return None
-
-    step_start = ensure_timezone(parse_timestamp(step.get("started_at") or ""))
-    step_end = ensure_timezone(parse_timestamp(step.get("completed_at") or ""))
-
-    if not step_start:
-        logger.warning(f"Could not find start time for step '{step_name}'")
-        return None
-
-    extracted_logs = []
-    for line in logs.splitlines():
-        timestamp_token = line.split()[0]
-        log_time = ensure_timezone(parse_timestamp(timestamp_token))
-        if not log_time:
-            continue
-        if step_end and log_time > step_end:
-            break  # Logs are chronologically sorted, so we can stop once we pass the step.
-        if log_time >= step_start:
-            extracted_logs.append(line)
-    return "\n".join(extracted_logs)
-
-
 def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
     github_job_id = github_job.get("id")
 
@@ -372,11 +344,10 @@ def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
             repository = f"{parts[3]}/{parts[4]}"
 
     job_matrix_config, docker_image = None, None
-    job_steps = github_job["steps"]
     logs = get_job_logs(repository, github_job_id)
     if logs:
-        job_matrix_config = job_inputs_from_logs(get_step_logs(logs, job_steps, "Set up job"))
-        docker_image = docker_image_from_logs(get_step_logs(logs, job_steps, "Initialize containers"))
+        job_matrix_config = job_inputs_from_logs(logs)
+        docker_image = docker_image_from_logs(logs)
 
     failure_signature = None
     failure_description = None
