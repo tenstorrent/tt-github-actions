@@ -244,20 +244,31 @@ def extract_error_lines_from_logs(logs: str) -> List[str]:
 
 def job_inputs_from_logs(logs: str) -> Dict[str, str]:
     """Parse the Inputs section in the logs and return a mapping."""
-    inputs: Dict[str, str] = {}
-    in_inputs_section = False
-    for line in logs.splitlines():
-        payload_start = line.find(" ")
-        payload = line[payload_start + 1 :].strip()
-        if payload == "##[group] Inputs":
-            in_inputs_section = True
-            continue
-        if in_inputs_section:
-            if payload == "##[endgroup]":
-                break
-            key, value = payload.split(":", 1)
-            inputs[key.strip()] = value.strip()
-    return inputs
+    try:
+        inputs: Dict[str, str] = {}
+        in_inputs_section = False
+        for line in logs.splitlines():
+            # Safely handle empty or malformed lines
+            if not line.strip():
+                continue
+            payload_start = line.find(" ")
+            if payload_start == -1:
+                continue  # No space found; skip line
+            payload = line[payload_start + 1 :].strip()
+            if payload == "##[group] Inputs":
+                in_inputs_section = True
+                continue
+            if in_inputs_section:
+                if payload == "##[endgroup]":
+                    break
+                # Ensure the line has a ':' to split on
+                if ":" not in payload:
+                    continue
+                key, value = payload.split(":", 1)
+                inputs[key.strip()] = value.strip()
+        return inputs
+    except Exception:
+        return None
 
 
 def docker_image_from_logs(logs: str) -> Optional[str]:
