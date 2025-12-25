@@ -310,7 +310,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         for eval_entry in evals:
             if metadata:
                 logger.debug(f"Processing evals with metadata included...")
-                eval_entry = {**metadata, **eval_entry}  # eval_entry values take precedence
+                eval_entry = {**eval_entry, **metadata}  # metadata values take precedence
             measurements = self._create_measurements(
                 job,
                 "eval",
