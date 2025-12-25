@@ -245,10 +245,10 @@ def extract_error_lines_from_logs(logs: str) -> List[str]:
 def job_inputs_from_logs(logs: str) -> Dict[str, str]:
     """Parse the Inputs section in the logs and return a mapping."""
     JSON_START_CHARS = ("[", "{")
-    
+
     inputs: Dict[str, str] = {}
     in_inputs_section = False
-    
+
     for line in logs.splitlines():
         payload_start = line.find(" ")
         payload = line[payload_start + 1 :].strip()
@@ -258,9 +258,9 @@ def job_inputs_from_logs(logs: str) -> Dict[str, str]:
         if in_inputs_section and payload == "##[endgroup]":
             break
         if in_inputs_section and ":" in payload:
-                key, value = payload.split(":", 1)
-                if value.strip() not in JSON_START_CHARS:
-                    inputs[key.strip("\"")] = value.strip(" ,")
+            key, value = payload.split(":", 1)
+            if value.strip() not in JSON_START_CHARS:
+                inputs[key.strip('"')] = value.strip(" ,")
     return inputs
 
 
