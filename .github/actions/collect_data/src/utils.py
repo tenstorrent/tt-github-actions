@@ -347,12 +347,12 @@ def job_inputs_from_logs(logs: str) -> Dict[str, str]:
             if _is_multiline_log_input(lines, i + 1, value.strip()):
                 multiline_value, next_i = _return_multiline_log_value(lines, i + 1, value.strip())
                 inputs[key] = multiline_value.strip()
-                logger.debug(f"Found multiline value: ${multiline_value} for key: {key}")
+                logger.debug(f"Found multiline value: {multiline_value} for key: {key}")
                 i = next_i
                 continue
             else:
                 inputs[key] = value.strip()
-                logger.debug(f"Found single line value: ${value} for key: {key}")
+                logger.debug(f"Found single line value: {value} for key: {key}")
         i += 1
 
     return inputs
