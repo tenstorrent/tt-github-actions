@@ -289,7 +289,7 @@ def _is_multiline_log_input(lines: list[str], start_multiline_idx: int, value: s
 
 def _return_multiline_log_value(
     lines: list[str], start_multiline_idx: int, start_multiline_value: str
-) -> tuple(str, int):
+) -> tuple[str, int]:
     """
     Read multiline log values.
     Returns multiline value and next line index after multiline.
