@@ -267,7 +267,7 @@ def _is_multiline_log_input(lines: list[str], start_multiline_idx: int, value: s
     multiline_end_indicator = False
 
     JSON_START_CHARS = ("[", "{")
-    if value.startswith(JSON_START_CHARS) or value == " ":
+    if value.startswith(JSON_START_CHARS) or value == "":
         multiline_start_indicator = True
 
     while i < len(lines):
@@ -304,7 +304,7 @@ def _return_multiline_log_value(
         }
     ]
 
-    -> ('run-matrix': '[{"with-inference-server": false,"model": "example-model","runner": {"label": "example-label", "type": "example-type"},"impl": ""}]', next_line_idx)
+    -> ('[{"with-inference-server": true,"model": "example-model","runner": {"label": "example-label", "type": "example-type"},"impl": ""}]', next_line_idx)
     """
     multiline_value = [start_multiline_value]
     i = start_multiline_idx
@@ -329,7 +329,13 @@ def job_inputs_from_logs(logs: str) -> Dict[str, str]:
 
     while i < len(lines):
         line = lines[i]
-        payload = line[line.find(" ") + 1 :].strip()
+
+        space_index = line.find(" ")
+        if space_index == -1:
+            i += 1
+            continue
+
+        payload = line[space_index + 1 :].strip()
         if payload == "##[group] Inputs":
             logger.debug("Found Inputs section in logs!")
             in_inputs_section = True
@@ -346,12 +352,12 @@ def job_inputs_from_logs(logs: str) -> Dict[str, str]:
             # Check if value is multiline before processing
             if _is_multiline_log_input(lines, i + 1, value.strip()):
                 multiline_value, next_i = _return_multiline_log_value(lines, i + 1, value.strip())
-                inputs[key] = multiline_value.strip()
+                inputs[key.strip()] = multiline_value.strip()
                 logger.debug(f"Found multiline value: {multiline_value} for key: {key}")
                 i = next_i
                 continue
             else:
-                inputs[key] = value.strip()
+                inputs[key.strip()] = value.strip()
                 logger.debug(f"Found single line value: {value} for key: {key}")
         i += 1
 
