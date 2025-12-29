@@ -242,25 +242,119 @@ def extract_error_lines_from_logs(logs: str) -> List[str]:
     return error_lines
 
 
+def _is_multiline_log_input(lines: list[str], start_multiline_idx: int, value: str) -> bool:
+    """
+    Check if the input value indicates a multiline value.
+
+    Examples:
+    2025-12-29T11:33:37.6922195Z   run-matrix: [
+        {
+            "with-inference-server": true,
+            "model": "example-model",
+            "runner": {"label": "example-label", "type": "example-type"},
+            "impl": ""
+        }
+    ]
+
+    -> True
+
+    2025-12-29T11:33:37.6922687Z   run-matrix: [{"key": "value"}]
+    2025-12-29T11:33:38.4354123Z   another-key: another-value
+    -> False
+    """
+    i = start_multiline_idx
+    multiline_start_indicator = False
+    multiline_end_indicator = False
+
+    JSON_START_CHARS = ("[", "{")
+    if value.startswith(JSON_START_CHARS) or value == " ":
+        multiline_start_indicator = True
+
+    while i < len(lines):
+        # Timestamp indicates next key-value pair, so input is not multiline
+        try:
+            timestamp = re.match(r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{7}Z)", lines[i]).group(1)
+            if timestamp:
+                break
+        except AttributeError:
+            pass
+        # Empty line indicates end of multiline value
+        if lines[i] == "":
+            multiline_end_indicator = True
+            break
+        i += 1
+
+    return multiline_start_indicator and multiline_end_indicator
+
+
+def _return_multiline_log_value(
+    lines: list[str], start_multiline_idx: int, start_multiline_value: str
+) -> tuple(str, int):
+    """
+    Read multiline log values.
+    Returns multiline value and next line index after multiline.
+
+    Example:
+    2025-12-29T11:33:37.6922195Z  run-matrix: [
+        {
+            "with-inference-server": true,
+            "model": "example-model",
+            "runner": {"label": "example-label", "type": "example-type"},
+            "impl": ""
+        }
+    ]
+
+    -> ('run-matrix': '[{"with-inference-server": false,"model": "example-model","runner": {"label": "example-label", "type": "example-type"},"impl": ""}]', next_line_idx)
+    """
+    multiline_value = [start_multiline_value]
+    i = start_multiline_idx
+
+    while i < len(lines):
+        # Empty line indicates end of multiline value
+        if lines[i] == "":
+            break
+
+        multiline_value.append(lines[i].strip())
+        i += 1
+
+    return "".join(multiline_value), i
+
+
 def job_inputs_from_logs(logs: str) -> Dict[str, str]:
     """Parse the Inputs section in the logs and return a mapping."""
-    JSON_START_CHARS = ("[", "{")
-
     inputs: Dict[str, str] = {}
     in_inputs_section = False
+    lines = logs.splitlines()
+    i = 0
 
-    for line in logs.splitlines():
-        payload_start = line.find(" ")
-        payload = line[payload_start + 1 :].strip()
+    while i < len(lines):
+        line = lines[i]
+        payload = line[line.find(" ") + 1 :].strip()
         if payload == "##[group] Inputs":
+            logger.debug("Found Inputs section in logs!")
             in_inputs_section = True
+            i += 1
             continue
+
         if in_inputs_section and payload == "##[endgroup]":
+            logger.debug("Found endgroup section for Inputs in logs!")
+            logger.debug("Finished parsing Inputs from logs.")
             break
+
         if in_inputs_section and ":" in payload:
             key, value = payload.split(":", 1)
-            if value.strip() not in JSON_START_CHARS:
-                inputs[key.strip('"')] = value.strip(" ,")
+            # Check if value is multiline before processing
+            if _is_multiline_log_input(lines, i + 1, value.strip()):
+                multiline_value, next_i = _return_multiline_log_value(lines, i + 1, value.strip())
+                inputs[key] = multiline_value.strip()
+                logger.debug(f"Found multiline value: ${multiline_value} for key: {key}")
+                i = next_i
+                continue
+            else:
+                inputs[key] = value.strip()
+                logger.debug(f"Found single line value: ${value} for key: {key}")
+        i += 1
+
     return inputs
 
 
