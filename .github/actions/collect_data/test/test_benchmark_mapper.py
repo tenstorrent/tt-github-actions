@@ -52,6 +52,7 @@ def test_process_benchmarks(mapper, pipeline):
     result = mapper.map_benchmark_data(pipeline, 1, report_data)
     assert len(result) == 1
     assert isinstance(result[0], CompleteBenchmarkRun)
+    assert not isinstance(result[0].config_params, dict)
     assert len(result[0].measurements) == 2
 
 
@@ -80,6 +81,46 @@ def test_process_benchmarks_with_metadata(mapper, pipeline):
     assert isinstance(result[0], CompleteBenchmarkRun)
     assert result[0].ml_model_name == "test_model"
     assert result[0].ml_model_type == "vllm_tt"
+    assert not isinstance(result[0].config_params, dict)
+    assert len(result[0].measurements) == 2
+
+
+def test_process_benchmarks_with_model_spec_data(mapper, pipeline):
+    model_spec_data = {
+        "model_id": "test_model",
+        "impl": {
+            "impl_id": "test_impl_id",
+            "impl_name": "test_impl_name",
+        },
+        "inference_engine": "vllm",
+        "device_type": "tt",
+        "device_model_spec": {
+            "device": "test_device",
+            "max_concurrency": 1,
+            "max_context": 2048
+        },
+        "env_vars": {
+            "MESH_DEVICE": "test_mesh_device",
+            "ARCH_NAME": "test_arch_name"
+        }
+    }
+    report_data = {
+        "benchmarks": [
+            {
+                "device": "test_device",
+                "model_name": "test_model",
+                "model_id": "test_model",
+                "input_sequence_length": 128,
+                "output_sequence_length": 128,
+                "mean_ttft_ms": 100.0,
+                "std_ttft_ms": 10.0,
+            }
+        ]
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data, model_spec_data)
+    assert len(result) == 1
+    assert isinstance(result[0], CompleteBenchmarkRun)
+    assert isinstance(result[0].config_params, dict)
     assert len(result[0].measurements) == 2
 
 
@@ -98,6 +139,71 @@ def test_process_evals(mapper, pipeline):
     result = mapper.map_benchmark_data(pipeline, 1, report_data)
     assert len(result) == 1
     assert isinstance(result[0], CompleteBenchmarkRun)
+    assert not isinstance(result[0].config_params, dict)
+    assert len(result[0].measurements) == 3
+
+
+def test_process_evals_with_metadata(mapper, pipeline):
+    report_data = {
+        "metadata": {
+            "report_id": "test_report",
+            "model_name": "test_model",
+            "model_id": "id_test_spec_test_model_test_device",
+            "inference_engine": "vllm",
+        },
+        "evals": [
+            {
+                "device": "test_device",
+                "model": "test_model",
+                "score": 95.0,
+                "published_score": 90.0,
+                "gpu_reference_score": 85.0,
+            }
+        ]
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    assert len(result) == 1
+    assert isinstance(result[0], CompleteBenchmarkRun)
+    assert result[0].ml_model_name == "test_model"
+    assert result[0].ml_model_type == None
+    assert not isinstance(result[0].config_params, dict)
+    assert len(result[0].measurements) == 3
+
+
+def test_process_evals_with_model_spec_data(mapper, pipeline):
+    model_spec_data = {
+        "model_id": "test_model",
+        "impl": {
+            "impl_id": "test_impl_id",
+            "impl_name": "test_impl_name",
+        },
+        "inference_engine": "vllm",
+        "device_type": "tt",
+        "device_model_spec": {
+            "device": "test_device",
+            "max_concurrency": 1,
+            "max_context": 2048
+        },
+        "env_vars": {
+            "MESH_DEVICE": "test_mesh_device",
+            "ARCH_NAME": "test_arch_name"
+        }
+    }
+    report_data = {
+        "evals": [
+            {
+                "device": "test_device",
+                "model": "test_model",
+                "score": 95.0,
+                "published_score": 90.0,
+                "gpu_reference_score": 85.0,
+            }
+        ]
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data, model_spec_data)
+    assert len(result) == 1
+    assert isinstance(result[0], CompleteBenchmarkRun)
+    assert isinstance(result[0].config_params, dict)
     assert len(result[0].measurements) == 3
 
 
