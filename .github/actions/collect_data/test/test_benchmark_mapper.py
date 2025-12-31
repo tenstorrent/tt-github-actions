@@ -94,15 +94,8 @@ def test_process_benchmarks_with_model_spec_data(mapper, pipeline):
         },
         "inference_engine": "vllm",
         "device_type": "tt",
-        "device_model_spec": {
-            "device": "test_device",
-            "max_concurrency": 1,
-            "max_context": 2048
-        },
-        "env_vars": {
-            "MESH_DEVICE": "test_mesh_device",
-            "ARCH_NAME": "test_arch_name"
-        }
+        "device_model_spec": {"device": "test_device", "max_concurrency": 1, "max_context": 2048},
+        "env_vars": {"MESH_DEVICE": "test_mesh_device", "ARCH_NAME": "test_arch_name"},
     }
     report_data = {
         "benchmarks": [
@@ -159,7 +152,7 @@ def test_process_evals_with_metadata(mapper, pipeline):
                 "published_score": 90.0,
                 "gpu_reference_score": 85.0,
             }
-        ]
+        ],
     }
     result = mapper.map_benchmark_data(pipeline, 1, report_data)
     assert len(result) == 1
@@ -179,15 +172,8 @@ def test_process_evals_with_model_spec_data(mapper, pipeline):
         },
         "inference_engine": "vllm",
         "device_type": "tt",
-        "device_model_spec": {
-            "device": "test_device",
-            "max_concurrency": 1,
-            "max_context": 2048
-        },
-        "env_vars": {
-            "MESH_DEVICE": "test_mesh_device",
-            "ARCH_NAME": "test_arch_name"
-        }
+        "device_model_spec": {"device": "test_device", "max_concurrency": 1, "max_context": 2048},
+        "env_vars": {"MESH_DEVICE": "test_mesh_device", "ARCH_NAME": "test_arch_name"},
     }
     report_data = {
         "evals": [

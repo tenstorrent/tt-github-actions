@@ -16,6 +16,7 @@ from typing import List, Dict
 Generate benchmark data from perf reports.
 """
 
+
 def _load_model_spec_json(model_spec_path: pathlib.Path) -> dict | None:
     """
     HINT: Temporary helper method to load model_spec JSON for Shield benchmarks.
@@ -43,7 +44,7 @@ def create_json_from_report(pipeline, workflow_outputs_dir) -> List[CompleteBenc
             model_spec_data = _load_model_spec_json(model_spec_path)
         if model_spec_data:
             logger.info(f"Loaded model_spec for job: {job_id} from {model_spec_path}")
-            
+
         for report_path in report_paths:
             with open(report_path) as report_file:
                 report_data = json.load(report_file)
@@ -161,26 +162,26 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         job = self._get_job(pipeline, job_id)
         if job is None:
             return None
-        
-        # Load run specs 
+
+        # Load run specs
         try:
             benchmark_runs = self._process_benchmarks(
-                pipeline, 
-                job, 
-                report_data.get("benchmarks", []), 
+                pipeline,
+                job,
+                report_data.get("benchmarks", []),
                 report_data.get("metadata", {}),
                 model_spec_data,
             )
             benchmark_summary_runs = self._process_benchmarks_summary(
-                pipeline, 
-                job, 
-                report_data.get("benchmarks_summary", []), 
+                pipeline,
+                job,
+                report_data.get("benchmarks_summary", []),
                 report_data.get("metadata", {}),
                 model_spec_data,
             )
             eval_runs = self._process_evals(
-                pipeline, 
-                job, 
+                pipeline,
+                job,
                 report_data.get("evals", []),
                 report_data.get("metadata", {}),
                 model_spec_data,
