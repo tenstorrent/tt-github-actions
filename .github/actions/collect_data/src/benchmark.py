@@ -44,12 +44,13 @@ def create_json_from_report(pipeline, workflow_outputs_dir) -> List[CompleteBenc
             model_spec_data = _load_model_spec_json(model_spec_path)
         if model_spec_data:
             logger.info(f"Loaded model_spec for job: {job_id} from {model_spec_path}")
+            report_paths.remove(model_spec_path)
 
         for report_path in report_paths:
             with open(report_path) as report_file:
                 report_data = json.load(report_file)
                 benchmark_data = _map_benchmark_data(pipeline, job_id, report_data, model_spec_data)
-                if benchmark_data is not None:
+                if benchmark_data:
                     results.extend(benchmark_data)
                     logger.info(f"Created benchmark data for job: {job_id} from report: {report_path}")
     return results
