@@ -17,17 +17,40 @@ Generate benchmark data from perf reports.
 """
 
 
+def _load_model_spec_json(model_spec_path: pathlib.Path) -> dict | None:
+    """
+    HINT: Temporary helper method to load model_spec JSON for Shield benchmarks.
+    model_spec is not yet integrated into the main report schema.
+    Until then, we load it separately from here.
+    """
+    try:
+        with open(model_spec_path) as model_spec_file:
+            model_spec_data = json.load(model_spec_file)
+            return model_spec_data
+    except Exception as e:
+        logger.error(f"Failed to load model_spec from {model_spec_path}: {e}")
+        return None
+
+
 def create_json_from_report(pipeline, workflow_outputs_dir) -> List[CompleteBenchmarkRun]:
 
     results = []
     reports = _get_model_reports(workflow_outputs_dir, pipeline.github_pipeline_id)
-
     for job_id, report_paths in reports.items():
+        # First, find and load model_spec file if it exists
+        model_spec_data = None
+        model_spec_path = next((path for path in report_paths if "model_spec" in path.name), None)
+        if model_spec_path:
+            report_paths.remove(model_spec_path)
+            model_spec_data = _load_model_spec_json(model_spec_path)
+        if model_spec_data:
+            logger.info(f"Loaded model_spec for job: {job_id} from {model_spec_path}")
+
         for report_path in report_paths:
             with open(report_path) as report_file:
                 report_data = json.load(report_file)
-                benchmark_data = _map_benchmark_data(pipeline, job_id, report_data)
-                if benchmark_data is not None:
+                benchmark_data = _map_benchmark_data(pipeline, job_id, report_data, model_spec_data)
+                if benchmark_data:
                     results.extend(benchmark_data)
                     logger.info(f"Created benchmark data for job: {job_id} from report: {report_path}")
     return results
@@ -73,7 +96,7 @@ class _BenchmarkDataMapper(ABC):
 
 
 class ForgeBenchmarkDataMapper(_BenchmarkDataMapper):
-    def map_benchmark_data(self, pipeline, job_id, report_data) -> CompleteBenchmarkRun | None:
+    def map_benchmark_data(self, pipeline, job_id, report_data, model_spec_data=None) -> CompleteBenchmarkRun | None:
         job = next((job for job in pipeline.jobs if job.github_job_id == job_id), None)
         if job is None:
             logger.error(f"No job found with github_job_id: {job_id}")
@@ -133,7 +156,7 @@ class ForgeBenchmarkDataMapper(_BenchmarkDataMapper):
 
 
 class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
-    def map_benchmark_data(self, pipeline, job_id, report_data) -> CompleteBenchmarkRun | None:
+    def map_benchmark_data(self, pipeline, job_id, report_data, model_spec_data=None) -> CompleteBenchmarkRun | None:
         """
         Maps benchmark and evaluation data from the report to CompleteBenchmarkRun objects.
         """
@@ -143,12 +166,26 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
 
         try:
             benchmark_runs = self._process_benchmarks(
-                pipeline, job, report_data.get("benchmarks", []), report_data.get("metadata", {})
+                pipeline,
+                job,
+                report_data.get("benchmarks", []),
+                report_data.get("metadata", {}),
+                model_spec_data,
             )
             benchmark_summary_runs = self._process_benchmarks_summary(
-                pipeline, job, report_data.get("benchmarks_summary", []), report_data.get("metadata", {})
+                pipeline,
+                job,
+                report_data.get("benchmarks_summary", []),
+                report_data.get("metadata", {}),
+                model_spec_data,
             )
-            eval_runs = self._process_evals(pipeline, job, report_data.get("evals", []))
+            eval_runs = self._process_evals(
+                pipeline,
+                job,
+                report_data.get("evals", []),
+                report_data.get("metadata", {}),
+                model_spec_data,
+            )
             return benchmark_runs + benchmark_summary_runs + eval_runs
         except ValidationError as e:
             failure_happened()
@@ -184,7 +221,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             model_type = f"{inference_engine}_{backend}"
         return model_type
 
-    def _process_benchmarks(self, pipeline, job, benchmarks, metadata=None):
+    def _process_benchmarks(self, pipeline, job, benchmarks, metadata=None, model_spec_data=None):
         """
         Processes benchmark entries and creates CompleteBenchmarkRun objects for each entry.
         """
@@ -232,11 +269,12 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     output_seq_length=benchmark.get("output_sequence_length"),
                     dataset_name=benchmark.get("model_id", None),
                     batch_size=benchmark.get("max_con"),
+                    config_params=model_spec_data,
                 )
             )
         return results
 
-    def _process_benchmarks_summary(self, pipeline, job, benchmarks_summary, metadata=None):
+    def _process_benchmarks_summary(self, pipeline, job, benchmarks_summary, metadata=None, model_spec_data=None):
         """
         Processes benchmark summary entries and creates CompleteBenchmarkRun objects for each entry.
         """
@@ -298,11 +336,12 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     output_seq_length=benchmark.get("osl"),
                     dataset_name=model_name,
                     batch_size=benchmark.get("max_concurrency"),
+                    config_params=model_spec_data,
                 )
             )
         return results
 
-    def _process_evals(self, pipeline, job, evals, metadata=None):
+    def _process_evals(self, pipeline, job, evals, metadata=None, model_spec_data=None):
         """
         Processes evaluation entries and creates CompleteBenchmarkRun objects for each entry.
         """
@@ -347,6 +386,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     output_seq_length=None,
                     dataset_name=eval_entry.get("task_name"),
                     batch_size=None,
+                    config_params=model_spec_data,
                 )
             )
         return results
@@ -390,6 +430,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         output_seq_length=None,
         dataset_name=None,
         batch_size=None,
+        config_params=None,
     ):
         """
         Creates a CompleteBenchmarkRun object with the provided data and measurements.
@@ -416,7 +457,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             ml_model_type=model_type,
             num_layers=None,
             batch_size=batch_size,
-            config_params=None,
+            config_params=config_params,
             precision=None,
             dataset_name=dataset_name,
             profiler_name=None,
@@ -429,7 +470,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         )
 
 
-def _map_benchmark_data(pipeline, job_id, report_data):
+def _map_benchmark_data(pipeline, job_id, report_data, model_spec_data=None):
     if pipeline.project in ["tt-forge-fe", "tt-xla", "tt-forge"]:
         mapper = ForgeBenchmarkDataMapper()
     elif pipeline.project == "tt-shield":
@@ -437,4 +478,4 @@ def _map_benchmark_data(pipeline, job_id, report_data):
     else:
         raise ValueError(f"Unsupported project: {pipeline.project}")
 
-    return mapper.map_benchmark_data(pipeline, job_id, report_data)
+    return mapper.map_benchmark_data(pipeline, job_id, report_data, model_spec_data)
