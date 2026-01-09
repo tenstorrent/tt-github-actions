@@ -81,7 +81,7 @@ def test_process_benchmarks_with_metadata(mapper, pipeline):
     assert isinstance(result[0], CompleteBenchmarkRun)
     assert result[0].ml_model_name == "test_model"
     assert result[0].ml_model_type == "vllm_tt"
-    assert not isinstance(result[0].config_params, dict)
+    assert result[0].config_params is None
     assert len(result[0].measurements) == 2
 
 
@@ -132,7 +132,7 @@ def test_process_evals(mapper, pipeline):
     result = mapper.map_benchmark_data(pipeline, 1, report_data)
     assert len(result) == 1
     assert isinstance(result[0], CompleteBenchmarkRun)
-    assert not isinstance(result[0].config_params, dict)
+    assert result[0].config_params is None
     assert len(result[0].measurements) == 3
 
 
@@ -158,8 +158,8 @@ def test_process_evals_with_metadata(mapper, pipeline):
     assert len(result) == 1
     assert isinstance(result[0], CompleteBenchmarkRun)
     assert result[0].ml_model_name == "test_model"
-    assert result[0].ml_model_type == None
-    assert not isinstance(result[0].config_params, dict)
+    assert result[0].ml_model_type is None
+    assert result[0].config_params is None
     assert len(result[0].measurements) == 3
 
 

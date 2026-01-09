@@ -41,10 +41,10 @@ def create_json_from_report(pipeline, workflow_outputs_dir) -> List[CompleteBenc
         model_spec_data = None
         model_spec_path = next((path for path in report_paths if "model_spec" in path.name), None)
         if model_spec_path:
+            report_paths.remove(model_spec_path)
             model_spec_data = _load_model_spec_json(model_spec_path)
         if model_spec_data:
             logger.info(f"Loaded model_spec for job: {job_id} from {model_spec_path}")
-            report_paths.remove(model_spec_path)
 
         for report_path in report_paths:
             with open(report_path) as report_file:
@@ -164,7 +164,6 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         if job is None:
             return None
 
-        # Load run specs
         try:
             benchmark_runs = self._process_benchmarks(
                 pipeline,
