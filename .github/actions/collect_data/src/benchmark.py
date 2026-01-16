@@ -210,17 +210,6 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             model_name = model_name.split("/", 1)[1]
         return model_name
 
-    def _format_model_type(self, benchmark):
-        """
-        Formats the model type by combining inference_engine and backend.
-        """
-        model_type = None
-        inference_engine = benchmark.get("inference_engine")
-        backend = benchmark.get("backend")
-        if inference_engine and backend:
-            model_type = f"{inference_engine}_{backend}"
-        return model_type
-
     def _process_benchmarks(self, pipeline, job, benchmarks, metadata=None, model_spec_data=None):
         """
         Processes benchmark entries and creates CompleteBenchmarkRun objects for each entry.
@@ -253,7 +242,6 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             )
 
             model_name = self._format_model_name(benchmark)
-            model_type = self._format_model_type(benchmark)
 
             results.append(
                 self._create_complete_benchmark_run(
@@ -264,7 +252,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     measurements=measurements,
                     device_info=benchmark.get("device"),
                     model_name=model_name,
-                    model_type=model_type,
+                    model_type=model_spec_data.get("model_type") if model_spec_data else None,
                     input_seq_length=benchmark.get("input_sequence_length"),
                     output_seq_length=benchmark.get("output_sequence_length"),
                     dataset_name=benchmark.get("model_id", None),
@@ -317,7 +305,6 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 measurements.extend(target_measurements)
 
             model_name = self._format_model_name(benchmark)
-            model_type = self._format_model_type(benchmark)
 
             # Extract device (should now be included in benchmarks_summary)
             device = benchmark.get("device", "unknown")
@@ -331,7 +318,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     measurements=measurements,
                     device_info=device,
                     model_name=model_name,
-                    model_type=model_type,
+                    model_type=model_spec_data.get("model_type") if model_spec_data else None,
                     input_seq_length=benchmark.get("isl"),
                     output_seq_length=benchmark.get("osl"),
                     dataset_name=model_name,
@@ -381,7 +368,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     measurements=measurements,
                     device_info=eval_entry.get("device"),
                     model_name=eval_entry.get("model"),
-                    model_type=None,
+                    model_type=model_spec_data.get("model_type") if model_spec_data else None,
                     input_seq_length=None,
                     output_seq_length=None,
                     dataset_name=eval_entry.get("task_name"),

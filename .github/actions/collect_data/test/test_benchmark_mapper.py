@@ -80,7 +80,7 @@ def test_process_benchmarks_with_metadata(mapper, pipeline):
     assert len(result) == 1
     assert isinstance(result[0], CompleteBenchmarkRun)
     assert result[0].ml_model_name == "test_model"
-    assert result[0].ml_model_type == "vllm_tt"
+    assert result[0].ml_model_type is None
     assert result[0].config_params is None
     assert len(result[0].measurements) == 2
 
@@ -216,37 +216,40 @@ def test_format_model_name_none(mapper):
     assert result is None
 
 
-def test_format_model_type_both_present(mapper):
-    benchmark = {"inference_engine": "vllm", "backend": "tt"}
-    result = mapper._format_model_type(benchmark)
-    assert result == "vllm_tt"
+def test_benchmarks_model_type_with_model_spec(mapper, pipeline):
+    report_data = {"benchmarks": [{"model_name": "test_model"}]}
+    model_spec_data = {"model_type": "LLM"}
+    result = mapper.map_benchmark_data(pipeline, 1, report_data, model_spec_data)
+    assert result[0].ml_model_type == "LLM"
 
 
-def test_format_model_type_missing_inference_engine(mapper):
-    benchmark = {"backend": "tt"}
-    result = mapper._format_model_type(benchmark)
-    assert result is None
+def test_benchmarks_model_type_without_model_spec(mapper, pipeline):
+    report_data = {"benchmarks": [{"model_name": "test_model"}]}
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    assert result[0].ml_model_type is None
 
 
-def test_format_model_type_missing_backend(mapper):
-    benchmark = {"inference_engine": "vllm"}
-    result = mapper._format_model_type(benchmark)
-    assert result is None
+def test_benchmark_summary_model_type_with_model_spec(mapper, pipeline):
+    report_data = {"benchmarks_summary": [{"model_name": "test_model"}]}
+    model_spec_data = {"model_type": "LLM"}
+    result = mapper.map_benchmark_data(pipeline, 1, report_data, model_spec_data)
+    assert result[0].ml_model_type == "LLM"
 
 
-def test_format_model_type_both_missing(mapper):
-    benchmark = {}
-    result = mapper._format_model_type(benchmark)
-    assert result is None
+def test_benchmark_summary_model_type_without_model_spec(mapper, pipeline):
+    report_data = {"benchmarks_summary": [{"model_name": "test_model"}]}
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    assert result[0].ml_model_type is None
 
 
-def test_format_model_type_backend_none(mapper):
-    benchmark = {"inference_engine": "vllm", "backend": None}
-    result = mapper._format_model_type(benchmark)
-    assert result is None
+def test_evals_model_type_with_model_spec(mapper, pipeline):
+    report_data = {"evals": [{"model": "test_model"}]}
+    model_spec_data = {"model_type": "LLM"}
+    result = mapper.map_benchmark_data(pipeline, 1, report_data, model_spec_data)
+    assert result[0].ml_model_type == "LLM"
 
 
-def test_format_model_type_inference_engine_none(mapper):
-    benchmark = {"inference_engine": None, "backend": "tt"}
-    result = mapper._format_model_type(benchmark)
-    assert result is None
+def test_evals_model_type_without_model_spec(mapper, pipeline):
+    report_data = {"evals": [{"model": "test_model"}]}
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    assert result[0].ml_model_type is None

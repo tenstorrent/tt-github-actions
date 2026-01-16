@@ -4,6 +4,9 @@
 .github/actions/collect_data/pipeline_*.json
 .github/actions/collect_data/test/data/tt_torch_models/models/**
 .github/actions/collect_data/generated/**
+.github/actions/collect_data/.coverage
+.github/actions/collect_data/pytest-coverage.txt
+.github/actions/collect_data/pytest.xml
 .env
 .github/actions/collect_data/*.jsonl
 
