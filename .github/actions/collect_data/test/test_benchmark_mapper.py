@@ -253,3 +253,110 @@ def test_evals_model_type_without_model_spec(mapper, pipeline):
     report_data = {"evals": [{"model": "test_model"}]}
     result = mapper.map_benchmark_data(pipeline, 1, report_data)
     assert result[0].ml_model_type is None
+
+
+def test_process_parameter_support_tests(mapper, pipeline):
+    report_data = {
+        "parameter_support_tests": [
+            {
+                "device": "test_device",
+                "model": "test_model",
+                "task_name": "test_task",
+                "endpoint_url": "http://example.com/api",
+                "results": {
+                    "test_n": [{"status": "failed", "message": "n=10 not supported", "test_node_name": "test_n[2]"}],
+                    "test_max_tokens": [
+                        {
+                            "status": "passed",
+                            "message": "max_tokens=2048 supported",
+                            "test_node_name": "test_max_tokens[3]",
+                        }
+                    ],
+                },
+            }
+        ]
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    assert len(result) == 1
+    assert isinstance(result[0], CompleteBenchmarkRun)
+    assert result[0].run_type == "parameter_support_test"
+    assert result[0].config_params is None
+    assert len(result[0].measurements) == 2
+    measurements_by_name = {m.step_name: m for m in result[0].measurements}
+    assert measurements_by_name["test_n"].value == 0.0
+    assert measurements_by_name["test_max_tokens"].value == 1.0
+
+
+def test_process_parameter_support_tests_with_metadata(mapper, pipeline):
+    report_data = {
+        "metadata": {
+            "report_id": "test_report",
+            "model_name": "test_model",
+            "inference_engine": "vllm",
+        },
+        "parameter_support_tests": [
+            {
+                "device": "test_device",
+                "model": "test_model",
+                "task_name": "test_task",
+                "endpoint_url": "http://example.com/api",
+                "results": {
+                    "test_n": [{"status": "failed", "message": "n=10 not supported", "test_node_name": "test_n[2]"}],
+                    "test_max_tokens": [
+                        {
+                            "status": "passed",
+                            "message": "max_tokens=2048 supported",
+                            "test_node_name": "test_max_tokens[3]",
+                        }
+                    ],
+                },
+            }
+        ],
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    assert len(result) == 1
+    assert isinstance(result[0], CompleteBenchmarkRun)
+    assert result[0].run_type == "parameter_support_test"
+    assert result[0].ml_model_type is None
+    assert result[0].config_params is None
+    assert len(result[0].measurements) == 2
+    measurements_by_name = {m.step_name: m for m in result[0].measurements}
+    assert measurements_by_name["test_n"].value == 0.0
+    assert measurements_by_name["test_max_tokens"].value == 1.0
+
+
+def test_process_parameter_support_tests_with_model_spec_data(mapper, pipeline):
+    model_spec_data = {
+        "model_id": "test_model",
+        "model_type": "LLM",
+        "impl": {
+            "impl_id": "test_impl_id",
+            "impl_name": "test_impl_name",
+        },
+        "inference_engine": "vllm",
+        "device_type": "tt",
+        "device_model_spec": {"device": "test_device", "max_concurrency": 1, "max_context": 2048},
+        "env_vars": {"MESH_DEVICE": "test_mesh_device", "ARCH_NAME": "test_arch_name"},
+    }
+    report_data = {
+        "parameter_support_tests": [
+            {
+                "device": "test_device",
+                "model": "test_model",
+                "task_name": "test_task",
+                "endpoint_url": "http://example.com/api",
+                "results": {
+                    "test_n": [{"status": "failed", "message": "n=10 not supported", "test_node_name": "test_n[2]"}]
+                },
+            }
+        ]
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data, model_spec_data)
+    assert len(result) == 1
+    assert isinstance(result[0], CompleteBenchmarkRun)
+    assert result[0].run_type == "parameter_support_test"
+    assert result[0].ml_model_type == "LLM"
+    assert isinstance(result[0].config_params, dict)
+    assert len(result[0].measurements) == 1
+    assert result[0].measurements[0].step_name == "test_n"
+    assert result[0].measurements[0].value == 0.0

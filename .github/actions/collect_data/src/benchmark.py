@@ -164,29 +164,38 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         if job is None:
             return None
 
+        metadata = report_data.get("metadata", {})
+
         try:
             benchmark_runs = self._process_benchmarks(
                 pipeline,
                 job,
                 report_data.get("benchmarks", []),
-                report_data.get("metadata", {}),
+                metadata,
                 model_spec_data,
             )
             benchmark_summary_runs = self._process_benchmarks_summary(
                 pipeline,
                 job,
                 report_data.get("benchmarks_summary", []),
-                report_data.get("metadata", {}),
+                metadata,
                 model_spec_data,
             )
             eval_runs = self._process_evals(
                 pipeline,
                 job,
                 report_data.get("evals", []),
-                report_data.get("metadata", {}),
+                metadata,
                 model_spec_data,
             )
-            return benchmark_runs + benchmark_summary_runs + eval_runs
+            parameter_support_tests_runs = self._process_parameter_support_tests(
+                pipeline,
+                job,
+                report_data.get("parameter_support_tests", []),
+                metadata,
+                model_spec_data,
+            )
+            return benchmark_runs + benchmark_summary_runs + eval_runs + parameter_support_tests_runs
         except ValidationError as e:
             failure_happened()
             logger.error(f"Validation error: {e}")
@@ -378,6 +387,77 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             )
         return results
 
+    def _process_parameter_support_tests(self, pipeline, job, tests, metadata=None, model_spec_data=None):
+        """
+        Processes parameter support tests and creates CompleteBenchmarkRun objects for each test.
+        Extracts status from test results and converts to numeric measurements (0=failed, 1=success).
+        """
+        results = []
+        for test in tests:
+            if metadata:
+                logger.debug(f"Processing tests with metadata included...")
+                test = {**test, **metadata}  # metadata values take precedence
+
+            # Append endpoint_url from test to model_spec_data if available
+            if model_spec_data and "endpoint_url" in test:
+                model_spec_data["endpoint_url"] = test.get("endpoint_url", {})
+
+            if "results" not in test:
+                logger.warning(f"No results found in parameter support test: {test.get('test_name', 'unknown')}")
+                continue
+
+            all_measurements = []
+
+            # Iterate through each test category (e.g., "test_n", "test_max_tokens")
+            for test_name, test_cases in test.get("results", {}).items():
+                for test_case in test_cases:
+                    measurements = self._create_measurements(
+                        job,
+                        test_name,
+                        test_case,
+                        [
+                            "status",
+                        ],
+                    )
+                    all_measurements.extend(measurements)
+
+            results.append(
+                self._create_complete_benchmark_run(
+                    pipeline=pipeline,
+                    job=job,
+                    data=test,
+                    run_type="parameter_support_test",
+                    measurements=all_measurements,
+                    device_info=test.get("device"),
+                    model_name=test.get("model"),
+                    model_type=model_spec_data.get("model_type") if model_spec_data else None,
+                    input_seq_length=None,
+                    output_seq_length=None,
+                    dataset_name=test.get("task_name"),
+                    batch_size=None,
+                    config_params=model_spec_data,
+                )
+            )
+        return results
+
+    def _normalize_measurement_value(self, value):
+        """
+        Normalizes string status values to float (1.0 for success, 0.0 for failure).
+        For all other types, returns the value as-is to let Pydantic handle conversion.
+        """
+        if isinstance(value, str):
+            normalized_str = value.strip().lower()
+
+            SUCCESS_VALUES = ["success", "passed", "true", "pass", "ok"]
+            FAILURE_VALUES = ["failure", "failed", "false", "fail", "error"]
+
+            if normalized_str in SUCCESS_VALUES:
+                return 1.0
+            if normalized_str in FAILURE_VALUES:
+                return 0.0
+
+        return value
+
     def _create_measurements(self, job, step_name, data, keys):
         """
         Creates BenchmarkMeasurement objects for the specified keys in the data.
@@ -393,7 +473,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                         step_name=step_name,
                         step_warm_up_num_iterations=None,
                         name=key,
-                        value=data.get(key),
+                        value=self._normalize_measurement_value(data.get(key)),
                         target=None,
                         device_power=None,
                         device_temperature=None,
