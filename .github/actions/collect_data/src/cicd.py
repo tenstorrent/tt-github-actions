@@ -82,12 +82,12 @@ def create_cicd_json_for_data_analysis(
 
 
 def get_github_job_id_to_test_reports(
-    workflow_outputs_dir, workflow_run_id: int, extensions: Union[List[str], str] = ".xml"
+    workflow_outputs_dir, workflow_run_id: int, extensions: Union[List[str], str] = [".xml", ".json"]
 ) -> Dict[int, List[str]]:
     """
     This function searches for test reports in the artifacts directory
     and returns a mapping of job IDs to the paths of the test reports.
-    We expect that report filename is in format `<report_name>_<job_id>.xml`.
+    We expect that report filename is in format `<report_name>_<job_id>.xml/json`.
     """
 
     if not isinstance(extensions, list):

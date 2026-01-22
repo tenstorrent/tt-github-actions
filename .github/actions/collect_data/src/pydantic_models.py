@@ -23,7 +23,7 @@ class Test(BaseModel):
     test_start_ts: datetime = Field(description="Timestamp with timezone when the test execution started.")
     test_end_ts: datetime = Field(description="Timestamp with timezone when the test execution ended.")
     test_case_name: str = Field(description="Name of the pytest function.")
-    filepath: str = Field(description="Test file path and name.")
+    filepath: Optional[str] = Field(None, description="Test file path and name.")
     category: str = Field(description="Name of the test category.")
     group: Optional[str] = Field(None, description="Name of the test group.")
     owner: Optional[str] = Field(None, description="Developer of the test.")

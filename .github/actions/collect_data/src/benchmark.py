@@ -188,14 +188,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 metadata,
                 model_spec_data,
             )
-            parameter_support_tests_runs = self._process_parameter_support_tests(
-                pipeline,
-                job,
-                report_data.get("parameter_support_tests", {}),
-                metadata,
-                model_spec_data,
-            )
-            return benchmark_runs + benchmark_summary_runs + eval_runs + parameter_support_tests_runs
+            return benchmark_runs + benchmark_summary_runs + eval_runs
         except ValidationError as e:
             failure_happened()
             logger.error(f"Validation error: {e}")
@@ -387,76 +380,6 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             )
         return results
 
-    def _process_parameter_support_tests(self, pipeline, job, tests, metadata=None, model_spec_data=None):
-        """
-        Processes parameter support tests and creates CompleteBenchmarkRun object for parameter support tests.
-        Extracts status from test results and converts to numeric measurements (0=failed, 1=success).
-        """
-        results = []
-
-        if metadata:
-            logger.debug(f"Processing parameter support tests with metadata included...")
-            tests = {**tests, **metadata}  # metadata values take precedence
-
-        # Append endpoint_url from test to model_spec_data if available
-        if model_spec_data and "endpoint_url" in tests:
-            model_spec_data["endpoint_url"] = tests.get("endpoint_url", {})
-
-        if "results" not in tests:
-            logger.warning(f"No results found in parameter support tests: {tests.get('test_name', 'unknown')}")
-            return results
-
-        all_measurements = []
-        # Iterate through each test category (e.g., "test_n", "test_max_tokens")
-        for test_name, test_cases in tests.get("results", {}).items():
-            for test_case in test_cases:
-                measurements = self._create_measurements(
-                    job,
-                    test_name,
-                    test_case,
-                    [
-                        "status",
-                    ],
-                )
-                all_measurements.extend(measurements)
-
-        results.append(
-            self._create_complete_benchmark_run(
-                pipeline=pipeline,
-                job=job,
-                data=tests,
-                run_type="parameter_support_tests",
-                measurements=all_measurements,
-                device_info=tests.get("device"),
-                model_name=tests.get("model_name"),
-                model_type=model_spec_data.get("model_type") if model_spec_data else None,
-                input_seq_length=None,
-                output_seq_length=None,
-                dataset_name=None,
-                batch_size=None,
-                config_params=model_spec_data,
-            )
-        )
-        return results
-
-    def _normalize_measurement_value(self, value):
-        """
-        Normalizes string status values to float (1.0 for success, 0.0 for failure).
-        For all other types, returns the value as-is to let Pydantic handle conversion.
-        """
-        if isinstance(value, str):
-            normalized_str = value.strip().lower()
-
-            SUCCESS_VALUES = ["success", "passed", "true", "pass", "ok"]
-            FAILURE_VALUES = ["failure", "failed", "false", "fail", "error"]
-
-            if normalized_str in SUCCESS_VALUES:
-                return 1.0
-            if normalized_str in FAILURE_VALUES:
-                return 0.0
-
-        return value
-
     def _create_measurements(self, job, step_name, data, keys):
         """
         Creates BenchmarkMeasurement objects for the specified keys in the data.
@@ -472,7 +395,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                         step_name=step_name,
                         step_warm_up_num_iterations=None,
                         name=key,
-                        value=self._normalize_measurement_value(data.get(key)),
+                        value=data.get(key),
                         target=None,
                         device_power=None,
                         device_temperature=None,
