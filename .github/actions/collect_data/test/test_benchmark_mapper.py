@@ -257,24 +257,22 @@ def test_evals_model_type_without_model_spec(mapper, pipeline):
 
 def test_process_parameter_support_tests(mapper, pipeline):
     report_data = {
-        "parameter_support_tests": [
-            {
-                "device": "test_device",
-                "model": "test_model",
-                "task_name": "test_task",
-                "endpoint_url": "http://example.com/api",
-                "results": {
-                    "test_n": [{"status": "failed", "message": "n=10 not supported", "test_node_name": "test_n[2]"}],
-                    "test_max_tokens": [
-                        {
-                            "status": "passed",
-                            "message": "max_tokens=2048 supported",
-                            "test_node_name": "test_max_tokens[3]",
-                        }
-                    ],
-                },
-            }
-        ]
+        "parameter_support_tests": {
+            "device": "test_device",
+            "model": "test_model",
+            "task_name": "test_task",
+            "endpoint_url": "http://example.com/api",
+            "results": {
+                "test_n": [{"status": "failed", "message": "n=10 not supported", "test_node_name": "test_n[2]"}],
+                "test_max_tokens": [
+                    {
+                        "status": "passed",
+                        "message": "max_tokens=2048 supported",
+                        "test_node_name": "test_max_tokens[3]",
+                    }
+                ],
+            },
+        }
     }
     result = mapper.map_benchmark_data(pipeline, 1, report_data)
     assert len(result) == 1
@@ -294,24 +292,22 @@ def test_process_parameter_support_tests_with_metadata(mapper, pipeline):
             "model_name": "test_model",
             "inference_engine": "vllm",
         },
-        "parameter_support_tests": [
-            {
-                "device": "test_device",
-                "model": "test_model",
-                "task_name": "test_task",
-                "endpoint_url": "http://example.com/api",
-                "results": {
-                    "test_n": [{"status": "failed", "message": "n=10 not supported", "test_node_name": "test_n[2]"}],
-                    "test_max_tokens": [
-                        {
-                            "status": "passed",
-                            "message": "max_tokens=2048 supported",
-                            "test_node_name": "test_max_tokens[3]",
-                        }
-                    ],
-                },
-            }
-        ],
+        "parameter_support_tests": {
+            "device": "test_device",
+            "model": "test_model",
+            "task_name": "test_task",
+            "endpoint_url": "http://example.com/api",
+            "results": {
+                "test_n": [{"status": "failed", "message": "n=10 not supported", "test_node_name": "test_n[2]"}],
+                "test_max_tokens": [
+                    {
+                        "status": "passed",
+                        "message": "max_tokens=2048 supported",
+                        "test_node_name": "test_max_tokens[3]",
+                    }
+                ],
+            },
+        },
     }
     result = mapper.map_benchmark_data(pipeline, 1, report_data)
     assert len(result) == 1
@@ -339,17 +335,15 @@ def test_process_parameter_support_tests_with_model_spec_data(mapper, pipeline):
         "env_vars": {"MESH_DEVICE": "test_mesh_device", "ARCH_NAME": "test_arch_name"},
     }
     report_data = {
-        "parameter_support_tests": [
-            {
-                "device": "test_device",
-                "model": "test_model",
-                "task_name": "test_task",
-                "endpoint_url": "http://example.com/api",
-                "results": {
-                    "test_n": [{"status": "failed", "message": "n=10 not supported", "test_node_name": "test_n[2]"}]
-                },
-            }
-        ]
+        "parameter_support_tests": {
+            "device": "test_device",
+            "model": "test_model",
+            "task_name": "test_task",
+            "endpoint_url": "http://example.com/api",
+            "results": {
+                "test_n": [{"status": "failed", "message": "n=10 not supported", "test_node_name": "test_n[2]"}]
+            },
+        }
     }
     result = mapper.map_benchmark_data(pipeline, 1, report_data, model_spec_data)
     assert len(result) == 1

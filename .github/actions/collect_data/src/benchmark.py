@@ -191,7 +191,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             parameter_support_tests_runs = self._process_parameter_support_tests(
                 pipeline,
                 job,
-                report_data.get("parameter_support_tests", []),
+                report_data.get("parameter_support_tests", {}),
                 metadata,
                 model_spec_data,
             )
@@ -389,55 +389,54 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
 
     def _process_parameter_support_tests(self, pipeline, job, tests, metadata=None, model_spec_data=None):
         """
-        Processes parameter support tests and creates CompleteBenchmarkRun objects for each test.
+        Processes parameter support tests and creates CompleteBenchmarkRun object for parameter support tests.
         Extracts status from test results and converts to numeric measurements (0=failed, 1=success).
         """
         results = []
-        for test in tests:
-            if metadata:
-                logger.debug(f"Processing tests with metadata included...")
-                test = {**test, **metadata}  # metadata values take precedence
 
-            # Append endpoint_url from test to model_spec_data if available
-            if model_spec_data and "endpoint_url" in test:
-                model_spec_data["endpoint_url"] = test.get("endpoint_url", {})
+        if metadata:
+            logger.debug(f"Processing parameter support tests with metadata included...")
+            tests = {**tests, **metadata}  # metadata values take precedence
 
-            if "results" not in test:
-                logger.warning(f"No results found in parameter support test: {test.get('test_name', 'unknown')}")
-                continue
+        # Append endpoint_url from test to model_spec_data if available
+        if model_spec_data and "endpoint_url" in tests:
+            model_spec_data["endpoint_url"] = tests.get("endpoint_url", {})
 
-            all_measurements = []
+        if "results" not in tests:
+            logger.warning(f"No results found in parameter support tests: {tests.get('test_name', 'unknown')}")
+            return results
 
-            # Iterate through each test category (e.g., "test_n", "test_max_tokens")
-            for test_name, test_cases in test.get("results", {}).items():
-                for test_case in test_cases:
-                    measurements = self._create_measurements(
-                        job,
-                        test_name,
-                        test_case,
-                        [
-                            "status",
-                        ],
-                    )
-                    all_measurements.extend(measurements)
-
-            results.append(
-                self._create_complete_benchmark_run(
-                    pipeline=pipeline,
-                    job=job,
-                    data=test,
-                    run_type="parameter_support_test",
-                    measurements=all_measurements,
-                    device_info=test.get("device"),
-                    model_name=test.get("model"),
-                    model_type=model_spec_data.get("model_type") if model_spec_data else None,
-                    input_seq_length=None,
-                    output_seq_length=None,
-                    dataset_name=test.get("task_name"),
-                    batch_size=None,
-                    config_params=model_spec_data,
+        all_measurements = []
+        # Iterate through each test category (e.g., "test_n", "test_max_tokens")
+        for test_name, test_cases in tests.get("results", {}).items():
+            for test_case in test_cases:
+                measurements = self._create_measurements(
+                    job,
+                    test_name,
+                    test_case,
+                    [
+                        "status",
+                    ],
                 )
+                all_measurements.extend(measurements)
+
+        results.append(
+            self._create_complete_benchmark_run(
+                pipeline=pipeline,
+                job=job,
+                data=tests,
+                run_type="parameter_support_tests",
+                measurements=all_measurements,
+                device_info=tests.get("device"),
+                model_name=tests.get("model_name"),
+                model_type=model_spec_data.get("model_type") if model_spec_data else None,
+                input_seq_length=None,
+                output_seq_length=None,
+                dataset_name=None,
+                batch_size=None,
+                config_params=model_spec_data,
             )
+        )
         return results
 
     def _normalize_measurement_value(self, value):
