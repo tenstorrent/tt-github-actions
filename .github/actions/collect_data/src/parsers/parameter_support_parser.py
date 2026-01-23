@@ -19,9 +19,9 @@ class ParameterSupportParser(Parser):
         """Check if file is JSON and contains parameter support test results."""
         if not filepath.endswith(".json"):
             return False
-        
+
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, "r") as f:
                 data = json.load(f)
                 # Check if it has the parameter_support_tests structure
                 return "parameter_support_tests" in data and "results" in data.get("parameter_support_tests", {})
@@ -36,9 +36,9 @@ class ParameterSupportParser(Parser):
         github_job_id: Optional[int] = None,
     ) -> List[Test]:
         logger.info(f"Parsing parameter support tests from {filepath}")
-        
+
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, "r") as f:
                 data = json.load(f)
         except (json.JSONDecodeError, IOError) as e:
             logger.error(f"Failed to load JSON from {filepath}: {e}")
@@ -53,11 +53,10 @@ class ParameterSupportParser(Parser):
         model_name = param_tests.get("model_name", "unknown_model")
         model_impl = param_tests.get("model_impl", "unknown_impl")
         endpoint_url = param_tests.get("endpoint_url", "")
-        
-        base_timestamp = datetime.now()
-        
+
         for test_case_name, test_case_results in param_tests.get("results", {}).items():
             for test_case in test_case_results:
+                base_timestamp = datetime.now()  # Placeholder timestamp
                 test = _create_test_from_case(
                     test_case=test_case,
                     test_case_name=test_case_name,
@@ -68,7 +67,7 @@ class ParameterSupportParser(Parser):
                 )
                 if test:
                     tests.append(test)
-        
+
         logger.info(f"Parsed {len(tests)} parameter support tests from {filepath}")
         return tests
 
@@ -82,14 +81,16 @@ def _create_test_from_case(
     base_timestamp: datetime,
 ) -> Optional[Test]:
     """Convert a parameter support test case to a Test object."""
-    
-    test_duration = 1.0  # Default 1 second per test for now
+
+    test_duration = 1.0  # Placeholder duration in seconds
     test_start_ts = base_timestamp
     test_end_ts = base_timestamp + timedelta(seconds=test_duration)
 
+    filepath = "test_vllm_server_parameters.py"  # Placeholder filepath
+
     status = test_case.get("status", "unknown").lower()
     message = test_case.get("message", "")
-        
+
     success = status.lower() in ["passed", "success", "pass", "ok"]
     failed = status.lower() in ["failed", "failure", "fail", "error"]
     skipped = status.lower() in ["skipped", "skip"]
@@ -97,30 +98,32 @@ def _create_test_from_case(
     error_message = None
     if failed or skipped:
         error_message = message
-    
+
+    full_test_name = f"{filepath}::{test_case_name}"
+
     config = {
         "model_name": model_name,
         "model_impl": model_impl,
         "endpoint_url": endpoint_url,
     }
-    
+
     tags = {
         "type": "parameter_support_test",
     }
-    
+
     try:
         return Test(
             test_start_ts=test_start_ts,
             test_end_ts=test_end_ts,
             test_case_name=test_case_name,
-            filepath=None,
+            filepath=filepath,
             category="parameter_support",
             group=test_case_name,
-            owner=None,
+            owner="tt-shield",
             error_message=error_message,
             success=success,
             skipped=skipped,
-            full_test_name=test_case_name,
+            full_test_name=full_test_name,
             config=config,
             tags=tags,
         )

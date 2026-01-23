@@ -19,34 +19,22 @@ def sample_parameter_support_json():
             "model_impl": "tt-transformers",
             "results": {
                 "test_n": [
-                    {
-                        "status": "failed",
-                        "message": "Connection refused",
-                        "test_node_name": "test_n[2]"
-                    },
-                    {
-                        "status": "passed",
-                        "message": "",
-                        "test_node_name": "test_n[3]"
-                    }
+                    {"status": "failed", "message": "Connection refused", "test_node_name": "test_n[2]"},
+                    {"status": "passed", "message": "", "test_node_name": "test_n[3]"},
                 ],
                 "test_max_tokens": [
-                    {
-                        "status": "passed",
-                        "message": "max_tokens=2048 supported",
-                        "test_node_name": "test_max_tokens[5]"
-                    }
-                ]
-            }
+                    {"status": "passed", "message": "max_tokens=2048 supported", "test_node_name": "test_max_tokens[5]"}
+                ],
+            },
         }
     }
-    
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         json.dump(data, f)
         temp_path = f.name
-    
+
     yield temp_path
-    
+
     Path(temp_path).unlink()
 
 
@@ -63,9 +51,9 @@ def test_cannot_parse_non_json():
 def test_parse_parameter_support_tests(sample_parameter_support_json):
     parser = ParameterSupportParser()
     tests = parser.parse(sample_parameter_support_json)
-    
+
     assert len(tests) == 3
-    
+
     # Check first test (failed)
     assert tests[0].test_case_name == "test_n"
     assert tests[0].success is False
@@ -74,7 +62,7 @@ def test_parse_parameter_support_tests(sample_parameter_support_json):
     assert tests[0].group == "test_n"
     assert tests[0].config["model_name"] == "Llama-3.1-8B-Instruct"
     assert tests[0].tags["type"] == "parameter_support_test"
-    
+
     # Check second test (passed)
     assert tests[1].test_case_name == "test_n"
     assert tests[1].success is True
@@ -87,18 +75,12 @@ def test_parse_parameter_support_tests(sample_parameter_support_json):
 
 
 def test_parse_empty_results():
-    data = {
-        "parameter_support_tests": {
-            "endpoint_url": "http://test",
-            "model_name": "test_model",
-            "results": {}
-        }
-    }
-    
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+    data = {"parameter_support_tests": {"endpoint_url": "http://test", "model_name": "test_model", "results": {}}}
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         json.dump(data, f)
         temp_path = f.name
-    
+
     try:
         parser = ParameterSupportParser()
         tests = parser.parse(temp_path)
