@@ -55,7 +55,7 @@ def test_parse_parameter_support_tests(sample_parameter_support_json):
     assert len(tests) == 3
 
     # Check first test (failed)
-    assert tests[0].test_case_name == "test_n"
+    assert tests[0].test_case_name == "test_n[2]"
     assert tests[0].success is False
     assert tests[0].error_message == "Connection refused"
     assert tests[0].category == "parameter_support"
@@ -64,12 +64,12 @@ def test_parse_parameter_support_tests(sample_parameter_support_json):
     assert tests[0].tags["type"] == "parameter_support_test"
 
     # Check second test (passed)
-    assert tests[1].test_case_name == "test_n"
+    assert tests[1].test_case_name == "test_n[3]"
     assert tests[1].success is True
     assert tests[1].error_message is None
     assert tests[1].config["model_name"] == "Llama-3.1-8B-Instruct"
     # Check third test (passed)
-    assert tests[2].test_case_name == "test_max_tokens"
+    assert tests[2].test_case_name == "test_max_tokens[5]"
     assert tests[2].success is True
     assert tests[2].config["model_name"] == "Llama-3.1-8B-Instruct"
 
