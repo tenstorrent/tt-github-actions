@@ -6,7 +6,7 @@ import pytest
 import json
 import tempfile
 from pathlib import Path
-from parsers.parameter_support_parser import ParameterSupportParser
+from parsers.parameter_support_test_parser import ParameterSupportTestParser
 
 
 @pytest.fixture
@@ -39,17 +39,17 @@ def sample_parameter_support_json():
 
 
 def test_can_parse_parameter_support_json(sample_parameter_support_json):
-    parser = ParameterSupportParser()
+    parser = ParameterSupportTestParser()
     assert parser.can_parse(sample_parameter_support_json) is True
 
 
 def test_cannot_parse_non_json():
-    parser = ParameterSupportParser()
+    parser = ParameterSupportTestParser()
     assert parser.can_parse("test.xml") is False
 
 
 def test_parse_parameter_support_tests(sample_parameter_support_json):
-    parser = ParameterSupportParser()
+    parser = ParameterSupportTestParser()
     tests = parser.parse(sample_parameter_support_json)
 
     assert len(tests) == 3
@@ -96,7 +96,7 @@ def test_parse_empty_results():
         temp_path = f.name
 
     try:
-        parser = ParameterSupportParser()
+        parser = ParameterSupportTestParser()
         tests = parser.parse(temp_path)
         assert len(tests) == 0
     finally:

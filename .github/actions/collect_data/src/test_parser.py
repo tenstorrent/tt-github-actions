@@ -7,10 +7,10 @@ from pydantic_models import Test, OpTest
 
 from parsers.python_unittest_parser import PythonUnittestParser
 from parsers.python_pytest_parser import PythonPytestParser
-from parsers.parameter_support_parser import ParameterSupportParser
+from parsers.parameter_support_test_parser import ParameterSupportTestParser
 
 parsers = [
-    ParameterSupportParser(),
+    ParameterSupportTestParser(),
     PythonPytestParser(),
     PythonUnittestParser(),
 ]
