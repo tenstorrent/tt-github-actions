@@ -103,9 +103,9 @@ class ParameterSupportTestParser(Parser):
 
         status = test_case.get("status", "unknown").lower()
         message = test_case.get("message", "")
-        success = status.lower() in ["passed", "success", "pass", "ok"]
-        failed = status.lower() in ["failed", "failure", "fail", "error"]
-        skipped = status.lower() in ["skipped", "skip"]
+        success = status in ["passed", "success", "pass", "ok"]
+        failed = status in ["failed", "failure", "fail", "error"]
+        skipped = status in ["skipped", "skip"]
 
         error_message = None
         if failed or skipped:
