@@ -164,26 +164,28 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         if job is None:
             return None
 
+        metadata = report_data.get("metadata", {})
+
         try:
             benchmark_runs = self._process_benchmarks(
                 pipeline,
                 job,
                 report_data.get("benchmarks", []),
-                report_data.get("metadata", {}),
+                metadata,
                 model_spec_data,
             )
             benchmark_summary_runs = self._process_benchmarks_summary(
                 pipeline,
                 job,
                 report_data.get("benchmarks_summary", []),
-                report_data.get("metadata", {}),
+                metadata,
                 model_spec_data,
             )
             eval_runs = self._process_evals(
                 pipeline,
                 job,
                 report_data.get("evals", []),
-                report_data.get("metadata", {}),
+                metadata,
                 model_spec_data,
             )
             return benchmark_runs + benchmark_summary_runs + eval_runs
