@@ -2,14 +2,34 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+from dataclasses import dataclass, asdict
 from loguru import logger
 from pydantic_models import Test
-from datetime import datetime, timedelta
 from typing import Optional, List
 from .parser import Parser
 from pydantic import ValidationError
 from shared import failure_happened
 import json
+
+
+CATEGORY = "parameter_support"
+OWNER = "tt-shield"
+
+
+@dataclass(frozen=True)
+class ParameterSupportConfig:
+    model_name: str = "unknown_model"
+    model_impl: str = "unknown_impl"
+    endpoint_url: str = ""
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "ParameterSupportConfig":
+        return cls(**{k: data[k] for k in ["model_name", "model_impl", "endpoint_url"] if k in data})
+
+
+@dataclass(frozen=True)
+class ParameterSupportTags:
+    type: str = "parameter_support_test"
 
 
 class ParameterSupportParser(Parser):
@@ -92,15 +112,8 @@ class ParameterSupportParser(Parser):
             error_message = message
 
         full_test_name = test_case.get("test_id", "unknown")
-        config = {
-            "model_name": param_support_tests.get("model_name", "unknown_model"),
-            "model_impl": param_support_tests.get("model_impl", "unknown_impl"),
-            "endpoint_url": param_support_tests.get("endpoint_url", ""),
-        }
-
-        tags = {
-            "type": "parameter_support_test",
-        }
+        config = ParameterSupportConfig.from_dict(param_support_tests)
+        tags = ParameterSupportTags()
 
         try:
             return Test(
@@ -108,15 +121,15 @@ class ParameterSupportParser(Parser):
                 test_end_ts=test_end_ts,
                 test_case_name=test_case_name,
                 filepath=filepath,
-                category="parameter_support",
+                category=CATEGORY,
                 group=test_group_name,
-                owner="tt-shield",
+                owner=OWNER,
                 error_message=error_message,
                 success=success,
                 skipped=skipped,
                 full_test_name=full_test_name,
-                config=config,
-                tags=tags,
+                config=asdict(config),
+                tags=asdict(tags),
             )
         except ValidationError as e:
             failure_happened()
