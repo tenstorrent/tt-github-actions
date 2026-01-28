@@ -148,3 +148,43 @@ def test_metadata_takes_precedence():
         assert tests[0].config["model_impl"] == "tt-transformers"
     finally:
         Path(temp_path).unlink()
+
+
+def test_metadata_results_does_not_override_actual_results():
+    """Test that a 'results' key in metadata does not interfere with actual test results parsing."""
+    data = {
+        "metadata": {
+            "model_name": "Metadata-Model",
+            "results": {
+                "fake_test": [
+                    {"status": "passed", "message": "", "test_node_name": "fake_test[1]"},
+                ],
+            },
+        },
+        "parameter_support_tests": {
+            "endpoint_url": "http://127.0.0.1:8000/v1/chat/completions",
+            "model_name": "Original-Model",
+            "model_impl": "tt-transformers",
+            "results": {
+                "real_test": [
+                    {"status": "passed", "message": "", "test_node_name": "real_test[1]"},
+                    {"status": "failed", "message": "Error", "test_node_name": "real_test[2]"},
+                ],
+            },
+        },
+    }
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        json.dump(data, f)
+        temp_path = f.name
+
+    try:
+        parser = ParameterSupportTestParser()
+        tests = parser.parse(temp_path)
+
+        # Should parse results from parameter_support_tests, not metadata
+        assert len(tests) == 2
+        assert tests[0].test_case_name == "real_test[1]"
+        assert tests[0].group == "real_test"
+    finally:
+        Path(temp_path).unlink()
