@@ -18,13 +18,15 @@ OWNER = "tt-shield"
 
 @dataclass(frozen=True)
 class ParameterSupportTestConfig:
+    _PARAM_SUPPORT_TEST_PROPS: tuple = ("model_name", "model_impl", "device", "endpoint_url")
     model_name: str = "unknown_model"
     model_impl: str = "unknown_impl"
+    device: str = "unknown_device"
     endpoint_url: str = ""
 
     @classmethod
     def from_dict(cls, data: dict) -> "ParameterSupportTestConfig":
-        return cls(**{k: data[k] for k in ["model_name", "model_impl", "endpoint_url"] if k in data})
+        return cls(**{k: data[k] for k in cls._PARAM_SUPPORT_TEST_PROPS if k in data})
 
 
 @dataclass(frozen=True)
@@ -64,11 +66,13 @@ class ParameterSupportTestParser(Parser):
         except (json.JSONDecodeError, IOError) as e:
             logger.error(f"Failed to load JSON from {filepath}: {e}")
             return []
-
+        
+        metadata = data.get("metadata", {})
         param_support_tests = data.get("parameter_support_tests", {})
         if not param_support_tests or "results" not in param_support_tests:
             logger.warning(f"No parameter support test results found in {filepath}")
             return []
+        param_support_tests = {**param_support_tests, **metadata} # metadata values take precedence
 
         tests = []
         for test_group_name, test_case_results in param_support_tests.get("results", {}).items():
