@@ -72,7 +72,9 @@ class ParameterSupportTestParser(Parser):
         if not param_support_tests or "results" not in param_support_tests:
             logger.warning(f"No parameter support test results found in {filepath}")
             return []
-        param_support_tests = {**param_support_tests, **metadata}  # metadata values take precedence
+        # Merge metadata into param_support_tests without allowing it to override the actual test results
+        filtered_metadata = {k: v for k, v in metadata.items() if k != "results"}
+        param_support_tests = {**param_support_tests, **filtered_metadata}  # metadata values take precedence (except 'results')
 
         tests = []
         for test_group_name, test_case_results in param_support_tests.get("results", {}).items():
