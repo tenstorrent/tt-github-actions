@@ -5,7 +5,7 @@
 from dataclasses import dataclass, asdict
 from loguru import logger
 from pydantic_models import Test
-from typing import Optional, List
+from typing import Optional, List, ClassVar
 from .parser import Parser
 from pydantic import ValidationError
 from shared import failure_happened
@@ -18,13 +18,15 @@ OWNER = "tt-shield"
 
 @dataclass(frozen=True)
 class ParameterSupportTestConfig:
+    _PARAM_SUPPORT_TEST_PROPS: ClassVar[tuple] = ("model_name", "model_impl", "device", "endpoint_url")
     model_name: str = "unknown_model"
     model_impl: str = "unknown_impl"
+    device: str = "unknown_device"
     endpoint_url: str = ""
 
     @classmethod
     def from_dict(cls, data: dict) -> "ParameterSupportTestConfig":
-        return cls(**{k: data[k] for k in ["model_name", "model_impl", "endpoint_url"] if k in data})
+        return cls(**{k: data[k] for k in cls._PARAM_SUPPORT_TEST_PROPS if k in data})
 
 
 @dataclass(frozen=True)
@@ -65,10 +67,17 @@ class ParameterSupportTestParser(Parser):
             logger.error(f"Failed to load JSON from {filepath}: {e}")
             return []
 
+        metadata = data.get("metadata", {})
         param_support_tests = data.get("parameter_support_tests", {})
         if not param_support_tests or "results" not in param_support_tests:
             logger.warning(f"No parameter support test results found in {filepath}")
             return []
+        # Merge metadata into param_support_tests without allowing it to override the actual test results
+        filtered_metadata = {k: v for k, v in metadata.items() if k != "results"}
+        param_support_tests = {
+            **param_support_tests,
+            **filtered_metadata,
+        }  # metadata values take precedence (except 'results')
 
         tests = []
         for test_group_name, test_case_results in param_support_tests.get("results", {}).items():

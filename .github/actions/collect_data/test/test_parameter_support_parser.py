@@ -13,6 +13,11 @@ from parsers.parameter_support_test_parser import ParameterSupportTestParser
 def sample_parameter_support_json():
     """Create a sample parameter support test JSON file."""
     data = {
+        "metadata": {
+            "model_name": "Llama-3.1-8B-Instruct",
+            "model_impl": "tt-transformers",
+            "device": "n300",
+        },
         "parameter_support_tests": {
             "endpoint_url": "http://127.0.0.1:8000/v1/chat/completions",
             "model_name": "Llama-3.1-8B-Instruct",
@@ -26,7 +31,7 @@ def sample_parameter_support_json():
                     {"status": "passed", "message": "max_tokens=2048 supported", "test_node_name": "test_max_tokens[5]"}
                 ],
             },
-        }
+        },
     }
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -57,6 +62,7 @@ def test_parse_parameter_support_tests(sample_parameter_support_json):
     assert tests[0].config["endpoint_url"] == "http://127.0.0.1:8000/v1/chat/completions"
     assert tests[0].config["model_name"] == "Llama-3.1-8B-Instruct"
     assert tests[0].config["model_impl"] == "tt-transformers"
+    assert tests[0].config["device"] == "n300"
     assert tests[0].test_case_name == "test_n[2]"
     assert tests[0].success is False
     assert tests[0].error_message == "Connection refused"
@@ -68,6 +74,7 @@ def test_parse_parameter_support_tests(sample_parameter_support_json):
     assert tests[1].config["endpoint_url"] == "http://127.0.0.1:8000/v1/chat/completions"
     assert tests[1].config["model_name"] == "Llama-3.1-8B-Instruct"
     assert tests[1].config["model_impl"] == "tt-transformers"
+    assert tests[1].config["device"] == "n300"
     assert tests[1].test_case_name == "test_n[3]"
     assert tests[1].success is True
     assert tests[1].error_message is None
@@ -79,6 +86,7 @@ def test_parse_parameter_support_tests(sample_parameter_support_json):
     assert tests[2].config["endpoint_url"] == "http://127.0.0.1:8000/v1/chat/completions"
     assert tests[2].config["model_name"] == "Llama-3.1-8B-Instruct"
     assert tests[2].config["model_impl"] == "tt-transformers"
+    assert tests[2].config["device"] == "n300"
     assert tests[2].test_case_name == "test_max_tokens[5]"
     assert tests[2].success is True
     assert tests[2].error_message is None
@@ -99,5 +107,84 @@ def test_parse_empty_results():
         parser = ParameterSupportTestParser()
         tests = parser.parse(temp_path)
         assert len(tests) == 0
+    finally:
+        Path(temp_path).unlink()
+
+
+def test_metadata_takes_precedence():
+    """Test that metadata values override parameter_support_tests values."""
+    data = {
+        "metadata": {
+            "model_name": "Metadata-Model",
+            "device": "n150",
+        },
+        "parameter_support_tests": {
+            "endpoint_url": "http://127.0.0.1:8000/v1/chat/completions",
+            "model_name": "Original-Model",
+            "model_impl": "tt-transformers",
+            "device": "n300",
+            "results": {
+                "test_n": [
+                    {"status": "passed", "message": "", "test_node_name": "test_n[1]"},
+                ],
+            },
+        },
+    }
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        json.dump(data, f)
+        temp_path = f.name
+
+    try:
+        parser = ParameterSupportTestParser()
+        tests = parser.parse(temp_path)
+
+        assert len(tests) == 1
+        # Metadata values should override parameter_support_tests values
+        assert tests[0].config["model_name"] == "Metadata-Model"
+        assert tests[0].config["device"] == "n150"
+        # Values not in metadata should come from parameter_support_tests
+        assert tests[0].config["endpoint_url"] == "http://127.0.0.1:8000/v1/chat/completions"
+        assert tests[0].config["model_impl"] == "tt-transformers"
+    finally:
+        Path(temp_path).unlink()
+
+
+def test_metadata_results_does_not_override_actual_results():
+    """Test that a 'results' key in metadata does not interfere with actual test results parsing."""
+    data = {
+        "metadata": {
+            "model_name": "Metadata-Model",
+            "results": {
+                "fake_test": [
+                    {"status": "passed", "message": "", "test_node_name": "fake_test[1]"},
+                ],
+            },
+        },
+        "parameter_support_tests": {
+            "endpoint_url": "http://127.0.0.1:8000/v1/chat/completions",
+            "model_name": "Original-Model",
+            "model_impl": "tt-transformers",
+            "results": {
+                "real_test": [
+                    {"status": "passed", "message": "", "test_node_name": "real_test[1]"},
+                    {"status": "failed", "message": "Error", "test_node_name": "real_test[2]"},
+                ],
+            },
+        },
+    }
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        json.dump(data, f)
+        temp_path = f.name
+
+    try:
+        parser = ParameterSupportTestParser()
+        tests = parser.parse(temp_path)
+
+        # Should parse results from parameter_support_tests, not metadata
+        assert len(tests) == 2
+        assert tests[0].test_case_name == "real_test[1]"
+        assert tests[0].group == "real_test"
     finally:
         Path(temp_path).unlink()
