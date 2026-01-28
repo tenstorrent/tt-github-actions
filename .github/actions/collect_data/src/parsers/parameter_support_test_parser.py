@@ -66,13 +66,13 @@ class ParameterSupportTestParser(Parser):
         except (json.JSONDecodeError, IOError) as e:
             logger.error(f"Failed to load JSON from {filepath}: {e}")
             return []
-        
+
         metadata = data.get("metadata", {})
         param_support_tests = data.get("parameter_support_tests", {})
         if not param_support_tests or "results" not in param_support_tests:
             logger.warning(f"No parameter support test results found in {filepath}")
             return []
-        param_support_tests = {**param_support_tests, **metadata} # metadata values take precedence
+        param_support_tests = {**param_support_tests, **metadata}  # metadata values take precedence
 
         tests = []
         for test_group_name, test_case_results in param_support_tests.get("results", {}).items():

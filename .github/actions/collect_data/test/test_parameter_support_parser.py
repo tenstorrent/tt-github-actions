@@ -31,7 +31,7 @@ def sample_parameter_support_json():
                     {"status": "passed", "message": "max_tokens=2048 supported", "test_node_name": "test_max_tokens[5]"}
                 ],
             },
-        }
+        },
     }
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
