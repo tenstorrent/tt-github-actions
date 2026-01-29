@@ -17,7 +17,7 @@ jobs:
       matrix:
         config:
           - { "runs-on": "ubuntu-latest" }
-          - { "runs-on": "ubuntu-22.04", "image": "ghcr.io/tenstorrent/tt-forge-fe/tt-forge-fe-ci-ubuntu-22-04:dt-8ee183d6fc5ceb4feb9feff9b2674560c43d8a00b38c7b892449220a1d3d5691" }
+          - { "runs-on": "ubuntu-22.04", "image": "ghcr.io/tenstorrent/tt-forge-fe/tt-forge-fe-ci-ubuntu-22-04:latest" }
           - { "runs-on": "ubuntu-22.04", "image": "ubuntu:22.04" }
           - { "runs-on": "ubuntu-24.04", "image": "ubuntu:24.04" }
 
