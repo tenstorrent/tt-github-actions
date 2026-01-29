@@ -143,13 +143,23 @@ def get_pipeline_row_from_github_info(
     }
 
 
-def get_job_failure_signature(github_job: Dict[str, Any]) -> Optional[Union[InfraErrorV1, str]]:
+def get_job_failure_signature(github_job: Dict[str, Any], logs: Optional[str] = None) -> Optional[Union[InfraErrorV1, str]]:
     if github_job["conclusion"] == "success":
         return None
     failed_steps = get_failed_steps(github_job)
-    if failed_steps:
-        return failed_steps[0]
-    return None
+    signature = failed_steps[0] if failed_steps else None
+
+    triage_phrase = "device timeout, potential hang detected, the device is unrecoverable"
+    triage_tag = "[tt-triage]"
+
+    if logs and triage_phrase in logs:
+        if signature:
+            if triage_tag not in signature:
+                signature = f"{signature} {triage_tag}"
+        else:
+            signature = triage_tag
+
+    return signature
 
 
 def get_failed_steps(github_job: Dict[str, Any]) -> List[str]:
@@ -456,7 +466,7 @@ def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
     failure_signature = None
     failure_description = None
     if job_status == "failure":
-        failure_signature = get_job_failure_signature(github_job)
+        failure_signature = get_job_failure_signature(github_job, logs)
         failure_description = get_failure_description(github_job, logs)
 
     return {
