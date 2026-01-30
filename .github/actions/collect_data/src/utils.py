@@ -143,7 +143,10 @@ def get_pipeline_row_from_github_info(
     }
 
 
-def get_job_failure_signature(github_job: Dict[str, Any], logs: Optional[str] = None) -> Optional[Union[InfraErrorV1, str]]:
+def get_job_failure_signature(
+    github_job: Dict[str, Any], logs: Optional[str] = None
+) -> Optional[Union[InfraErrorV1, str]]:
+    print("in get_job_failure_signature")
     if github_job["conclusion"] == "success":
         return None
     failed_steps = get_failed_steps(github_job)
@@ -153,11 +156,14 @@ def get_job_failure_signature(github_job: Dict[str, Any], logs: Optional[str] = 
     triage_tag = "[tt-triage]"
 
     if logs and triage_phrase in logs:
+        print("signature found")
         if signature:
             if triage_tag not in signature:
                 signature = f"{signature} {triage_tag}"
         else:
             signature = triage_tag
+    else:
+        print("signature not found")
 
     return signature
 
