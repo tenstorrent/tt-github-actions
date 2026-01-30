@@ -24,11 +24,15 @@ jobs:
             source venv/bin/activate
             pip install -r requirements.txt
             set -o pipefail # Ensures that the exit code reflects the first command that fails
+            echo "texttexttext device timeout, potential hang detected, the device is unrecoverable <randomtext>"
             pytest \
+                -s -vv \
                 --junitxml=pytest.xml \
                 --cov-report=term-missing \
                 --cov=src \
                 test | tee pytest-coverage.txt
+            exit 1
+
 
         - name: Show reports
           uses: MishaKav/pytest-coverage-comment@main
