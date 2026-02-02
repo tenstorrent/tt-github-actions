@@ -143,7 +143,9 @@ def get_pipeline_row_from_github_info(
     }
 
 
-def get_job_failure_signature(github_job: Dict[str, Any], logs: Optional[str] = None) -> Optional[Union[InfraErrorV1, str]]:
+def get_job_failure_signature(
+    github_job: Dict[str, Any], logs: Optional[str] = None
+) -> Optional[Union[InfraErrorV1, str]]:
     if github_job["conclusion"] == "success":
         return None
     failed_steps = get_failed_steps(github_job)
