@@ -420,7 +420,9 @@ def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
 
     name = github_job.get("name")
 
-    assert github_job.get("status") == "completed", f"{github_job_id} is not completed"
+    if github_job.get("status") != "completed":
+        logger.warning(f"Skipping job {github_job_id} with status {github_job.get('status')!r} (not completed)")
+        return None
 
     # Determine card type based on runner name
     runner_name = (github_job.get("runner_name") or "").upper()
@@ -495,7 +497,7 @@ def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
 def get_job_rows_from_github_info(
     github_pipeline_json: Dict[str, Any], github_jobs_json: Dict[str, Any]
 ) -> List[Dict[str, Any]]:
-    return list(map(get_job_row_from_github_job, github_jobs_json.get("jobs")))
+    return [row for row in map(get_job_row_from_github_job, github_jobs_json.get("jobs")) if row is not None]
 
 
 def get_github_runner_environment() -> Dict[str, str]:
