@@ -13,6 +13,7 @@ from shared import failure_happened
 from typing import Union, List, Dict
 
 from utils import (
+    assert_workflow_completed,
     get_pipeline_row_from_github_info,
     get_job_rows_from_github_info,
     get_data_pipeline_datetime_from_datetime,
@@ -38,6 +39,8 @@ def create_cicd_json_for_data_analysis(
     logger.info(f"Load pipeline info from: {github_pipeline_json_filename}")
     with open(github_pipeline_json_filename) as github_pipeline_json_file:
         github_pipeline_json = json.load(github_pipeline_json_file)
+
+    assert_workflow_completed(github_pipeline_json)
 
     logger.info(f"Load jobs info from: {github_jobs_json_filename}")
     with open(github_jobs_json_filename) as github_jobs_json_file:
