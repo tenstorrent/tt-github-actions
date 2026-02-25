@@ -253,3 +253,26 @@ def test_evals_model_type_without_model_spec(mapper, pipeline):
     report_data = {"evals": [{"model": "test_model"}]}
     result = mapper.map_benchmark_data(pipeline, 1, report_data)
     assert result[0].ml_model_type is None
+
+
+@pytest.mark.parametrize(
+    "input_val, expected",
+    [
+        (None, None),
+        (128, 128),
+        ("256", 256),
+        ("n/a", None),
+        ("N/A", None),
+        ("", None),
+        (128.0, 128),
+        (128.9, 128),
+        (-128, -128),
+        (-128.5, -128),
+        ("-256", -256),
+        (True, None),
+        (False, None),
+    ],
+)
+def test_coerce_optional_int(input_val, expected):
+    result = CompleteBenchmarkRun.coerce_optional_int(input_val)
+    assert result == expected

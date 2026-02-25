@@ -8,8 +8,8 @@ Definition of the pydantic models used for data production.
 
 from enum import Enum
 from datetime import datetime, timedelta
-from typing import List, Optional
-from pydantic import BaseModel, Field
+from typing import Any, List, Optional
+from pydantic import BaseModel, Field, field_validator
 
 
 class Test(BaseModel):
@@ -216,6 +216,23 @@ class CompleteBenchmarkRun(BaseModel):
         None,
         description="Length of the sequence used as output by the model, applicable " "to sequence models.",
     )
+
+    @field_validator(
+        "num_layers",
+        "batch_size",
+        "input_sequence_length",
+        "output_sequence_length",
+        mode="before",
+    )
+    @classmethod
+    def coerce_optional_int(cls, v: Any) -> Optional[int]:
+        if v is None or isinstance(v, bool):
+            return None
+        try:
+            return int(v)
+        except (TypeError, ValueError):
+            return None
+
     image_dimension: Optional[str] = Field(
         None,
         description="Dimension of the image, e.g. 224x224x3, applicable to computer " "vision models.",
