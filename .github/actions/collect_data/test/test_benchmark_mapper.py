@@ -266,12 +266,13 @@ def test_evals_model_type_without_model_spec(mapper, pipeline):
         ("", None),
         (128.0, 128),
         (128.9, 128),
+        (-128, -128),
+        (-128.5, -128),
+        ("-256", -256),
         (True, None),
         (False, None),
     ],
 )
 def test_coerce_optional_int(input_val, expected):
-    from pydantic_models import CompleteBenchmarkRun
-
     result = CompleteBenchmarkRun.coerce_optional_int(input_val)
     assert result == expected
