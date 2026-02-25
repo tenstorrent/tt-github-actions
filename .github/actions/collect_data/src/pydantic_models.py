@@ -226,20 +226,12 @@ class CompleteBenchmarkRun(BaseModel):
     )
     @classmethod
     def coerce_optional_int(cls, v: Any) -> Optional[int]:
-        if v is None:
+        if v is None or isinstance(v, bool):
             return None
-        if isinstance(v, bool):
-            return None
-        if isinstance(v, int):
-            return v
-        if isinstance(v, float):
+        try:
             return int(v)
-        if isinstance(v, str):
-            try:
-                return int(v)
-            except ValueError:
-                return None
-        return None
+        except (TypeError, ValueError):
+            return None
 
     image_dimension: Optional[str] = Field(
         None,
