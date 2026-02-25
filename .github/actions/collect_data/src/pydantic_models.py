@@ -8,7 +8,7 @@ Definition of the pydantic models used for data production.
 
 from enum import Enum
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Any, List, Optional
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -218,19 +218,28 @@ class CompleteBenchmarkRun(BaseModel):
     )
 
     @field_validator(
-        "num_layers", "batch_size", "input_sequence_length", "output_sequence_length",
+        "num_layers",
+        "batch_size",
+        "input_sequence_length",
+        "output_sequence_length",
         mode="before",
     )
     @classmethod
-    def coerce_optional_int(cls, v):
+    def coerce_optional_int(cls, v: Any) -> Optional[int]:
         if v is None:
             return None
+        if isinstance(v, bool):
+            return None
+        if isinstance(v, int):
+            return v
+        if isinstance(v, float):
+            return int(v)
         if isinstance(v, str):
             try:
                 return int(v)
-            except (ValueError, TypeError):
+            except ValueError:
                 return None
-        return v
+        return None
 
     image_dimension: Optional[str] = Field(
         None,
