@@ -8,10 +8,8 @@ from pydantic_models import Test, OpTest
 from parsers.python_unittest_parser import PythonUnittestParser
 from parsers.python_pytest_parser import PythonPytestParser
 from parsers.parameter_support_test_parser import ParameterSupportTestParser
-from parsers.vllm_bench_serve_parser import VllmBenchServeParser
 
 parsers = [
-    VllmBenchServeParser(),
     ParameterSupportTestParser(),
     PythonPytestParser(),
     PythonUnittestParser(),

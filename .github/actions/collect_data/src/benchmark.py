@@ -459,11 +459,78 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         )
 
 
+class VllmBenchmarkDataMapper(ShieldBenchmarkDataMapper):
+    """Maps flat vLLM bench serve JSON output to CompleteBenchmarkRun objects."""
+
+    MEASUREMENT_KEYS = [
+        "mean_ttft_ms",
+        "median_ttft_ms",
+        "std_ttft_ms",
+        "p99_ttft_ms",
+        "mean_tpot_ms",
+        "median_tpot_ms",
+        "std_tpot_ms",
+        "p99_tpot_ms",
+        "mean_itl_ms",
+        "median_itl_ms",
+        "std_itl_ms",
+        "p99_itl_ms",
+        "request_throughput",
+        "output_throughput",
+        "total_token_throughput",
+        "max_output_tokens_per_s",
+        "total_input_tokens",
+        "total_output_tokens",
+        "completed",
+        "failed",
+        "num_prompts",
+        "duration",
+    ]
+
+    def map_benchmark_data(self, pipeline, job_id, report_data, model_spec_data=None):
+        job = self._get_job(pipeline, job_id)
+        if job is None:
+            return None
+
+        try:
+            model_id = report_data.get("model_id", "unknown")
+            model_name = model_id.split("/", 1)[-1] if "/" in model_id else model_id
+
+            measurements = self._create_measurements(
+                job, "vllm_bench_serve", report_data, self.MEASUREMENT_KEYS
+            )
+
+            config_params = {
+                "model_id": model_id,
+                "tokenizer_id": report_data.get("tokenizer_id"),
+                "num_prompts": report_data.get("num_prompts"),
+                "max_concurrency": report_data.get("max_concurrency"),
+            }
+
+            return [self._create_complete_benchmark_run(
+                pipeline=pipeline,
+                job=job,
+                data=report_data,
+                run_type="vllm_benchmark",
+                measurements=measurements,
+                device_info=None,
+                model_name=model_name,
+                batch_size=report_data.get("max_concurrency"),
+                config_params=config_params,
+            )]
+        except ValidationError as e:
+            failure_happened()
+            logger.error(f"Validation error: {e}")
+            return None
+
+
 def _map_benchmark_data(pipeline, job_id, report_data, model_spec_data=None):
     if pipeline.project in ["tt-forge-fe", "tt-xla", "tt-forge", "tt-mlir"]:
         mapper = ForgeBenchmarkDataMapper()
     elif pipeline.project == "tt-shield":
         mapper = ShieldBenchmarkDataMapper()
+    elif pipeline.project == "tt-inference-server":
+        mapper = VllmBenchmarkDataMapper()
     else:
         raise ValueError(f"Unsupported project: {pipeline.project}")
 
