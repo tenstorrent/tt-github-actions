@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union
 import subprocess
 from loguru import logger
+import pydantic_models
 
 
 class InfraErrorV1(enum.Enum):
@@ -484,6 +485,24 @@ def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
         failure_signature = get_job_failure_signature(github_job, logs)
         failure_description = get_failure_description(github_job, logs)
 
+    # Extract and convert steps from the job into Step pydantic objects
+    raw_steps = github_job.get("steps", [])
+    steps = []
+    for raw_step in raw_steps:
+        try:
+            step = pydantic_models.Step(
+                name=raw_step.get("name"),
+                status=raw_step.get("status"),
+                conclusion=raw_step.get("conclusion"),
+                number=raw_step.get("number"),
+                started_at=parse_timestamp(raw_step.get("started_at")) if raw_step.get("started_at") else None,
+                completed_at=parse_timestamp(raw_step.get("completed_at")) if raw_step.get("completed_at") else None,
+            )
+            steps.append(step)
+        except Exception as e:
+            logger.warning(f"Failed to parse step {raw_step.get('number')} for job {github_job_id}: {e}")
+            continue
+
     return {
         "github_job_id": github_job_id,
         "host_name": host_name,
@@ -502,6 +521,7 @@ def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
         "github_job_link": github_job_link,
         "failure_signature": failure_signature,
         "failure_description": failure_description,
+        "steps": steps,
     }
 
 

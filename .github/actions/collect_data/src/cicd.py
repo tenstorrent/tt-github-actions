@@ -105,6 +105,10 @@ def get_github_job_id_to_test_reports(
         for file in files:
             file_extension = os.path.splitext(file)[1]
             if file_extension in extensions:
+                # Skip performance/benchmark reports - they're handled by benchmark.py
+                if file.startswith("report_perf_") or "perf-reports" in root:
+                    continue
+
                 logger.debug(f"Found test report {file}")
                 file_path = pathlib.Path(root) / file
                 filename = file_path.name
