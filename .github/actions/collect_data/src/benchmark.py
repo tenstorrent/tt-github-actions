@@ -188,7 +188,14 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 metadata,
                 model_spec_data,
             )
-            return benchmark_runs + benchmark_summary_runs + eval_runs
+            acceptance_summary_runs = self._process_acceptance_summary(
+                pipeline,
+                job,
+                report_data.get("acceptance_summary", {}),
+                metadata,
+                model_spec_data,
+            )
+            return benchmark_runs + benchmark_summary_runs + eval_runs + acceptance_summary_runs
         except ValidationError as e:
             failure_happened()
             logger.error(f"Validation error: {e}")
@@ -380,6 +387,58 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             )
         return results
 
+    def _process_acceptance_summary(self, pipeline, job, acceptance_summary, metadata=None, model_spec_data=None):
+        """
+        Processes acceptance summary entries and creates CompleteBenchmarkRun objects for each entry.
+        """
+        results = []
+        if acceptance_summary:
+            if metadata:
+                logger.debug(f"Processing acceptance summary with metadata included...")
+                acceptance_summary = {**acceptance_summary, **metadata}  # metadata values take precedence
+            measurements = self._create_measurements(
+                job,
+                "acceptance_summary",
+                acceptance_summary,
+                [
+                    "acceptance_criteria",
+                ],
+            )
+
+            # Merge leftover key-values from acceptance_summary into model_spec_data for config_params
+            acceptance_criteria_metadata = model_spec_data.copy() if model_spec_data else {}
+            for key, value in acceptance_summary.items():
+                if key not in acceptance_criteria_metadata:
+                    acceptance_criteria_metadata[key] = value
+            results.append(
+                self._create_complete_benchmark_run(
+                    pipeline=pipeline,
+                    job=job,
+                    data=acceptance_summary,
+                    run_type="acceptance_summary",
+                    measurements=measurements,
+                    device_info=acceptance_summary.get("device"),
+                    model_name=acceptance_summary.get("model"),
+                    model_type=model_spec_data.get("model_type") if model_spec_data else None,
+                    input_seq_length=None,
+                    output_seq_length=None,
+                    dataset_name=None,
+                    batch_size=None,
+                    config_params=acceptance_criteria_metadata,
+                )
+            )
+        return results
+
+    def _normalize_measurement_value(self, value):
+        if isinstance(value, str):
+            if value.lower() == "true":
+                return 1.0
+            elif value.lower() == "false":
+                return 0.0
+            elif value == "":
+                return None
+        return value
+
     def _create_measurements(self, job, step_name, data, keys):
         """
         Creates BenchmarkMeasurement objects for the specified keys in the data.
@@ -388,6 +447,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         for key in keys:
             if key in data:
                 try:
+                    value = self._normalize_measurement_value(data.get(key))
                     measurement = BenchmarkMeasurement(
                         step_start_ts=job.job_start_ts,
                         step_end_ts=job.job_end_ts,
@@ -395,7 +455,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                         step_name=step_name,
                         step_warm_up_num_iterations=None,
                         name=key,
-                        value=data.get(key),
+                        value=value,
                         target=None,
                         device_power=None,
                         device_temperature=None,
