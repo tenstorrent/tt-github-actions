@@ -255,6 +255,140 @@ def test_evals_model_type_without_model_spec(mapper, pipeline):
     assert result[0].ml_model_type is None
 
 
+def test_process_acceptance_summary(mapper, pipeline):
+    report_data = {
+        "metadata": {
+            "report_id": "test_report",
+            "model": "test_model",
+            "device": "test_device",
+            "model_id": "id_test_spec_test_model_test_device",
+            "inference_engine": "vllm",
+        },
+        "acceptance_summary": {
+            "acceptance_criteria": "true",
+            "acceptance_blockers": "",
+            "acceptance_summary_markdown": "## Summary\nAll good",
+        },
+    }
+    result = mapper.map_benchmark_data(
+        pipeline, 1, report_data, {"model_name": "test_model", "device_type": "test_device"}
+    )
+    assert len(result) == 1
+    assert isinstance(result[0], CompleteBenchmarkRun)
+    assert result[0].run_type == "acceptance_summary"
+    assert len(result[0].measurements) == 1
+    assert result[0].measurements[0].name == "acceptance_criteria"
+    assert result[0].measurements[0].value == 1.0
+
+
+def test_process_acceptance_summary_config_params(mapper, pipeline):
+    report_data = {
+        "metadata": {
+            "report_id": "test_report",
+            "model": "test_model",
+            "device": "test_device",
+            "model_id": "id_test_spec_test_model_test_device",
+            "inference_engine": "vllm",
+        },
+        "acceptance_summary": {
+            "acceptance_criteria": "true",
+            "acceptance_blockers": "",
+            "acceptance_summary_markdown": "## Summary\nAll good",
+        },
+    }
+    model_spec_data = {
+        "model_name": "test_model",
+        "device_type": "test_device",
+        "extra_param": "extra_value",
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data, model_spec_data)
+    assert len(result) == 1
+    assert isinstance(result[0], CompleteBenchmarkRun)
+    assert result[0].run_type == "acceptance_summary"
+    assert isinstance(result[0].config_params, dict)
+    assert result[0].config_params.get("extra_param") == "extra_value"
+    assert result[0].config_params.get("acceptance_blockers") == ""
+    assert result[0].config_params.get("acceptance_summary_markdown") == "## Summary\nAll good"
+
+
+def test_process_acceptance_summary_with_metadata(mapper, pipeline):
+    report_data = {
+        "metadata": {
+            "report_id": "test_report",
+            "model": "test_model",
+            "device": "test_device",
+            "model_id": "id_test_spec_test_model_test_device",
+            "inference_engine": "vllm",
+        },
+        "acceptance_summary": {
+            "model": "test_model_2",
+            "device": "test_device_2",
+            "acceptance_criteria": "false",
+            "acceptance_blockers": "Test blocker 1, Test blocker 2",
+            "acceptance_summary_markdown": "## Summary\nSome issues found",
+        },
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data, {"model_name": "test_model"})
+    assert len(result) == 1
+    assert isinstance(result[0], CompleteBenchmarkRun)
+    assert result[0].run_type == "acceptance_summary"
+    assert result[0].ml_model_name == "test_model"
+    assert result[0].device_info == {"device_name": "test_device"}
+    assert len(result[0].measurements) == 1
+    assert result[0].measurements[0].name == "acceptance_criteria"
+    assert result[0].measurements[0].value == 0.0
+
+
+def test_process_acceptance_summary_empty(mapper, pipeline):
+    report_data = {"acceptance_summary": {}}
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    assert len(result) == 0
+
+
+def test_process_acceptance_summary_missing(mapper, pipeline):
+    report_data = {}
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    assert len(result) == 0
+
+
+def test_process_acceptance_summary_model_spec_precedence(mapper, pipeline):
+    model_spec_data = {
+        "model_name": "model_from_spec",
+        "device_type": "tt",
+        "shared_key": "value_from_model_spec",
+        "only_in_spec": "spec_value",
+    }
+    report_data = {
+        "metadata": {
+            "report_id": "test_report",
+            "model": "test_model",
+            "device": "test_device",
+            "model_id": "id_test_spec_test_model_test_device",
+            "inference_engine": "vllm",
+        },
+        "acceptance_summary": {
+            "acceptance_criteria": "true",
+            "shared_key": "value_from_acceptance_summary",
+            "only_in_acceptance": "acceptance_value",
+        },
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data, model_spec_data)
+    assert len(result) == 1
+    assert isinstance(result[0], CompleteBenchmarkRun)
+    assert result[0].run_type == "acceptance_summary"
+
+    # Verify model_spec_data key takes precedence
+    assert result[0].config_params.get("shared_key") == "value_from_model_spec"
+
+    # Verify both unique keys are present
+    assert result[0].config_params.get("only_in_spec") == "spec_value"
+    assert result[0].config_params.get("only_in_acceptance") == "acceptance_value"
+
+    # Verify model_spec_data keys are present
+    assert result[0].config_params.get("model_name") == "model_from_spec"
+    assert result[0].config_params.get("device_type") == "tt"
+
+
 @pytest.mark.parametrize(
     "input_val, expected",
     [
