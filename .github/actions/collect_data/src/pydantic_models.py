@@ -14,8 +14,8 @@ from pydantic import BaseModel, Field, field_validator
 
 class Test(BaseModel):
     """
-    Table containing information about the execution of CI/CD tests, each one associated
-    with a specific CI/CD job execution.
+    Contains information about the execution of CI/CD tests, each one associated with a
+    specific CI/CD job execution.
 
     Only some CI/CD jobs execute tests, which are executed sequentially.
     """
@@ -31,8 +31,34 @@ class Test(BaseModel):
     success: bool = Field(description="Test execution success.")
     skipped: bool = Field(description="Some tests in a job can be skipped.")
     full_test_name: str = Field(description="Test name plus config.")
-    config: Optional[dict] = Field(None, description="Test configuration key/value " "pairs.")
+    config: Optional[dict] = Field(None, description="Test configuration, as key/value pairs.")
     tags: Optional[dict] = Field(None, description="Tags associated with the test, as key/value pairs.")
+
+
+class Step(BaseModel):
+    """
+    Contains information about the execution of CI/CD steps, each one associated with a
+    specific CI/CD job execution.
+    """
+
+    name: Optional[str] = Field(description="Name of the step.")
+    status: Optional[str] = Field(description="Status of the step.")
+    conclusion: Optional[str] = Field(description="Conclusion of the step.")
+    number: int = Field(description="Step number.")
+    started_at: Optional[datetime] = Field(description="Timestamp with timezone when the step execution started.")
+    completed_at: Optional[datetime] = Field(description="Timestamp with timezone when the step execution ended.")
+
+
+class JobStatus(str, Enum):
+    success = "success"
+    failure = "failure"
+    skipped = "skipped"
+    cancelled = "cancelled"
+    neutral = "neutral"
+    timed_out = "timed_out"
+    action_required = "action_required"
+    completed = "completed"
+    stale = "stale"
 
 
 class Job(BaseModel):
@@ -61,8 +87,16 @@ class Job(BaseModel):
         "criteria. Failure mechanisms that are only descriptive of the "
         "job itself."
     )
-    job_status: str = Field(description="Status of the job, e.g. success, failure, cancelled, etc.")
-
+    job_status: Optional[JobStatus] = Field(
+        None,
+        description="Job execution status, possible statuses include success, failure, "
+        "skipped, cancelled, neutral, etc.",
+    )
+    job_label: Optional[str] = Field(None, description="GitHub CI runner label for the job.")
+    tt_smi_version: Optional[str] = Field(
+        None,
+        description="Version of the tt-smi tool in order to check consistency across " "CI fleets.",
+    )
     docker_image: Optional[str] = Field(None, description="Name of the Docker image used for the CI job.")
     is_build_job: bool = Field(description="Flag identifying if the job is a software build.")
     job_matrix_config: Optional[dict] = Field(
@@ -75,6 +109,19 @@ class Job(BaseModel):
     failure_signature: Optional[str] = Field(None, description="Failure signature.")
     failure_description: Optional[str] = Field(None, description="Failure description.")
     tests: List[Test] = []
+    steps: Optional[List[Step]] = Field(None, description="Steps of the job.")
+
+
+class PipelineStatus(str, Enum):
+    success = "success"
+    failure = "failure"
+    skipped = "skipped"
+    cancelled = "cancelled"
+    neutral = "neutral"
+    timed_out = "timed_out"
+    action_required = "action_required"
+    completed = "completed"
+    stale = "stale"
 
 
 class Pipeline(BaseModel):
@@ -99,6 +146,11 @@ class Pipeline(BaseModel):
     )
     pipeline_start_ts: datetime = Field(description="Timestamp with timezone when the pipeline execution started.")
     pipeline_end_ts: datetime = Field(description="Timestamp with timezone when the pipeline execution ended.")
+    pipeline_status: Optional[PipelineStatus] = Field(
+        None,
+        description="Pipeline execution status, possible statuses include success, "
+        "failure, skipped, cancelled, neutral, etc.",
+    )
     name: str = Field(description="Name of the pipeline.")
     project: Optional[str] = Field(None, description="Name of the software project.")
     trigger: Optional[str] = Field(None, description="Type of trigger that initiated the pipeline.")
