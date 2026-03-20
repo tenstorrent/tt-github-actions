@@ -94,6 +94,93 @@ class _BenchmarkDataMapper(ABC):
     def map_benchmark_data(self, pipeline, job_id, report_data) -> CompleteBenchmarkRun | None:
         pass
 
+    def _get_job(self, pipeline, job_id):
+        """
+        Retrieves the job object from the pipeline using the job ID.
+        """
+        job = next((job for job in pipeline.jobs if job.github_job_id == job_id), None)
+        if job is None:
+            logger.error(f"No job found with github_job_id: {job_id}")
+        return job
+
+    def _create_measurements(self, job, step_name, data, keys):
+        """
+        Creates BenchmarkMeasurement objects for the specified keys in the data.
+        """
+        measurements = []
+        for key in keys:
+            if key in data:
+                try:
+                    measurement = BenchmarkMeasurement(
+                        step_start_ts=job.job_start_ts,
+                        step_end_ts=job.job_end_ts,
+                        iteration=1,
+                        step_name=step_name,
+                        step_warm_up_num_iterations=None,
+                        name=key,
+                        value=data.get(key),
+                        target=None,
+                        device_power=None,
+                        device_temperature=None,
+                    )
+                    measurements.append(measurement)
+                except Exception as e:
+                    logger.warning(f"Missing value for key: {key}, value: {data.get(key)}.")
+        return measurements
+
+    def _create_complete_benchmark_run(
+        self,
+        pipeline,
+        job,
+        data,
+        run_type,
+        measurements,
+        device_info,
+        model_name,
+        model_type=None,
+        input_seq_length=None,
+        output_seq_length=None,
+        dataset_name=None,
+        batch_size=None,
+        config_params=None,
+    ):
+        """
+        Creates a CompleteBenchmarkRun object with the provided data and measurements.
+        """
+        return CompleteBenchmarkRun(
+            run_start_ts=pipeline.pipeline_start_ts,
+            run_end_ts=pipeline.pipeline_end_ts,
+            run_type=run_type,
+            git_repo_name=pipeline.project,
+            git_commit_hash=pipeline.git_commit_hash,
+            git_commit_ts=pipeline.pipeline_submission_ts,
+            git_branch_name=pipeline.git_branch_name,
+            github_pipeline_id=pipeline.github_pipeline_id,
+            github_pipeline_link=pipeline.github_pipeline_link,
+            github_job_id=job.github_job_id,
+            user_name=pipeline.git_author,
+            docker_image=job.docker_image,
+            device_hostname=job.host_name,
+            device_ip=None,
+            device_info={
+                "device_name": device_info,
+            },
+            ml_model_name=model_name,
+            ml_model_type=model_type,
+            num_layers=None,
+            batch_size=batch_size,
+            config_params=config_params,
+            precision=None,
+            dataset_name=dataset_name,
+            profiler_name=None,
+            input_sequence_length=input_seq_length,
+            output_sequence_length=output_seq_length,
+            image_dimension=None,
+            perf_analysis=None,
+            training=False,
+            measurements=measurements,
+        )
+
 
 class ForgeBenchmarkDataMapper(_BenchmarkDataMapper):
     def map_benchmark_data(self, pipeline, job_id, report_data, model_spec_data=None) -> CompleteBenchmarkRun | None:
@@ -193,15 +280,6 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             failure_happened()
             logger.error(f"Validation error: {e}")
             return None
-
-    def _get_job(self, pipeline, job_id):
-        """
-        Retrieves the job object from the pipeline using the job ID.
-        """
-        job = next((job for job in pipeline.jobs if job.github_job_id == job_id), None)
-        if job is None:
-            logger.error(f"No job found with github_job_id: {job_id}")
-        return job
 
     def _format_model_name(self, benchmark):
         """
@@ -380,86 +458,8 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             )
         return results
 
-    def _create_measurements(self, job, step_name, data, keys):
-        """
-        Creates BenchmarkMeasurement objects for the specified keys in the data.
-        """
-        measurements = []
-        for key in keys:
-            if key in data:
-                try:
-                    measurement = BenchmarkMeasurement(
-                        step_start_ts=job.job_start_ts,
-                        step_end_ts=job.job_end_ts,
-                        iteration=1,
-                        step_name=step_name,
-                        step_warm_up_num_iterations=None,
-                        name=key,
-                        value=data.get(key),
-                        target=None,
-                        device_power=None,
-                        device_temperature=None,
-                    )
-                    measurements.append(measurement)
-                except Exception as e:
-                    logger.warning(f"Missing value for key: {key}, value: {data.get(key)}.")
-        return measurements
 
-    def _create_complete_benchmark_run(
-        self,
-        pipeline,
-        job,
-        data,
-        run_type,
-        measurements,
-        device_info,
-        model_name,
-        model_type=None,
-        input_seq_length=None,
-        output_seq_length=None,
-        dataset_name=None,
-        batch_size=None,
-        config_params=None,
-    ):
-        """
-        Creates a CompleteBenchmarkRun object with the provided data and measurements.
-        """
-        return CompleteBenchmarkRun(
-            run_start_ts=pipeline.pipeline_start_ts,
-            run_end_ts=pipeline.pipeline_end_ts,
-            run_type=run_type,
-            git_repo_name=pipeline.project,
-            git_commit_hash=pipeline.git_commit_hash,
-            git_commit_ts=pipeline.pipeline_submission_ts,
-            git_branch_name=pipeline.git_branch_name,
-            github_pipeline_id=pipeline.github_pipeline_id,
-            github_pipeline_link=pipeline.github_pipeline_link,
-            github_job_id=job.github_job_id,
-            user_name=pipeline.git_author,
-            docker_image=job.docker_image,
-            device_hostname=job.host_name,
-            device_ip=None,
-            device_info={
-                "device_name": device_info,
-            },
-            ml_model_name=model_name,
-            ml_model_type=model_type,
-            num_layers=None,
-            batch_size=batch_size,
-            config_params=config_params,
-            precision=None,
-            dataset_name=dataset_name,
-            profiler_name=None,
-            input_sequence_length=input_seq_length,
-            output_sequence_length=output_seq_length,
-            image_dimension=None,
-            perf_analysis=None,
-            training=False,
-            measurements=measurements,
-        )
-
-
-class VllmBenchmarkDataMapper(ShieldBenchmarkDataMapper):
+class VllmBenchmarkDataMapper(_BenchmarkDataMapper):
     """Maps flat vLLM bench serve JSON output to CompleteBenchmarkRun objects."""
 
     MEASUREMENT_KEYS = [
@@ -517,6 +517,8 @@ class VllmBenchmarkDataMapper(ShieldBenchmarkDataMapper):
                 model_name=model_name,
                 batch_size=report_data.get("max_concurrency"),
                 config_params=config_params,
+                input_seq_length=report_data.get("input_seq_len"),
+                output_seq_length=report_data.get("output_seq_len"),
             )]
         except ValidationError as e:
             failure_happened()
