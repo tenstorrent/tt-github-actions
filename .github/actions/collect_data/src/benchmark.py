@@ -499,7 +499,9 @@ class VllmBenchmarkDataMapper(_BenchmarkDataMapper):
         "duration",
     ]
 
-    def map_benchmark_data(self, pipeline, job_id, report_data, model_spec_data=None):
+    def map_benchmark_data(
+        self, pipeline, job_id, report_data, model_spec_data=None
+    ) -> List[CompleteBenchmarkRun] | None:
         job = self._get_job(pipeline, job_id)
         if job is None:
             return None
