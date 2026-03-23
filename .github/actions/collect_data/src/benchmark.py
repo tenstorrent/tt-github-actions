@@ -124,8 +124,18 @@ class _BenchmarkDataMapper(ABC):
                         device_temperature=None,
                     )
                     measurements.append(measurement)
+                except ValidationError as e:
+                    logger.error(
+                        f"Validation error while creating BenchmarkMeasurement for key '{key}' "
+                        f"with value {data.get(key)!r}: {e}",
+                        exc_info=True,
+                    )
                 except Exception as e:
-                    logger.warning(f"Missing value for key: {key}, value: {data.get(key)}.")
+                    logger.error(
+                        f"Unexpected error while creating BenchmarkMeasurement for key '{key}' "
+                        f"with value {data.get(key)!r}: {e}",
+                        exc_info=True,
+                    )
         return measurements
 
     def _create_complete_benchmark_run(
