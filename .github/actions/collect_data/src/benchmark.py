@@ -94,6 +94,103 @@ class _BenchmarkDataMapper(ABC):
     def map_benchmark_data(self, pipeline, job_id, report_data) -> CompleteBenchmarkRun | None:
         pass
 
+    def _get_job(self, pipeline, job_id):
+        """
+        Retrieves the job object from the pipeline using the job ID.
+        """
+        job = next((job for job in pipeline.jobs if job.github_job_id == job_id), None)
+        if job is None:
+            logger.error(f"No job found with github_job_id: {job_id}")
+        return job
+
+    def _create_measurements(self, job, step_name, data, keys):
+        """
+        Creates BenchmarkMeasurement objects for the specified keys in the data.
+        """
+        measurements = []
+        for key in keys:
+            if key in data:
+                try:
+                    measurement = BenchmarkMeasurement(
+                        step_start_ts=job.job_start_ts,
+                        step_end_ts=job.job_end_ts,
+                        iteration=1,
+                        step_name=step_name,
+                        step_warm_up_num_iterations=None,
+                        name=key,
+                        value=data.get(key),
+                        target=None,
+                        device_power=None,
+                        device_temperature=None,
+                    )
+                    measurements.append(measurement)
+                except ValidationError as e:
+                    logger.error(
+                        f"Validation error while creating BenchmarkMeasurement for key '{key}' "
+                        f"with value {data.get(key)!r}: {e}",
+                        exc_info=True,
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Unexpected error while creating BenchmarkMeasurement for key '{key}' "
+                        f"with value {data.get(key)!r}: {e}",
+                        exc_info=True,
+                    )
+        return measurements
+
+    def _create_complete_benchmark_run(
+        self,
+        pipeline,
+        job,
+        data,
+        run_type,
+        measurements,
+        device_info,
+        model_name,
+        model_type=None,
+        input_seq_length=None,
+        output_seq_length=None,
+        dataset_name=None,
+        batch_size=None,
+        config_params=None,
+    ):
+        """
+        Creates a CompleteBenchmarkRun object with the provided data and measurements.
+        """
+        return CompleteBenchmarkRun(
+            run_start_ts=pipeline.pipeline_start_ts,
+            run_end_ts=pipeline.pipeline_end_ts,
+            run_type=run_type,
+            git_repo_name=pipeline.project,
+            git_commit_hash=pipeline.git_commit_hash,
+            git_commit_ts=pipeline.pipeline_submission_ts,
+            git_branch_name=pipeline.git_branch_name,
+            github_pipeline_id=pipeline.github_pipeline_id,
+            github_pipeline_link=pipeline.github_pipeline_link,
+            github_job_id=job.github_job_id,
+            user_name=pipeline.git_author,
+            docker_image=job.docker_image,
+            device_hostname=job.host_name,
+            device_ip=None,
+            device_info=(
+                device_info if isinstance(device_info, dict) or device_info is None else {"device_name": device_info}
+            ),
+            ml_model_name=model_name,
+            ml_model_type=model_type,
+            num_layers=None,
+            batch_size=batch_size,
+            config_params=config_params,
+            precision=None,
+            dataset_name=dataset_name,
+            profiler_name=None,
+            input_sequence_length=input_seq_length,
+            output_sequence_length=output_seq_length,
+            image_dimension=None,
+            perf_analysis=None,
+            training=False,
+            measurements=measurements,
+        )
+
 
 class ForgeBenchmarkDataMapper(_BenchmarkDataMapper):
     def map_benchmark_data(self, pipeline, job_id, report_data, model_spec_data=None) -> CompleteBenchmarkRun | None:
@@ -194,15 +291,6 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             logger.error(f"Validation error: {e}")
             return None
 
-    def _get_job(self, pipeline, job_id):
-        """
-        Retrieves the job object from the pipeline using the job ID.
-        """
-        job = next((job for job in pipeline.jobs if job.github_job_id == job_id), None)
-        if job is None:
-            logger.error(f"No job found with github_job_id: {job_id}")
-        return job
-
     def _format_model_name(self, benchmark):
         """
         Formats the model name by removing any prefix before '/' from model identifier.
@@ -254,7 +342,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     measurements=measurements,
                     device_info=benchmark.get("device"),
                     model_name=model_name,
-                    model_type=model_spec_data.get("model_type") if model_spec_data else None,
+                    model_type=(model_spec_data.get("model_type") if model_spec_data else None),
                     input_seq_length=benchmark.get("input_sequence_length"),
                     output_seq_length=benchmark.get("output_sequence_length"),
                     dataset_name=benchmark.get("model_id", None),
@@ -320,7 +408,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     measurements=measurements,
                     device_info=device,
                     model_name=model_name,
-                    model_type=model_spec_data.get("model_type") if model_spec_data else None,
+                    model_type=(model_spec_data.get("model_type") if model_spec_data else None),
                     input_seq_length=benchmark.get("isl"),
                     output_seq_length=benchmark.get("osl"),
                     dataset_name=model_name,
@@ -338,7 +426,10 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         for eval_entry in evals:
             if metadata:
                 logger.debug(f"Processing evals with metadata included...")
-                eval_entry = {**eval_entry, **metadata}  # metadata values take precedence
+                eval_entry = {
+                    **eval_entry,
+                    **metadata,
+                }  # metadata values take precedence
             measurements = self._create_measurements(
                 job,
                 "eval",
@@ -370,7 +461,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     measurements=measurements,
                     device_info=eval_entry.get("device"),
                     model_name=eval_entry.get("model"),
-                    model_type=model_spec_data.get("model_type") if model_spec_data else None,
+                    model_type=(model_spec_data.get("model_type") if model_spec_data else None),
                     input_seq_length=None,
                     output_seq_length=None,
                     dataset_name=eval_entry.get("task_name"),
@@ -380,83 +471,74 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             )
         return results
 
-    def _create_measurements(self, job, step_name, data, keys):
-        """
-        Creates BenchmarkMeasurement objects for the specified keys in the data.
-        """
-        measurements = []
-        for key in keys:
-            if key in data:
-                try:
-                    measurement = BenchmarkMeasurement(
-                        step_start_ts=job.job_start_ts,
-                        step_end_ts=job.job_end_ts,
-                        iteration=1,
-                        step_name=step_name,
-                        step_warm_up_num_iterations=None,
-                        name=key,
-                        value=data.get(key),
-                        target=None,
-                        device_power=None,
-                        device_temperature=None,
-                    )
-                    measurements.append(measurement)
-                except Exception as e:
-                    logger.warning(f"Missing value for key: {key}, value: {data.get(key)}.")
-        return measurements
 
-    def _create_complete_benchmark_run(
-        self,
-        pipeline,
-        job,
-        data,
-        run_type,
-        measurements,
-        device_info,
-        model_name,
-        model_type=None,
-        input_seq_length=None,
-        output_seq_length=None,
-        dataset_name=None,
-        batch_size=None,
-        config_params=None,
-    ):
-        """
-        Creates a CompleteBenchmarkRun object with the provided data and measurements.
-        """
-        return CompleteBenchmarkRun(
-            run_start_ts=pipeline.pipeline_start_ts,
-            run_end_ts=pipeline.pipeline_end_ts,
-            run_type=run_type,
-            git_repo_name=pipeline.project,
-            git_commit_hash=pipeline.git_commit_hash,
-            git_commit_ts=pipeline.pipeline_submission_ts,
-            git_branch_name=pipeline.git_branch_name,
-            github_pipeline_id=pipeline.github_pipeline_id,
-            github_pipeline_link=pipeline.github_pipeline_link,
-            github_job_id=job.github_job_id,
-            user_name=pipeline.git_author,
-            docker_image=job.docker_image,
-            device_hostname=job.host_name,
-            device_ip=None,
-            device_info={
-                "device_name": device_info,
-            },
-            ml_model_name=model_name,
-            ml_model_type=model_type,
-            num_layers=None,
-            batch_size=batch_size,
-            config_params=config_params,
-            precision=None,
-            dataset_name=dataset_name,
-            profiler_name=None,
-            input_sequence_length=input_seq_length,
-            output_sequence_length=output_seq_length,
-            image_dimension=None,
-            perf_analysis=None,
-            training=False,
-            measurements=measurements,
-        )
+class VllmBenchmarkDataMapper(_BenchmarkDataMapper):
+    """Maps flat vLLM bench serve JSON output to CompleteBenchmarkRun objects."""
+
+    MEASUREMENT_KEYS = [
+        "mean_ttft_ms",
+        "median_ttft_ms",
+        "std_ttft_ms",
+        "p99_ttft_ms",
+        "mean_tpot_ms",
+        "median_tpot_ms",
+        "std_tpot_ms",
+        "p99_tpot_ms",
+        "mean_itl_ms",
+        "median_itl_ms",
+        "std_itl_ms",
+        "p99_itl_ms",
+        "request_throughput",
+        "output_throughput",
+        "total_token_throughput",
+        "max_output_tokens_per_s",
+        "total_input_tokens",
+        "total_output_tokens",
+        "completed",
+        "failed",
+        "num_prompts",
+        "duration",
+    ]
+
+    def map_benchmark_data(
+        self, pipeline, job_id, report_data, model_spec_data=None
+    ) -> List[CompleteBenchmarkRun] | None:
+        job = self._get_job(pipeline, job_id)
+        if job is None:
+            return None
+
+        try:
+            model_id = report_data.get("model_id", "unknown")
+            model_name = model_id.split("/", 1)[-1] if "/" in model_id else model_id
+
+            measurements = self._create_measurements(job, "vllm_bench_serve", report_data, self.MEASUREMENT_KEYS)
+
+            config_params = {
+                "model_id": model_id,
+                "tokenizer_id": report_data.get("tokenizer_id"),
+                "num_prompts": report_data.get("num_prompts"),
+                "max_concurrency": report_data.get("max_concurrency"),
+            }
+
+            return [
+                self._create_complete_benchmark_run(
+                    pipeline=pipeline,
+                    job=job,
+                    data=report_data,
+                    run_type="vllm_benchmark",
+                    measurements=measurements,
+                    device_info=None,
+                    model_name=model_name,
+                    batch_size=report_data.get("max_concurrency"),
+                    config_params=config_params,
+                    input_seq_length=report_data.get("input_seq_len"),
+                    output_seq_length=report_data.get("output_seq_len"),
+                )
+            ]
+        except ValidationError as e:
+            failure_happened()
+            logger.error(f"Validation error: {e}")
+            return None
 
 
 def _map_benchmark_data(pipeline, job_id, report_data, model_spec_data=None):
@@ -464,6 +546,8 @@ def _map_benchmark_data(pipeline, job_id, report_data, model_spec_data=None):
         mapper = ForgeBenchmarkDataMapper()
     elif pipeline.project == "tt-shield":
         mapper = ShieldBenchmarkDataMapper()
+    elif pipeline.project == "tt-inference-server":
+        mapper = VllmBenchmarkDataMapper()
     else:
         raise ValueError(f"Unsupported project: {pipeline.project}")
 
