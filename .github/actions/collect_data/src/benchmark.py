@@ -172,9 +172,11 @@ class _BenchmarkDataMapper(ABC):
             docker_image=job.docker_image,
             device_hostname=job.host_name,
             device_ip=None,
-            device_info={
-                "device_name": device_info,
-            },
+            device_info=(
+                device_info
+                if isinstance(device_info, dict) or device_info is None
+                else {"device_name": device_info}
+            ),
             ml_model_name=model_name,
             ml_model_type=model_type,
             num_layers=None,
