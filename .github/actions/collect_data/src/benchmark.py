@@ -173,9 +173,7 @@ class _BenchmarkDataMapper(ABC):
             device_hostname=job.host_name,
             device_ip=None,
             device_info=(
-                device_info
-                if isinstance(device_info, dict) or device_info is None
-                else {"device_name": device_info}
+                device_info if isinstance(device_info, dict) or device_info is None else {"device_name": device_info}
             ),
             ml_model_name=model_name,
             ml_model_type=model_type,
@@ -344,7 +342,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     measurements=measurements,
                     device_info=benchmark.get("device"),
                     model_name=model_name,
-                    model_type=model_spec_data.get("model_type") if model_spec_data else None,
+                    model_type=(model_spec_data.get("model_type") if model_spec_data else None),
                     input_seq_length=benchmark.get("input_sequence_length"),
                     output_seq_length=benchmark.get("output_sequence_length"),
                     dataset_name=benchmark.get("model_id", None),
@@ -410,7 +408,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     measurements=measurements,
                     device_info=device,
                     model_name=model_name,
-                    model_type=model_spec_data.get("model_type") if model_spec_data else None,
+                    model_type=(model_spec_data.get("model_type") if model_spec_data else None),
                     input_seq_length=benchmark.get("isl"),
                     output_seq_length=benchmark.get("osl"),
                     dataset_name=model_name,
@@ -428,7 +426,10 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         for eval_entry in evals:
             if metadata:
                 logger.debug(f"Processing evals with metadata included...")
-                eval_entry = {**eval_entry, **metadata}  # metadata values take precedence
+                eval_entry = {
+                    **eval_entry,
+                    **metadata,
+                }  # metadata values take precedence
             measurements = self._create_measurements(
                 job,
                 "eval",
@@ -460,7 +461,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     measurements=measurements,
                     device_info=eval_entry.get("device"),
                     model_name=eval_entry.get("model"),
-                    model_type=model_spec_data.get("model_type") if model_spec_data else None,
+                    model_type=(model_spec_data.get("model_type") if model_spec_data else None),
                     input_seq_length=None,
                     output_seq_length=None,
                     dataset_name=eval_entry.get("task_name"),
@@ -510,9 +511,7 @@ class VllmBenchmarkDataMapper(_BenchmarkDataMapper):
             model_id = report_data.get("model_id", "unknown")
             model_name = model_id.split("/", 1)[-1] if "/" in model_id else model_id
 
-            measurements = self._create_measurements(
-                job, "vllm_bench_serve", report_data, self.MEASUREMENT_KEYS
-            )
+            measurements = self._create_measurements(job, "vllm_bench_serve", report_data, self.MEASUREMENT_KEYS)
 
             config_params = {
                 "model_id": model_id,
@@ -521,19 +520,21 @@ class VllmBenchmarkDataMapper(_BenchmarkDataMapper):
                 "max_concurrency": report_data.get("max_concurrency"),
             }
 
-            return [self._create_complete_benchmark_run(
-                pipeline=pipeline,
-                job=job,
-                data=report_data,
-                run_type="vllm_benchmark",
-                measurements=measurements,
-                device_info=None,
-                model_name=model_name,
-                batch_size=report_data.get("max_concurrency"),
-                config_params=config_params,
-                input_seq_length=report_data.get("input_seq_len"),
-                output_seq_length=report_data.get("output_seq_len"),
-            )]
+            return [
+                self._create_complete_benchmark_run(
+                    pipeline=pipeline,
+                    job=job,
+                    data=report_data,
+                    run_type="vllm_benchmark",
+                    measurements=measurements,
+                    device_info=None,
+                    model_name=model_name,
+                    batch_size=report_data.get("max_concurrency"),
+                    config_params=config_params,
+                    input_seq_length=report_data.get("input_seq_len"),
+                    output_seq_length=report_data.get("output_seq_len"),
+                )
+            ]
         except ValidationError as e:
             failure_happened()
             logger.error(f"Validation error: {e}")
