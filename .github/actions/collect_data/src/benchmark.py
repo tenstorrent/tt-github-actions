@@ -541,14 +541,32 @@ class VllmBenchmarkDataMapper(_BenchmarkDataMapper):
             return None
 
 
-def _map_benchmark_data(pipeline, job_id, report_data, model_spec_data=None):
-    if pipeline.project in ["tt-forge-fe", "tt-xla", "tt-forge", "tt-mlir"]:
-        mapper = ForgeBenchmarkDataMapper()
-    elif pipeline.project == "tt-shield":
-        mapper = ShieldBenchmarkDataMapper()
-    elif pipeline.project == "tt-inference-server":
-        mapper = VllmBenchmarkDataMapper()
-    else:
-        raise ValueError(f"Unsupported project: {pipeline.project}")
+_REPORT_TYPE_MAPPERS = {
+    ("tt-shield", "vllm_bench_serve"): VllmBenchmarkDataMapper,
+    ("tt-inference-server", "vllm_bench_serve"): VllmBenchmarkDataMapper,
+}
 
+
+_PROJECT_MAPPERS = {
+    "tt-forge-fe": ForgeBenchmarkDataMapper,
+    "tt-xla": ForgeBenchmarkDataMapper,
+    "tt-forge": ForgeBenchmarkDataMapper,
+    "tt-mlir": ForgeBenchmarkDataMapper,
+    "tt-shield": ShieldBenchmarkDataMapper,
+}
+
+
+def _get_mapper(pipeline_project, report_data):
+    report_type = report_data.get("report_type")
+    mapper_cls = _REPORT_TYPE_MAPPERS.get((pipeline_project, report_type))
+    if mapper_cls:
+        return mapper_cls()
+    mapper_cls = _PROJECT_MAPPERS.get(pipeline_project)
+    if mapper_cls:
+        return mapper_cls()
+    raise ValueError(f"No mapper found for project {pipeline_project}!")
+
+
+def _map_benchmark_data(pipeline, job_id, report_data, model_spec_data=None):
+    mapper = _get_mapper(pipeline.project, report_data)
     return mapper.map_benchmark_data(pipeline, job_id, report_data, model_spec_data)
