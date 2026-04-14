@@ -28,7 +28,7 @@ jobs:
         - /proc:/host/proc:ro
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Start telemetry collection
         id: telemetry_start

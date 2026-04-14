@@ -15,7 +15,7 @@ jobs:
     steps:
 
       - name: Checkout code # Only needed for testing action in same repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Debug
         shell: bash
