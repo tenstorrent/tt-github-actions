@@ -43,7 +43,7 @@ runs:
     run: |
       ${GITHUB_ACTION_PATH}/download_workflow_data.sh ${{ inputs.repository }} ${{ inputs.run_id }} ${{ inputs.run_attempt }}
 
-  - uses: actions/setup-python@v5
+  - uses: actions/setup-python@v6
     with:
       python-version: '3.10'
 
@@ -95,7 +95,7 @@ runs:
 
   - name: Upload workflow run data, even on failure
     if: ${{ !cancelled() }}
-    uses: actions/upload-artifact@v4
+    uses: actions/upload-artifact@v7
     with:
       name: workflow-run-data
       path: |

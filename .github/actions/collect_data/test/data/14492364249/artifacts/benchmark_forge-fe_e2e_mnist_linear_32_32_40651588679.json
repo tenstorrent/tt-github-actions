@@ -44,6 +44,6 @@
     "chips": 1
   },
   "device_ip": null,
-  "project": "tt-forge-fe",
+  "project": "tt-forge-onnx",
   "model_rawname": "mnist_linear"
 }

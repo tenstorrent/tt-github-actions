@@ -548,7 +548,7 @@ _REPORT_TYPE_MAPPERS = {
 
 
 _PROJECT_MAPPERS = {
-    "tt-forge-fe": ForgeBenchmarkDataMapper,
+    "tt-forge-onnx": ForgeBenchmarkDataMapper,
     "tt-xla": ForgeBenchmarkDataMapper,
     "tt-forge": ForgeBenchmarkDataMapper,
     "tt-mlir": ForgeBenchmarkDataMapper,

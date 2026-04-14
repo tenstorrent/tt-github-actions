@@ -244,7 +244,7 @@
             </properties>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_linear" time="0.000">
-            <skipped type="pytest.skip" message="This is not ready yet">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:283: This is not ready yet</skipped>
+            <skipped type="pytest.skip" message="This is not ready yet">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:283: This is not ready yet</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_softmax" time="1.126">
             <properties>
@@ -1811,126 +1811,126 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:33" />
                 <property name="end_timestamp" value="2024-10-08T14:07:33" />
             </properties>
-            <skipped type="pytest.skip" message="FFE: Unsupported squeeze operation">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:418: FFE: Unsupported squeeze operation</skipped>
+            <skipped type="pytest.skip" message="FFE: Unsupported squeeze operation">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:418: FFE: Unsupported squeeze operation</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_mean[1-7-32]" time="0.002">
             <properties>
                 <property name="start_timestamp" value="2024-10-08T14:07:33" />
                 <property name="end_timestamp" value="2024-10-08T14:07:33" />
             </properties>
-            <skipped type="pytest.skip" message="FFE: Unsupported squeeze operation">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:418: FFE: Unsupported squeeze operation</skipped>
+            <skipped type="pytest.skip" message="FFE: Unsupported squeeze operation">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:418: FFE: Unsupported squeeze operation</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_mean[1-7-41]" time="0.002">
             <properties>
                 <property name="start_timestamp" value="2024-10-08T14:07:33" />
                 <property name="end_timestamp" value="2024-10-08T14:07:33" />
             </properties>
-            <skipped type="pytest.skip" message="FFE: Unsupported squeeze operation">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:418: FFE: Unsupported squeeze operation</skipped>
+            <skipped type="pytest.skip" message="FFE: Unsupported squeeze operation">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:418: FFE: Unsupported squeeze operation</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_mean[1-32-7]" time="0.002">
             <properties>
                 <property name="start_timestamp" value="2024-10-08T14:07:33" />
                 <property name="end_timestamp" value="2024-10-08T14:07:33" />
             </properties>
-            <skipped type="pytest.skip" message="FFE: Unsupported squeeze operation">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:418: FFE: Unsupported squeeze operation</skipped>
+            <skipped type="pytest.skip" message="FFE: Unsupported squeeze operation">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:418: FFE: Unsupported squeeze operation</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_mean[1-32-32]" time="0.002">
             <properties>
                 <property name="start_timestamp" value="2024-10-08T14:07:33" />
                 <property name="end_timestamp" value="2024-10-08T14:07:33" />
             </properties>
-            <skipped type="pytest.skip" message="FFE: Unsupported squeeze operation">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:418: FFE: Unsupported squeeze operation</skipped>
+            <skipped type="pytest.skip" message="FFE: Unsupported squeeze operation">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:418: FFE: Unsupported squeeze operation</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_mean[1-32-41]" time="0.002">
             <properties>
                 <property name="start_timestamp" value="2024-10-08T14:07:33" />
                 <property name="end_timestamp" value="2024-10-08T14:07:33" />
             </properties>
-            <skipped type="pytest.skip" message="FFE: Unsupported squeeze operation">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:418: FFE: Unsupported squeeze operation</skipped>
+            <skipped type="pytest.skip" message="FFE: Unsupported squeeze operation">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:418: FFE: Unsupported squeeze operation</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_mean[1-41-7]" time="0.002">
             <properties>
                 <property name="start_timestamp" value="2024-10-08T14:07:33" />
                 <property name="end_timestamp" value="2024-10-08T14:07:33" />
             </properties>
-            <skipped type="pytest.skip" message="FFE: Unsupported squeeze operation">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:418: FFE: Unsupported squeeze operation</skipped>
+            <skipped type="pytest.skip" message="FFE: Unsupported squeeze operation">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:418: FFE: Unsupported squeeze operation</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_mean[1-41-32]" time="0.002">
             <properties>
                 <property name="start_timestamp" value="2024-10-08T14:07:33" />
                 <property name="end_timestamp" value="2024-10-08T14:07:33" />
             </properties>
-            <skipped type="pytest.skip" message="FFE: Unsupported squeeze operation">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:418: FFE: Unsupported squeeze operation</skipped>
+            <skipped type="pytest.skip" message="FFE: Unsupported squeeze operation">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:418: FFE: Unsupported squeeze operation</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_mean[1-41-41]" time="0.002">
             <properties>
                 <property name="start_timestamp" value="2024-10-08T14:07:33" />
                 <property name="end_timestamp" value="2024-10-08T14:07:33" />
             </properties>
-            <skipped type="pytest.skip" message="FFE: Unsupported squeeze operation">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:418: FFE: Unsupported squeeze operation</skipped>
+            <skipped type="pytest.skip" message="FFE: Unsupported squeeze operation">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:418: FFE: Unsupported squeeze operation</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_mean[2-7-7]" time="0.002">
             <properties>
                 <property name="start_timestamp" value="2024-10-08T14:07:33" />
                 <property name="end_timestamp" value="2024-10-08T14:07:33" />
             </properties>
-            <skipped type="pytest.skip" message="TTNN: Tensor layout bugs">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:421: TTNN: Tensor layout bugs</skipped>
+            <skipped type="pytest.skip" message="TTNN: Tensor layout bugs">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:421: TTNN: Tensor layout bugs</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_mean[2-7-32]" time="0.002">
             <properties>
                 <property name="start_timestamp" value="2024-10-08T14:07:33" />
                 <property name="end_timestamp" value="2024-10-08T14:07:33" />
             </properties>
-            <skipped type="pytest.skip" message="TTNN: Tensor layout bugs">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:421: TTNN: Tensor layout bugs</skipped>
+            <skipped type="pytest.skip" message="TTNN: Tensor layout bugs">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:421: TTNN: Tensor layout bugs</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_mean[2-7-41]" time="0.002">
             <properties>
                 <property name="start_timestamp" value="2024-10-08T14:07:33" />
                 <property name="end_timestamp" value="2024-10-08T14:07:33" />
             </properties>
-            <skipped type="pytest.skip" message="TTNN: Tensor layout bugs">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:421: TTNN: Tensor layout bugs</skipped>
+            <skipped type="pytest.skip" message="TTNN: Tensor layout bugs">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:421: TTNN: Tensor layout bugs</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_mean[2-32-7]" time="0.002">
             <properties>
                 <property name="start_timestamp" value="2024-10-08T14:07:33" />
                 <property name="end_timestamp" value="2024-10-08T14:07:33" />
             </properties>
-            <skipped type="pytest.skip" message="TTNN: Tensor layout bugs">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:421: TTNN: Tensor layout bugs</skipped>
+            <skipped type="pytest.skip" message="TTNN: Tensor layout bugs">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:421: TTNN: Tensor layout bugs</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_mean[2-32-32]" time="0.002">
             <properties>
                 <property name="start_timestamp" value="2024-10-08T14:07:33" />
                 <property name="end_timestamp" value="2024-10-08T14:07:33" />
             </properties>
-            <skipped type="pytest.skip" message="TTNN: Tensor layout bugs">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:421: TTNN: Tensor layout bugs</skipped>
+            <skipped type="pytest.skip" message="TTNN: Tensor layout bugs">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:421: TTNN: Tensor layout bugs</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_mean[2-32-41]" time="0.002">
             <properties>
                 <property name="start_timestamp" value="2024-10-08T14:07:33" />
                 <property name="end_timestamp" value="2024-10-08T14:07:33" />
             </properties>
-            <skipped type="pytest.skip" message="TTNN: Tensor layout bugs">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:421: TTNN: Tensor layout bugs</skipped>
+            <skipped type="pytest.skip" message="TTNN: Tensor layout bugs">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:421: TTNN: Tensor layout bugs</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_mean[2-41-7]" time="0.002">
             <properties>
                 <property name="start_timestamp" value="2024-10-08T14:07:33" />
                 <property name="end_timestamp" value="2024-10-08T14:07:33" />
             </properties>
-            <skipped type="pytest.skip" message="TTNN: Tensor layout bugs">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:421: TTNN: Tensor layout bugs</skipped>
+            <skipped type="pytest.skip" message="TTNN: Tensor layout bugs">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:421: TTNN: Tensor layout bugs</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_mean[2-41-32]" time="0.002">
             <properties>
                 <property name="start_timestamp" value="2024-10-08T14:07:33" />
                 <property name="end_timestamp" value="2024-10-08T14:07:33" />
             </properties>
-            <skipped type="pytest.skip" message="TTNN: Tensor layout bugs">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:421: TTNN: Tensor layout bugs</skipped>
+            <skipped type="pytest.skip" message="TTNN: Tensor layout bugs">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:421: TTNN: Tensor layout bugs</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_mean[2-41-41]" time="0.002">
             <properties>
                 <property name="start_timestamp" value="2024-10-08T14:07:33" />
                 <property name="end_timestamp" value="2024-10-08T14:07:33" />
             </properties>
-            <skipped type="pytest.skip" message="TTNN: Tensor layout bugs">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:421: TTNN: Tensor layout bugs</skipped>
+            <skipped type="pytest.skip" message="TTNN: Tensor layout bugs">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:421: TTNN: Tensor layout bugs</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_sqrt[7-7]" time="0.816">
             <properties>
@@ -2142,7 +2142,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:47" />
                 <property name="end_timestamp" value="2024-10-08T14:07:47" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since stop &gt; shape[dim]">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:572: Skipping since stop &gt; shape[dim]</skipped>
+            <skipped type="pytest.skip" message="Skipping since stop &gt; shape[dim]">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:572: Skipping since stop &gt; shape[dim]</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_indexing[shape0-2-2-0--1]" time="0.030">
             <properties>
@@ -2197,7 +2197,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:47" />
                 <property name="end_timestamp" value="2024-10-08T14:07:47" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since stop &gt; shape[dim]">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:572: Skipping since stop &gt; shape[dim]</skipped>
+            <skipped type="pytest.skip" message="Skipping since stop &gt; shape[dim]">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:572: Skipping since stop &gt; shape[dim]</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_indexing[shape0-4-2-0--1]" time="0.031">
             <properties>
@@ -2252,7 +2252,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:48" />
                 <property name="end_timestamp" value="2024-10-08T14:07:48" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since stop &gt; shape[dim]">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:572: Skipping since stop &gt; shape[dim]</skipped>
+            <skipped type="pytest.skip" message="Skipping since stop &gt; shape[dim]">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:572: Skipping since stop &gt; shape[dim]</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_indexing[shape0-8-2-0--1]" time="0.030">
             <properties>
@@ -2307,7 +2307,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:48" />
                 <property name="end_timestamp" value="2024-10-08T14:07:48" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since stop &gt; shape[dim]">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:572: Skipping since stop &gt; shape[dim]</skipped>
+            <skipped type="pytest.skip" message="Skipping since stop &gt; shape[dim]">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:572: Skipping since stop &gt; shape[dim]</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_indexing[shape1-1-2-0--1]" time="0.030">
             <properties>
@@ -2362,7 +2362,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:48" />
                 <property name="end_timestamp" value="2024-10-08T14:07:48" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since stop &gt; shape[dim]">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:572: Skipping since stop &gt; shape[dim]</skipped>
+            <skipped type="pytest.skip" message="Skipping since stop &gt; shape[dim]">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:572: Skipping since stop &gt; shape[dim]</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_indexing[shape1-2-2-0--1]" time="0.032">
             <properties>
@@ -2417,7 +2417,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:48" />
                 <property name="end_timestamp" value="2024-10-08T14:07:48" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since stop &gt; shape[dim]">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:572: Skipping since stop &gt; shape[dim]</skipped>
+            <skipped type="pytest.skip" message="Skipping since stop &gt; shape[dim]">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:572: Skipping since stop &gt; shape[dim]</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_indexing[shape1-4-2-0--1]" time="0.031">
             <properties>
@@ -2472,7 +2472,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:49" />
                 <property name="end_timestamp" value="2024-10-08T14:07:49" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since stop &gt; shape[dim]">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:572: Skipping since stop &gt; shape[dim]</skipped>
+            <skipped type="pytest.skip" message="Skipping since stop &gt; shape[dim]">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:572: Skipping since stop &gt; shape[dim]</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_indexing[shape1-8-2-0--1]" time="0.029">
             <properties>
@@ -2527,7 +2527,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:49" />
                 <property name="end_timestamp" value="2024-10-08T14:07:49" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since stop &gt; shape[dim]">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:572: Skipping since stop &gt; shape[dim]</skipped>
+            <skipped type="pytest.skip" message="Skipping since stop &gt; shape[dim]">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:572: Skipping since stop &gt; shape[dim]</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_indexing[shape2-1-2-0--1]" time="0.024">
             <properties>
@@ -2546,7 +2546,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:49" />
                 <property name="end_timestamp" value="2024-10-08T14:07:49" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
+            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_indexing[shape2-1-32-0--1]" time="0.023">
             <properties>
@@ -2565,7 +2565,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:49" />
                 <property name="end_timestamp" value="2024-10-08T14:07:49" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
+            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_indexing[shape2-1-64-0--1]" time="0.024">
             <properties>
@@ -2584,7 +2584,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:49" />
                 <property name="end_timestamp" value="2024-10-08T14:07:49" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
+            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_indexing[shape2-2-2-0--1]" time="0.025">
             <properties>
@@ -2603,7 +2603,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:49" />
                 <property name="end_timestamp" value="2024-10-08T14:07:49" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
+            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_indexing[shape2-2-32-0--1]" time="0.024">
             <properties>
@@ -2622,7 +2622,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:49" />
                 <property name="end_timestamp" value="2024-10-08T14:07:49" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
+            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_indexing[shape2-2-64-0--1]" time="0.023">
             <properties>
@@ -2641,7 +2641,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:49" />
                 <property name="end_timestamp" value="2024-10-08T14:07:49" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
+            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_indexing[shape2-4-2-0--1]" time="0.032">
             <properties>
@@ -2660,7 +2660,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:49" />
                 <property name="end_timestamp" value="2024-10-08T14:07:49" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
+            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_indexing[shape2-4-32-0--1]" time="0.023">
             <properties>
@@ -2679,7 +2679,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:49" />
                 <property name="end_timestamp" value="2024-10-08T14:07:49" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
+            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_indexing[shape2-4-64-0--1]" time="0.023">
             <properties>
@@ -2698,7 +2698,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:49" />
                 <property name="end_timestamp" value="2024-10-08T14:07:49" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
+            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_indexing[shape2-8-2-0--1]" time="0.023">
             <properties>
@@ -2717,7 +2717,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:49" />
                 <property name="end_timestamp" value="2024-10-08T14:07:49" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
+            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_indexing[shape2-8-32-0--1]" time="0.024">
             <properties>
@@ -2736,7 +2736,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:49" />
                 <property name="end_timestamp" value="2024-10-08T14:07:49" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
+            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_indexing[shape2-8-64-0--1]" time="0.024">
             <properties>
@@ -2755,7 +2755,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:07:49" />
                 <property name="end_timestamp" value="2024-10-08T14:07:49" />
             </properties>
-            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
+            <skipped type="pytest.skip" message="Skipping since indexing on dim=-3, 2D tensor doesn't make sense">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops.py:570: Skipping since indexing on dim=-3, 2D tensor doesn't make sense</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops" name="test_adv_index_embedding_decompostion[input_tensor_shape0-indices_shape0]" time="0.020">
             <properties>
@@ -3098,7 +3098,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:08:39" />
                 <property name="end_timestamp" value="2024-10-08T14:08:39" />
             </properties>
-            <skipped type="pytest.skip" message="Circular buffer grows beyond maximum L1 size.">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops_tf.py:62: Circular buffer grows beyond maximum L1 size.</skipped>
+            <skipped type="pytest.skip" message="Circular buffer grows beyond maximum L1 size.">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops_tf.py:62: Circular buffer grows beyond maximum L1 size.</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops_tf" name="test_conv2d[no_bias-activations_dtype1-weights_dtype1-1-256-256-14-14-3-3-1-1]" time="2.234">
             <properties>
@@ -3369,7 +3369,7 @@
                 <property name="start_timestamp" value="2024-10-08T14:09:26" />
                 <property name="end_timestamp" value="2024-10-08T14:09:26" />
             </properties>
-            <skipped type="pytest.skip" message="Circular buffer grows beyond maximum L1 size.">/__w/tt-forge-fe/tt-forge-fe/forge/test/mlir/test_ops_tf.py:62: Circular buffer grows beyond maximum L1 size.</skipped>
+            <skipped type="pytest.skip" message="Circular buffer grows beyond maximum L1 size.">/__w/tt-forge-onnx/tt-forge-onnx/forge/test/mlir/test_ops_tf.py:62: Circular buffer grows beyond maximum L1 size.</skipped>
         </testcase>
         <testcase classname="forge.test.mlir.test_ops_tf" name="test_conv2d[with_bias-activations_dtype1-weights_dtype1-1-256-256-14-14-3-3-1-1]" time="1.537">
             <properties>

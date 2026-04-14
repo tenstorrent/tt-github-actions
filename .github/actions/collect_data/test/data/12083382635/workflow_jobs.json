@@ -36,7 +36,7 @@
           "completed_at": "2024-11-29T10:47:56Z"
         },
         {
-          "name": "Run actions/setup-python@v5",
+          "name": "Run actions/setup-python@v6",
           "status": "completed",
           "conclusion": "success",
           "number": 3,
@@ -156,7 +156,7 @@
           "completed_at": "2024-11-29T10:50:06Z"
         },
         {
-          "name": "Post Run actions/setup-python@v5",
+          "name": "Post Run actions/setup-python@v6",
           "status": "completed",
           "conclusion": "success",
           "number": 29,

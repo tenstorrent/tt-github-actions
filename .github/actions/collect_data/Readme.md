@@ -52,7 +52,7 @@ Steps:
 
 To run this manually, execute the following commands from the root folder:
 ```
-download_workflow_data.sh tenstorrent/tt-forge-fe 11236784732 1
+download_workflow_data.sh tenstorrent/tt-forge-onnx 11236784732 1
 GITHUB_EVENT_NAME=test python src/generate_data.py --run_id 11236784732
 ```
 Where 11236784732 is the run_id of workflow we are generating data for
@@ -69,7 +69,7 @@ pytest --junitxml=pytest.xml --cov-report=term-missing --cov=src
 
 You can run the scripts locally, first to download the necesary files, and seccond one to generate report
 ```
-download_workflow_data.sh tenstorrent/tt-forge-fe 11253719387 1
+download_workflow_data.sh tenstorrent/tt-forge-onnx 11253719387 1
 GITHUB_EVENT_NAME=test python3 src/generate_data.py --run_id 11253719387
 ```
 

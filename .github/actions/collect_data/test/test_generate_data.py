@@ -96,8 +96,8 @@ def test_create_benchmark_json(run_id, expected_file):
 @pytest.mark.parametrize(
     "run_id, expected_project",
     [
-        ("12890516473", "tt-forge-fe"),
-        ("14492364249", "tt-forge-fe"),
+        ("12890516473", "tt-forge-onnx"),
+        ("14492364249", "tt-forge-onnx"),
     ],
 )
 def test_check_benchmark_project(run_id, expected_project):

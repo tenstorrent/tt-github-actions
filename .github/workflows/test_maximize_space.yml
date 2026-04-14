@@ -14,10 +14,10 @@ jobs:
     container:
       image: ghcr.io/tenstorrent/tt-mlir/tt-mlir-ci-ubuntu-22-04:latest
     steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v5
         - name: Maximize space
           uses: ./.github/actions/maximize_space
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v5
         - name: Check space
           shell: bash
           run: |
@@ -26,10 +26,10 @@ jobs:
   run-without-container:
     runs-on: ubuntu-latest
     steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v5
         - name: Maximize space
           uses: ./.github/actions/maximize_space
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v5
         - name: Check space
           shell: bash
           run: |
