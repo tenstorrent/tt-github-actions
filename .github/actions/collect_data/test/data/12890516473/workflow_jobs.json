@@ -6,12 +6,12 @@
       "run_id": 12890516473,
       "workflow_name": "On PR",
       "head_branch": "vcanic/upload_download_artifacts",
-      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516473",
+      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/actions/runs/12890516473",
       "run_attempt": 1,
       "node_id": "CR_kwDOMYlQT88AAAAIXjUE8g",
       "head_sha": "f4660ec96ae842071e0bf2774bcee16c2ccb25f4",
-      "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/jobs/35940271346",
-      "html_url": "https://github.com/tenstorrent/tt-forge-fe/actions/runs/12890516473/job/35940271346",
+      "url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/actions/jobs/35940271346",
+      "html_url": "https://github.com/tenstorrent/tt-forge-onnx/actions/runs/12890516473/job/35940271346",
       "status": "completed",
       "conclusion": "success",
       "created_at": "2025-01-21T15:42:18Z",
@@ -60,7 +60,7 @@
           "completed_at": "2025-01-21T15:42:25Z"
         }
       ],
-      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/check-runs/35940271346",
+      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/check-runs/35940271346",
       "labels": [
         "ubuntu-latest"
       ],
@@ -74,12 +74,12 @@
       "run_id": 12890516473,
       "workflow_name": "On PR",
       "head_branch": "vcanic/upload_download_artifacts",
-      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516473",
+      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/actions/runs/12890516473",
       "run_attempt": 1,
       "node_id": "CR_kwDOMYlQT88AAAAIXjUKFg",
       "head_sha": "f4660ec96ae842071e0bf2774bcee16c2ccb25f4",
-      "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/jobs/35940272662",
-      "html_url": "https://github.com/tenstorrent/tt-forge-fe/actions/runs/12890516473/job/35940272662",
+      "url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/actions/jobs/35940272662",
+      "html_url": "https://github.com/tenstorrent/tt-forge-onnx/actions/runs/12890516473/job/35940272662",
       "status": "completed",
       "conclusion": "success",
       "created_at": "2025-01-21T15:42:19Z",
@@ -144,7 +144,7 @@
           "completed_at": "2025-01-21T15:43:08Z"
         }
       ],
-      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/check-runs/35940272662",
+      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/check-runs/35940272662",
       "labels": [
         "ubuntu-latest"
       ],
@@ -158,12 +158,12 @@
       "run_id": 12890516473,
       "workflow_name": "On PR",
       "head_branch": "vcanic/upload_download_artifacts",
-      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516473",
+      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/actions/runs/12890516473",
       "run_attempt": 1,
       "node_id": "CR_kwDOMYlQT88AAAAIXjULjQ",
       "head_sha": "f4660ec96ae842071e0bf2774bcee16c2ccb25f4",
-      "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/jobs/35940273037",
-      "html_url": "https://github.com/tenstorrent/tt-forge-fe/actions/runs/12890516473/job/35940273037",
+      "url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/actions/jobs/35940273037",
+      "html_url": "https://github.com/tenstorrent/tt-forge-onnx/actions/runs/12890516473/job/35940273037",
       "status": "completed",
       "conclusion": "success",
       "created_at": "2025-01-21T15:42:20Z",
@@ -260,7 +260,7 @@
           "completed_at": "2025-01-21T15:42:34Z"
         }
       ],
-      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/check-runs/35940273037",
+      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/check-runs/35940273037",
       "labels": [
         "builder"
       ],
@@ -274,12 +274,12 @@
       "run_id": 12890516473,
       "workflow_name": "On PR",
       "head_branch": "vcanic/upload_download_artifacts",
-      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516473",
+      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/actions/runs/12890516473",
       "run_attempt": 1,
       "node_id": "CR_kwDOMYlQT88AAAAIXjVUtQ",
       "head_sha": "f4660ec96ae842071e0bf2774bcee16c2ccb25f4",
-      "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/jobs/35940291765",
-      "html_url": "https://github.com/tenstorrent/tt-forge-fe/actions/runs/12890516473/job/35940291765",
+      "url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/actions/jobs/35940291765",
+      "html_url": "https://github.com/tenstorrent/tt-forge-onnx/actions/runs/12890516473/job/35940291765",
       "status": "completed",
       "conclusion": "success",
       "created_at": "2025-01-21T15:42:38Z",
@@ -448,7 +448,7 @@
           "completed_at": "2025-01-21T16:10:44Z"
         }
       ],
-      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/check-runs/35940291765",
+      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/check-runs/35940291765",
       "labels": [
         "in-service",
         "runner"
@@ -463,12 +463,12 @@
       "run_id": 12890516473,
       "workflow_name": "On PR",
       "head_branch": "vcanic/upload_download_artifacts",
-      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516473",
+      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/actions/runs/12890516473",
       "run_attempt": 1,
       "node_id": "CR_kwDOMYlQT88AAAAIXjVWRQ",
       "head_sha": "f4660ec96ae842071e0bf2774bcee16c2ccb25f4",
-      "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/jobs/35940292165",
-      "html_url": "https://github.com/tenstorrent/tt-forge-fe/actions/runs/12890516473/job/35940292165",
+      "url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/actions/jobs/35940292165",
+      "html_url": "https://github.com/tenstorrent/tt-forge-onnx/actions/runs/12890516473/job/35940292165",
       "status": "completed",
       "conclusion": "success",
       "created_at": "2025-01-21T15:42:38Z",
@@ -637,7 +637,7 @@
           "completed_at": "2025-01-21T16:15:14Z"
         }
       ],
-      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/check-runs/35940292165",
+      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/check-runs/35940292165",
       "labels": [
         "in-service",
         "runner"
@@ -652,12 +652,12 @@
       "run_id": 12890516473,
       "workflow_name": "On PR",
       "head_branch": "vcanic/upload_download_artifacts",
-      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516473",
+      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/actions/runs/12890516473",
       "run_attempt": 1,
       "node_id": "CR_kwDOMYlQT88AAAAIXlW0BA",
       "head_sha": "f4660ec96ae842071e0bf2774bcee16c2ccb25f4",
-      "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/jobs/35942413316",
-      "html_url": "https://github.com/tenstorrent/tt-forge-fe/actions/runs/12890516473/job/35942413316",
+      "url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/actions/jobs/35942413316",
+      "html_url": "https://github.com/tenstorrent/tt-forge-onnx/actions/runs/12890516473/job/35942413316",
       "status": "completed",
       "conclusion": "success",
       "created_at": "2025-01-21T16:15:18Z",
@@ -754,7 +754,7 @@
           "completed_at": "2025-01-21T16:15:37Z"
         }
       ],
-      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/check-runs/35942413316",
+      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/check-runs/35942413316",
       "labels": [
         "builder"
       ],
@@ -768,12 +768,12 @@
       "run_id": 12890516473,
       "workflow_name": "On PR",
       "head_branch": "vcanic/upload_download_artifacts",
-      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/runs/12890516473",
+      "run_url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/actions/runs/12890516473",
       "run_attempt": 1,
       "node_id": "CR_kwDOMYlQT88AAAAIXlYXNA",
       "head_sha": "f4660ec96ae842071e0bf2774bcee16c2ccb25f4",
-      "url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/actions/jobs/35942438708",
-      "html_url": "https://github.com/tenstorrent/tt-forge-fe/actions/runs/12890516473/job/35942438708",
+      "url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/actions/jobs/35942438708",
+      "html_url": "https://github.com/tenstorrent/tt-forge-onnx/actions/runs/12890516473/job/35942438708",
       "status": "completed",
       "conclusion": "success",
       "created_at": "2025-01-21T16:15:40Z",
@@ -910,7 +910,7 @@
           "completed_at": "2025-01-21T16:28:25Z"
         }
       ],
-      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-fe/check-runs/35942438708",
+      "check_run_url": "https://api.github.com/repos/tenstorrent/tt-forge-onnx/check-runs/35942438708",
       "labels": [
         "in-service",
         "n150",
