@@ -34,23 +34,6 @@ def failed_job():
 
 
 @pytest.fixture
-def success_job(failed_job):
-    job = dict(failed_job)
-    job["conclusion"] = "success"
-    job["steps"] = [
-        {
-            "name": "Success step",
-            "status": "completed",
-            "conclusion": "success",
-            "number": 1,
-            "started_at": "2026-04-21T00:00:00Z",
-            "completed_at": "2026-04-21T00:01:00Z",
-        }
-    ]
-    return job
-
-
-@pytest.fixture
 def fake_logs():
     # 29-char timestamp prefix matches what extract_error_lines_from_logs strips.
     return (
@@ -62,33 +45,17 @@ def fake_logs():
     )
 
 
-def test_skip_error_log_parsing_on(monkeypatch, failed_job, fake_logs):
+@pytest.mark.parametrize("skip_flag", [True, False])
+def test_skip_error_log_parsing(monkeypatch, failed_job, fake_logs, skip_flag):
     monkeypatch.setattr("utils.get_job_logs", lambda repo, job_id: fake_logs)
 
-    row = get_job_row_from_github_job(failed_job, skip_error_log_parsing=True)
+    row = get_job_row_from_github_job(failed_job, skip_error_log_parsing=skip_flag)
 
     assert row is not None
-    assert row["failure_signature"] is None
-    assert row["failure_description"] is None
-
-
-def test_skip_error_log_parsing_off(monkeypatch, failed_job, fake_logs):
-    monkeypatch.setattr("utils.get_job_logs", lambda repo, job_id: fake_logs)
-
-    row = get_job_row_from_github_job(failed_job, skip_error_log_parsing=False)
-
-    assert row is not None
-    assert row["failure_signature"] == "Failing step"
-    assert row["failure_description"] is not None
-    assert "Something exploded" in row["failure_description"]
-    assert "RuntimeError" in row["failure_description"]
-
-
-def test_skip_flag_noop_for_successful_job(monkeypatch, success_job, fake_logs):
-    monkeypatch.setattr("utils.get_job_logs", lambda repo, job_id: fake_logs)
-
-    row = get_job_row_from_github_job(success_job, skip_error_log_parsing=True)
-
-    assert row is not None
-    assert row["failure_signature"] is None
-    assert row["failure_description"] is None
+    if skip_flag:
+        assert row["failure_signature"] is None
+        assert row["failure_description"] is None
+    else:
+        assert row["failure_signature"] == "Failing step"
+        assert "Something exploded" in row["failure_description"]
+        assert "RuntimeError" in row["failure_description"]
