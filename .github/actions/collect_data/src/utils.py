@@ -402,7 +402,7 @@ def docker_image_from_logs(logs: str) -> Optional[str]:
     return None
 
 
-def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
+def get_job_row_from_github_job(github_job: Dict[str, Any], skip_error_log_parsing: bool = False) -> Dict[str, Any]:
     github_job_id = github_job.get("id")
 
     logger.info(f"Processing github job with ID {github_job_id}")
@@ -481,7 +481,7 @@ def get_job_row_from_github_job(github_job: Dict[str, Any]) -> Dict[str, Any]:
 
     failure_signature = None
     failure_description = None
-    if job_status == "failure":
+    if job_status == "failure" and not skip_error_log_parsing:
         failure_signature = get_job_failure_signature(github_job, logs)
         failure_description = get_failure_description(github_job, logs)
 
