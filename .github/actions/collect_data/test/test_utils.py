@@ -80,7 +80,8 @@ def test_skip_error_log_parsing_off(monkeypatch, failed_job, fake_logs):
     assert row is not None
     assert row["failure_signature"] == "Failing step"
     assert row["failure_description"] is not None
-    assert "Something exploded" in row["failure_description"] or "RuntimeError" in row["failure_description"]
+    assert "Something exploded" in row["failure_description"]
+    assert "RuntimeError" in row["failure_description"]
 
 
 def test_skip_flag_noop_for_successful_job(monkeypatch, success_job, fake_logs):
