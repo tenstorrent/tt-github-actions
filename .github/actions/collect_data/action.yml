@@ -33,6 +33,10 @@ inputs:
   ssh-private-key:
     description: "SSH private key"
     required: false
+  skip_error_log_parsing:
+    description: "Set to 'true' to skip the per-line log scan that produces failure_signature and failure_description for failed jobs. Any value other than the literal string 'true' is treated as false."
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
@@ -56,7 +60,11 @@ runs:
       PYTHONPATH: ${{ github.workspace }}
     shell: bash
     run: |
-      python3 ${GITHUB_ACTION_PATH}/src/generate_data.py --run_id ${{ inputs.run_id }}
+      EXTRA_ARGS=""
+      if [ "${{ inputs.skip_error_log_parsing }}" = "true" ]; then
+        EXTRA_ARGS="--skip-error-log-parsing"
+      fi
+      python3 ${GITHUB_ACTION_PATH}/src/generate_data.py --run_id ${{ inputs.run_id }} $EXTRA_ARGS
       # Workaround: Copy file to avoid GH upload filename limitations
       mkdir -p reports_json && cp *.json* reports_json/ && zip -rq reports_json.zip reports_json || true
 
