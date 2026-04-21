@@ -38,6 +38,24 @@ jobs:
 
 Note: If `sftp_host` is empty, action will skip SFTP upload and it can be used for testing this way.
 
+## Optional inputs
+
+| Input | Default | Description |
+|-------|---------|-------------|
+| `skip_error_log_parsing` | `'false'` | Set to `'true'` to skip the per-line log scan that produces `failure_signature` and `failure_description` for failed jobs. Useful when a project's logs legitimately contain many "error"-like lines (e.g. tt-shield), where the scan produces misleading `failure_description` payloads and spams the collection step's stdout. Logs are still fetched — only the per-line scan and its `logger.info` emissions are skipped. |
+
+Example usage with the flag enabled:
+
+```yaml
+- name: Collect CI/CD data
+  uses: tenstorrent/tt-github-actions/.github/actions/collect_data@main
+  with:
+    repository: ${{ github.repository }}
+    run_id: ${{ github.event.workflow_run.id }}
+    run_attempt: ${{ github.event.workflow_run.run_attempt }}
+    skip_error_log_parsing: 'true'
+```
+
 # Generate Data Analytics File
 
 Scripts are used to automatically generate data for the analytics platform.
