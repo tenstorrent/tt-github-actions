@@ -13,7 +13,12 @@ from optests import create_optest_reports, get_optest_filename
 from shared import is_failure
 
 
-def create_pipeline_json(workflow_filename: str, jobs_filename: str, workflow_outputs_dir):
+def create_pipeline_json(
+    workflow_filename: str,
+    jobs_filename: str,
+    workflow_outputs_dir,
+    skip_error_log_parsing: bool = False,
+):
 
     github_runner_environment = get_github_runner_environment()
     pipeline = create_cicd_json_for_data_analysis(
@@ -21,6 +26,7 @@ def create_pipeline_json(workflow_filename: str, jobs_filename: str, workflow_ou
         github_runner_environment,
         workflow_filename,
         jobs_filename,
+        skip_error_log_parsing=skip_error_log_parsing,
     )
 
     report_filename = get_cicd_json_filename(pipeline)
@@ -79,6 +85,15 @@ if __name__ == "__main__":
         default="generated/cicd",
         help="Output directory for the pipeline json",
     )
+    parser.add_argument(
+        "--skip-error-log-parsing",
+        action="store_true",
+        help=(
+            "Skip per-line log scan that produces failure_signature and "
+            "failure_description for failed jobs. Useful for projects whose "
+            "logs legitimately contain many 'error'-like lines."
+        ),
+    )
     args = parser.parse_args()
 
     logger.info(f"Creating pipeline JSON for workflow run ID {args.run_id}")
@@ -86,6 +101,7 @@ if __name__ == "__main__":
         workflow_filename=f"{args.output_dir}/{args.run_id}/workflow.json",
         jobs_filename=f"{args.output_dir}/{args.run_id}/workflow_jobs.json",
         workflow_outputs_dir=args.output_dir,
+        skip_error_log_parsing=args.skip_error_log_parsing,
     )
 
     logger.info(f"Creating benchmark JSON for workflow run ID {args.run_id}")
