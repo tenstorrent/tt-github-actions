@@ -68,11 +68,7 @@ def test_create_pipeline_json(run_id, expected):
     ],
 )
 def test_create_pipeline_json_with_skip_error_log_parsing(run_id):
-    """
-    End-to-end smoke test for the skip_error_log_parsing flag.
-    With the flag on, every job (including failed jobs) must have both
-    failure_signature and failure_description as None.
-    """
+    """End-to-end smoke test that the flag threads through all pipeline layers."""
     os.environ["GITHUB_EVENT_NAME"] = "test"
 
     pipeline, filename = create_pipeline_json(

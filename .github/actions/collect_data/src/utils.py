@@ -530,11 +530,11 @@ def get_job_rows_from_github_info(
     github_jobs_json: Dict[str, Any],
     skip_error_log_parsing: bool = False,
 ) -> List[Dict[str, Any]]:
-    rows = [
-        get_job_row_from_github_job(job, skip_error_log_parsing=skip_error_log_parsing)
+    return [
+        row
         for job in github_jobs_json.get("jobs")
+        if (row := get_job_row_from_github_job(job, skip_error_log_parsing=skip_error_log_parsing)) is not None
     ]
-    return [row for row in rows if row is not None]
 
 
 def get_github_runner_environment() -> Dict[str, str]:
