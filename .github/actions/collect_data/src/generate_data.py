@@ -18,6 +18,7 @@ def create_pipeline_json(
     jobs_filename: str,
     workflow_outputs_dir,
     skip_error_log_parsing: bool = False,
+    skip_log_download: bool = False,
 ):
 
     github_runner_environment = get_github_runner_environment()
@@ -27,6 +28,7 @@ def create_pipeline_json(
         workflow_filename,
         jobs_filename,
         skip_error_log_parsing=skip_error_log_parsing,
+        skip_log_download=skip_log_download,
     )
 
     report_filename = get_cicd_json_filename(pipeline)
@@ -94,6 +96,16 @@ if __name__ == "__main__":
             "logs legitimately contain many 'error'-like lines."
         ),
     )
+    parser.add_argument(
+        "--skip-log-download",
+        action="store_true",
+        help=(
+            "Skip the 'gh api .../logs' fetch entirely. Implies that "
+            "docker_image, job_matrix_config, failure_signature and "
+            "failure_description cannot be populated from logs. Useful for "
+            "projects whose logs are too large to fit in runner memory."
+        ),
+    )
     args = parser.parse_args()
 
     logger.info(f"Creating pipeline JSON for workflow run ID {args.run_id}")
@@ -102,6 +114,7 @@ if __name__ == "__main__":
         jobs_filename=f"{args.output_dir}/{args.run_id}/workflow_jobs.json",
         workflow_outputs_dir=args.output_dir,
         skip_error_log_parsing=args.skip_error_log_parsing,
+        skip_log_download=args.skip_log_download,
     )
 
     logger.info(f"Creating benchmark JSON for workflow run ID {args.run_id}")

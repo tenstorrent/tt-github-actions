@@ -59,3 +59,16 @@ def test_skip_error_log_parsing(monkeypatch, failed_job, fake_logs, skip_flag):
         assert row["failure_signature"] == "Failing step"
         assert "Something exploded" in row["failure_description"]
         assert "RuntimeError" in row["failure_description"]
+
+
+def test_skip_log_download_avoids_fetch(monkeypatch, failed_job):
+    def _fail_if_called(repo, job_id):
+        raise AssertionError("get_job_logs must not be called when skip_log_download=True")
+
+    monkeypatch.setattr("utils.get_job_logs", _fail_if_called)
+
+    row = get_job_row_from_github_job(failed_job, skip_log_download=True)
+
+    assert row is not None
+    assert row["docker_image"] is None
+    assert row["job_matrix_config"] is None

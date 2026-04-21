@@ -36,6 +36,7 @@ def create_cicd_json_for_data_analysis(
     github_pipeline_json_filename,
     github_jobs_json_filename,
     skip_error_log_parsing: bool = False,
+    skip_log_download: bool = False,
 ):
     logger.info(f"Load pipeline info from: {github_pipeline_json_filename}")
     with open(github_pipeline_json_filename) as github_pipeline_json_file:
@@ -52,6 +53,7 @@ def create_cicd_json_for_data_analysis(
         github_pipeline_json,
         github_jobs_json,
         skip_error_log_parsing=skip_error_log_parsing,
+        skip_log_download=skip_log_download,
     )
     github_pipeline_id = raw_pipeline["github_pipeline_id"]
     github_job_id_to_test_reports = get_github_job_id_to_test_reports(workflow_outputs_dir, github_pipeline_id)

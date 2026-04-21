@@ -43,6 +43,7 @@ Note: If `sftp_host` is empty, action will skip SFTP upload and it can be used f
 | Input | Default | Description |
 |-------|---------|-------------|
 | `skip_error_log_parsing` | `'false'` | Set to `'true'` to skip the per-line log scan that produces `failure_signature` and `failure_description` for failed jobs. Useful when a project's logs legitimately contain many "error"-like lines (e.g. tt-shield), where the scan produces misleading `failure_description` payloads and spams the collection step's stdout. Logs are still fetched — only the per-line scan and its `logger.info` emissions are skipped. |
+| `skip_log_download` | `'false'` | Set to `'true'` to skip the `gh api .../logs` fetch entirely. When this is on, `docker_image`, `job_matrix_config`, `failure_signature`, and `failure_description` cannot be populated from logs. Use when a project's logs are too large to fit in runner memory (e.g. tt-shield). |
 
 Example usage with the flag enabled:
 

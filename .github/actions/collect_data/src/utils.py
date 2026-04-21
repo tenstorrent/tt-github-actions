@@ -402,7 +402,11 @@ def docker_image_from_logs(logs: str) -> Optional[str]:
     return None
 
 
-def get_job_row_from_github_job(github_job: Dict[str, Any], skip_error_log_parsing: bool = False) -> Dict[str, Any]:
+def get_job_row_from_github_job(
+    github_job: Dict[str, Any],
+    skip_error_log_parsing: bool = False,
+    skip_log_download: bool = False,
+) -> Dict[str, Any]:
     github_job_id = github_job.get("id")
 
     logger.info(f"Processing github job with ID {github_job_id}")
@@ -474,7 +478,7 @@ def get_job_row_from_github_job(github_job: Dict[str, Any], skip_error_log_parsi
             repository = f"{parts[3]}/{parts[4]}"
 
     job_matrix_config, docker_image = None, None
-    logs = get_job_logs(repository, github_job_id)
+    logs = None if skip_log_download else get_job_logs(repository, github_job_id)
     if logs:
         job_matrix_config = job_inputs_from_logs(logs)
         docker_image = docker_image_from_logs(logs)
@@ -529,11 +533,19 @@ def get_job_rows_from_github_info(
     github_pipeline_json: Dict[str, Any],
     github_jobs_json: Dict[str, Any],
     skip_error_log_parsing: bool = False,
+    skip_log_download: bool = False,
 ) -> List[Dict[str, Any]]:
     return [
         row
         for job in github_jobs_json.get("jobs")
-        if (row := get_job_row_from_github_job(job, skip_error_log_parsing=skip_error_log_parsing)) is not None
+        if (
+            row := get_job_row_from_github_job(
+                job,
+                skip_error_log_parsing=skip_error_log_parsing,
+                skip_log_download=skip_log_download,
+            )
+        )
+        is not None
     ]
 
 
