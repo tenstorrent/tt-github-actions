@@ -526,9 +526,15 @@ def get_job_row_from_github_job(github_job: Dict[str, Any], skip_error_log_parsi
 
 
 def get_job_rows_from_github_info(
-    github_pipeline_json: Dict[str, Any], github_jobs_json: Dict[str, Any]
+    github_pipeline_json: Dict[str, Any],
+    github_jobs_json: Dict[str, Any],
+    skip_error_log_parsing: bool = False,
 ) -> List[Dict[str, Any]]:
-    return [row for row in map(get_job_row_from_github_job, github_jobs_json.get("jobs")) if row is not None]
+    rows = [
+        get_job_row_from_github_job(job, skip_error_log_parsing=skip_error_log_parsing)
+        for job in github_jobs_json.get("jobs")
+    ]
+    return [row for row in rows if row is not None]
 
 
 def get_github_runner_environment() -> Dict[str, str]:
