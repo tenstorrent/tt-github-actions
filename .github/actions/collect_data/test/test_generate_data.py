@@ -63,13 +63,15 @@ def test_create_pipeline_json(run_id, expected):
 @pytest.mark.parametrize(
     "run_id",
     [
-        "11236784732",
+        # Fixture must contain at least one failed job so the assertion is non-vacuous.
+        "12084081698",
     ],
 )
 def test_create_pipeline_json_with_skip_error_log_parsing(run_id):
     """
     End-to-end smoke test for the skip_error_log_parsing flag.
-    Every job in the resulting pipeline must have both failure fields as None.
+    With the flag on, every job (including failed jobs) must have both
+    failure_signature and failure_description as None.
     """
     os.environ["GITHUB_EVENT_NAME"] = "test"
 
@@ -84,6 +86,9 @@ def test_create_pipeline_json_with_skip_error_log_parsing(run_id):
 
     with open(filename, "r") as file:
         pipeline_json = json.load(file)
+        assert any(
+            job["job_status"] == "failure" for job in pipeline_json["jobs"]
+        ), "Fixture has no failed jobs — test assertion would be vacuously true"
         for job in pipeline_json["jobs"]:
             assert job["failure_signature"] is None
             assert job["failure_description"] is None
