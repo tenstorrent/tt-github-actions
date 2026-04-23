@@ -485,7 +485,7 @@ def get_job_row_from_github_job(
 
     failure_signature = None
     failure_description = None
-    if job_status == "failure" and not skip_error_log_parsing:
+    if job_status == "failure" and not skip_error_log_parsing and logs:
         failure_signature = get_job_failure_signature(github_job, logs)
         failure_description = get_failure_description(github_job, logs)
 

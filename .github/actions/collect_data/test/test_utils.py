@@ -72,3 +72,7 @@ def test_skip_log_download_avoids_fetch(monkeypatch, failed_job):
     assert row is not None
     assert row["docker_image"] is None
     assert row["job_matrix_config"] is None
+    # Without logs, failure parsing must not run — the fields stay None rather
+    # than becoming an exception string from extract_error_lines_from_logs(None).
+    assert row["failure_signature"] is None
+    assert row["failure_description"] is None
