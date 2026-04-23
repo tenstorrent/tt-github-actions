@@ -153,15 +153,11 @@ class _BenchmarkDataMapper(ABC):
         dataset_name=None,
         batch_size=None,
         config_params=None,
-        model_spec_data=None,
+        docker_image=None,
     ):
         """
         Creates a CompleteBenchmarkRun object with the provided data and measurements.
         """
-        # Prefer docker_image from run_spec (tt_model_spec_*.json) when available;
-        # it already reflects override_docker_image and dev_mode substitutions, and
-        # is populated even when skip_log_download bypasses the log-based parser.
-        docker_image = (model_spec_data or {}).get("docker_image") or job.docker_image
         return CompleteBenchmarkRun(
             run_start_ts=pipeline.pipeline_start_ts,
             run_end_ts=pipeline.pipeline_end_ts,
@@ -174,7 +170,7 @@ class _BenchmarkDataMapper(ABC):
             github_pipeline_link=pipeline.github_pipeline_link,
             github_job_id=job.github_job_id,
             user_name=pipeline.git_author,
-            docker_image=docker_image,
+            docker_image=job.docker_image or docker_image,
             device_hostname=job.host_name,
             device_ip=None,
             device_info=(
@@ -353,7 +349,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     dataset_name=benchmark.get("model_id", None),
                     batch_size=benchmark.get("max_con"),
                     config_params=model_spec_data,
-                    model_spec_data=model_spec_data,
+                    docker_image=(model_spec_data or {}).get("docker_image") or job.docker_image,
                 )
             )
         return results
@@ -420,7 +416,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     dataset_name=model_name,
                     batch_size=benchmark.get("max_concurrency"),
                     config_params=model_spec_data,
-                    model_spec_data=model_spec_data,
+                    docker_image=(model_spec_data or {}).get("docker_image") or job.docker_image,
                 )
             )
         return results
@@ -474,7 +470,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     dataset_name=eval_entry.get("task_name"),
                     batch_size=None,
                     config_params=model_spec_data,
-                    model_spec_data=model_spec_data,
+                    docker_image=(model_spec_data or {}).get("docker_image") or job.docker_image,
                 )
             )
         return results
@@ -541,7 +537,7 @@ class VllmBenchmarkDataMapper(_BenchmarkDataMapper):
                     config_params=config_params,
                     input_seq_length=report_data.get("input_seq_len"),
                     output_seq_length=report_data.get("output_seq_len"),
-                    model_spec_data=model_spec_data,
+                    docker_image=(model_spec_data or {}).get("docker_image") or job.docker_image,
                 )
             ]
         except ValidationError as e:
