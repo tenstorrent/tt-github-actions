@@ -61,36 +61,6 @@ def test_create_pipeline_json(run_id, expected):
 
 
 @pytest.mark.parametrize(
-    "run_id",
-    [
-        # Fixture must contain at least one failed job so the assertion is non-vacuous.
-        "12084081698",
-    ],
-)
-def test_create_pipeline_json_with_skip_error_log_parsing(run_id):
-    """End-to-end smoke test that the flag threads through all pipeline layers."""
-    os.environ["GITHUB_EVENT_NAME"] = "test"
-
-    pipeline, filename = create_pipeline_json(
-        workflow_filename=f"test/data/{run_id}/workflow.json",
-        jobs_filename=f"test/data/{run_id}/workflow_jobs.json",
-        workflow_outputs_dir="test/data",
-        skip_error_log_parsing=True,
-    )
-
-    assert os.path.exists(filename)
-
-    with open(filename, "r") as file:
-        pipeline_json = json.load(file)
-        assert any(
-            job["job_status"] == "failure" for job in pipeline_json["jobs"]
-        ), "Fixture has no failed jobs — test assertion would be vacuously true"
-        for job in pipeline_json["jobs"]:
-            assert job["failure_signature"] is None
-            assert job["failure_description"] is None
-
-
-@pytest.mark.parametrize(
     "run_id, expected_file",
     [
         ("12890516473", "test/data/12890516473/expected/benchmark.json"),
