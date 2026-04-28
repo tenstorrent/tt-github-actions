@@ -1,0 +1,28 @@
+{
+  "category": "vllm:connection",
+  "subcategory": "refused",
+  "layer": "serving",
+  "root_cause": "vLLM server failed to start - argparse error: unrecognized arguments: --new-flag",
+  "error_message": "ConnectionError: HTTPConnectionPool - Max retries exceeded with url: /health",
+  "is_your_code": true,
+  "confidence": "high",
+  "failed_tests": [
+    "test_health_check",
+    "test_generate_text",
+    "test_batch_inference"
+  ],
+  "_job": {
+    "name": "run-evals-Llama-3.1-8B-Instruct-llmbox-t3k",
+    "url": "https://github.com/tenstorrent/tt-shield/actions/runs/12345/job/100004",
+    "status": "TESTS FAILED (3 failed)",
+    "status_code": "ORANGE",
+    "exit_code": 1,
+    "has_crash": false,
+    "has_timeout": false,
+    "failed_tests": [
+      "test_health_check",
+      "test_generate_text",
+      "test_batch_inference"
+    ]
+  }
+}

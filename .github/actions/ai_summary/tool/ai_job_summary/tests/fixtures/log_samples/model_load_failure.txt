@@ -1,0 +1,136 @@
+using CACHE_ROOT: /home/container_app_user/cache_root
+Mounted CACHE_ROOT volume is owned by UID:GID - 0:0
+setting permissions for /home/container_app_user/cache_root ...
+Mounted volume permissions setup completed.
+2026-03-05 00:12:18,109 - INFO - Settings init: MODEL='mochi-1-preview', DEVICE='p150x4', model_runner(default)='tt-sdxl-trace', device_ids(default)='(0),(1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),(13),(14),(15),(16),(17),(18),(19),(20),(21),(22),(23),(24),(25),(26),(27),(28),(29),(30),(31)', is_galaxy(default)=True, device_mesh_shape(default)=(1, 1)
+2026-03-05 00:12:18,110 - INFO - Config lookup: runner=ModelRunners.TT_MOCHI_1, device_type=DeviceTypes.P150X4, key_exists=True, matching_config={'device_mesh_shape': (1, 4), 'is_galaxy': False, 'device_ids': '(0,1,2,3)', 'max_batch_size': 1, 'download_weights_from_service': False}
+2026-03-05 00:12:18,110 - INFO - After config overrides: model_runner='tt-mochi-1', device_ids='(0,1,2,3)', is_galaxy=False, device_mesh_shape=(1, 4)
+2026-03-05 00:12:18,110 - INFO - After mesh overrides: device_mesh_shape=(1, 4)
+2026-03-05 00:12:18,110 - INFO - _set_device_pairs_overrides: is_galaxy=False, device_mesh_shape=(1, 4), device_ids(before)='(0,1,2,3)'
+2026-03-05 00:12:18,110 - INFO - Settings resolved: model_runner='tt-mochi-1', model_service='video', device_ids='(0,1,2,3)', is_galaxy=False, device_mesh_shape=(1, 4), model_weights_path='genmo/mochi-1-preview', max_batch_size=1
+2026-03-05 00:12:25,009 - INFO - Setting up Prometheus metrics...
+2026-03-05 00:12:25,009 - INFO - Multiprocess directory ready: /tmp/prometheus_multiproc
+2026-03-05 00:12:25,010 - INFO - Prometheus metrics available at /metrics
+INFO:     Started server process [33]
+INFO:     Waiting for application startup.
+2026-03-05 00:12:25,018 - INFO - Creating new Video service instance
+2026-03-05 00:12:25,020 - INFO - _calculate_worker_count: raw device_ids='(0,1,2,3)'
+2026-03-05 00:12:25,020 - INFO - _calculate_worker_count: split into 1 workers, workers_to_open=['(0,1,2,3)']
+2026-03-05 00:12:25,021 - INFO - [__init__] executed in 0.0014 seconds. Scheduler init
+2026-03-05 00:12:25,022 - INFO - [__init__] executed in 0.0016 seconds. Base service init
+2026-03-05 00:12:32.551 | info     |             UMD | Established firmware bundle version: 19.5.0 (topology_discovery.cpp:418)
+2026-03-05 00:12:32.614 | info     |             UMD | Established firmware bundle version: 19.5.0 (topology_discovery.cpp:418)
+2026-03-05 00:12:32.625 | info     |             UMD | Harvesting masks for chip 3 tensix: 0xc0 dram: 0x0 eth: 0x120 pcie: 0x2 l2cpu: 0x0 (cluster.cpp:331)
+2026-03-05 00:12:32.677 | warning  |             UMD | hwloc_set_area_membind(): failed for physical_device_id: 0 on NodeSet: [0] with errno: Operation not permitted (pid: 103 tid: 127789714798400) (cpuset_lib.cpp:443)
+2026-03-05 00:12:32.677 | warning  |             UMD | ---- ttSiliconDevice::init_hugepage: bind_area_to_memory_nodeset() failed (physical_device_id: 0 ch: 0). Hugepage allocation is not on NumaNode matching TT Device. Side-Effect is decreased Device->Host perf (Issue #893). (silicon_sysmem_manager.cpp:188)
+2026-03-05 00:12:32.677 | info     |             UMD | Harvesting masks for chip 1 tensix: 0xc0 dram: 0x0 eth: 0x120 pcie: 0x2 l2cpu: 0x0 (cluster.cpp:331)
+2026-03-05 00:12:32.690 | warning  |             UMD | hwloc_set_area_membind(): failed for physical_device_id: 2 on NodeSet: [0] with errno: Operation not permitted (pid: 103 tid: 127789714798400) (cpuset_lib.cpp:443)
+2026-03-05 00:12:32.690 | warning  |             UMD | ---- ttSiliconDevice::init_hugepage: bind_area_to_memory_nodeset() failed (physical_device_id: 2 ch: 0). Hugepage allocation is not on NumaNode matching TT Device. Side-Effect is decreased Device->Host perf (Issue #893). (silicon_sysmem_manager.cpp:188)
+2026-03-05 00:12:32.690 | info     |             UMD | Harvesting masks for chip 2 tensix: 0xc0 dram: 0x0 eth: 0x120 pcie: 0x2 l2cpu: 0x0 (cluster.cpp:331)
+2026-03-05 00:12:32.702 | warning  |             UMD | hwloc_set_area_membind(): failed for physical_device_id: 3 on NodeSet: [0] with errno: Operation not permitted (pid: 103 tid: 127789714798400) (cpuset_lib.cpp:443)
+2026-03-05 00:12:32.702 | warning  |             UMD | ---- ttSiliconDevice::init_hugepage: bind_area_to_memory_nodeset() failed (physical_device_id: 3 ch: 0). Hugepage allocation is not on NumaNode matching TT Device. Side-Effect is decreased Device->Host perf (Issue #893). (silicon_sysmem_manager.cpp:188)
+2026-03-05 00:12:32.702 | info     |             UMD | Harvesting masks for chip 0 tensix: 0xc0 dram: 0x0 eth: 0x120 pcie: 0x2 l2cpu: 0x0 (cluster.cpp:331)
+2026-03-05 00:12:32.715 | warning  |             UMD | hwloc_set_area_membind(): failed for physical_device_id: 1 on NodeSet: [0] with errno: Operation not permitted (pid: 103 tid: 127789714798400) (cpuset_lib.cpp:443)
+2026-03-05 00:12:32.715 | warning  |             UMD | ---- ttSiliconDevice::init_hugepage: bind_area_to_memory_nodeset() failed (physical_device_id: 1 ch: 0). Hugepage allocation is not on NumaNode matching TT Device. Side-Effect is decreased Device->Host perf (Issue #893). (silicon_sysmem_manager.cpp:188)
+2026-03-05 00:12:32.715 | info     |             UMD | Opening local chip ids/PCIe ids: {0, 1, 2, 3}/[1, 2, 3, 0] and remote chip ids {} (cluster.cpp:180)
+2026-03-05 00:12:32.715 | info     |             UMD | IOMMU: disabled (cluster.cpp:155)
+2026-03-05 00:12:32.715 | info     |             UMD | KMD version: 2.5.0 (cluster.cpp:158)
+2026-03-05 00:12:39.602 | info     |           Metal | Fabric initialized on Device 2 (device.cpp:394)
+2026-03-05 00:12:39.603 | info     |           Metal | Fabric initialized on Device 3 (device.cpp:394)
+2026-03-05 00:12:39.603 | info     |           Metal | Fabric Initialized with config FabricConfig::FABRIC_1D (fabric_firmware_initializer.cpp:48)
+INFO:     172.17.0.1:58646 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+2026-03-05 00:12:42,184 - INFO - Device 0,1,2,3: Successfully created multidevice with 4 devices
+2026-03-05 00:12:42,185 - INFO - Device 0,1,2,3: Loading model...
+2026-03-05 00:12:42.186 | WARNING  | models.tt_dit.pipelines.mochi.pipeline_mochi:create_pipeline:303 - Mochi has only been successfully tested on 2x2 configuration for Blackhole. Proceeding with the requested (1, 4) configuration.
+2026-03-05 00:12:42,186 - ERROR - Device 0,1,2,3: Mochi pipeline creation failed
+Traceback (most recent call last):
+  File "/home/container_app_user/tt-metal/server/tt_model_runners/dit_runners.py", line 262, in create_pipeline
+    return MochiPipeline.create_pipeline(
+  File "/home/container_app_user/tt-metal/models/tt_dit/pipelines/mochi/pipeline_mochi.py", line 360, in create_pipeline
+    sp_axis = sp_axis or default_config[mesh_shape]["sp_axis"]
+KeyError: (1, 4)
+
+2026-03-05 00:12:42,187 - ERROR - Device 0,1,2,3: Exception during model loading
+Traceback (most recent call last):
+  File "/home/container_app_user/tt-metal/server/tt_model_runners/dit_runners.py", line 95, in warmup
+    await asyncio.wait_for(
+    return MochiPipeline.create_pipeline(
+  File "/home/container_app_user/tt-metal/models/tt_dit/pipelines/mochi/pipeline_mochi.py", line 360, in create_pipeline
+    sp_axis = sp_axis or default_config[mesh_shape]["sp_axis"]
+KeyError: (1, 4)
+... (trimmed) ...
+INFO:     172.17.0.1:34114 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:35692 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:42588 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:41808 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:53128 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:40834 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:59754 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:52440 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:41128 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:43462 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:60274 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:59210 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:38850 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:33776 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:55142 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:50992 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:36012 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:57806 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:37526 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:58902 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:50160 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:44964 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:45750 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:45714 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:41370 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:56072 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:40136 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:49824 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:40570 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:39362 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:47292 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:59218 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:34572 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:42104 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:39266 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:57264 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:45318 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:45286 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:59230 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:57066 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:35738 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:43272 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:35522 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:44552 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:41316 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:40116 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:57836 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:40422 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:60538 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:43220 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:42030 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:59236 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:34896 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:32910 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:42674 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:41336 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:39128 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:54892 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:38054 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:60670 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:46790 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:45356 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:40122 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:36108 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:55432 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:34278 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:60862 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:47464 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:36190 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:59448 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:34340 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:51932 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:41270 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:35932 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:53698 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error

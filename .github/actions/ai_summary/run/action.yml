@@ -1,0 +1,287 @@
+name: AI Run Summary
+description: Aggregate per-job AI summaries into a run-level report
+
+inputs:
+  config:
+    description: >-
+      JSON config string. Required keys: `model` (or `none` to skip
+      narrative LLM), `workspace`, `input_dir`, `output_dir`.
+      See README for the schema.
+    required: true
+  api-key:
+    description: "LLM API key (optional — set model: none in config to skip LLM)"
+    required: false
+    default: ""
+  api-url:
+    description: "LLM API URL (optional)"
+    required: false
+    default: ""
+  slack-bot-token:
+    description: "Slack bot token (skip Slack if empty)"
+    required: false
+    default: ""
+  slack-channel-id:
+    description: "Slack channel ID (skip Slack if empty)"
+    required: false
+    default: ""
+  slack-on-branches:
+    description: >-
+      Comma-separated list of branch names. Slack is sent only when
+      github.ref matches refs/heads/<one of these>. Default 'main' keeps
+      feature/dev branches out of the channel. Set empty to always send.
+    required: false
+    default: "main"
+  expected-jobs:
+    description: >-
+      JSON array of expected matrix legs. Pass the output of a
+      generate-matrix job (`needs.<matrix-job>.outputs.matrix`).
+      When set together with run-result, the action synthesizes
+      INFRA_FAILURE rows for expected legs whose ai-job-summary artifact
+      is missing (runner/container setup failure, runner died, etc.).
+    required: false
+    default: ""
+  run-result:
+    description: >-
+      Aggregate result of the matrix job (`needs.<matrix-job>.result`).
+      Accepted values: 'success', 'failure', 'cancelled', 'skipped'.
+      When 'cancelled' or 'skipped', no INFRA_FAILURE stubs are
+      synthesized (nothing to reconcile).
+    required: false
+    default: ""
+
+outputs:
+  report-file:
+    description: "Path to the generated .md report."
+    value: ${{ steps.summarize.outputs.report_file }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve config paths
+      id: config
+      shell: bash
+      env:
+        CONFIG: ${{ inputs.config }}
+      run: |
+        # Compute absolute input_dir and output_dir for the
+        # download-artifact and cleanup steps (which run outside the tool).
+        # Mirrors the tool's resolution: expandvars on workspace only —
+        # callers use $GITHUB_WORKSPACE for the in-container path.
+        # input_dir / output_dir are project-relative and not expanded.
+        INPUT_DIR=$(python3 - <<'PY'
+        import json, os, sys, pathlib
+        c = json.loads(os.environ["CONFIG"])
+        if "tool_dir" in c:
+            print("::error::tool_dir is no longer supported", file=sys.stderr); sys.exit(1)
+        ws = os.path.expandvars(c.get("workspace") or "") or os.getcwd()
+        v = c.get("input_dir", "")
+        if not v:
+            print("::error::input_dir not set in config", file=sys.stderr); sys.exit(1)
+        print(pathlib.Path(ws) / v)
+        PY
+        ) || exit 1
+        OUTPUT_DIR=$(python3 - <<'PY'
+        import json, os, sys, pathlib
+        c = json.loads(os.environ["CONFIG"])
+        ws = os.path.expandvars(c.get("workspace") or "") or os.getcwd()
+        v = c.get("output_dir", "")
+        if not v:
+            print("::error::output_dir not set in config", file=sys.stderr); sys.exit(1)
+        print(pathlib.Path(ws) / v)
+        PY
+        ) || exit 1
+        echo "input_dir=$INPUT_DIR" >> "$GITHUB_OUTPUT"
+        echo "output_dir=$OUTPUT_DIR" >> "$GITHUB_OUTPUT"
+
+        # The tool lives next to the actions in the same ai_summary/
+        # directory, so it moves with them as a single unit.
+        TOOL_DIR="$(realpath "${GITHUB_ACTION_PATH}/../tool")"
+        if [ ! -f "$TOOL_DIR/pyproject.toml" ]; then
+          echo "::error::Tool not found at $TOOL_DIR (missing pyproject.toml)"
+          exit 1
+        fi
+        echo "tool_dir=$TOOL_DIR" >> "$GITHUB_OUTPUT"
+
+    - name: Download AI job summaries
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        pattern: ai_job_summary_*
+        path: ${{ steps.config.outputs.input_dir }}
+        merge-multiple: true
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+
+    - name: Install Puppeteer
+      if: inputs.slack-bot-token != '' && inputs.slack-channel-id != ''
+      shell: bash
+      run: npm install puppeteer
+
+    - name: Generate run summary
+      id: summarize
+      shell: bash
+      env:
+        TT_CHAT_API_KEY: ${{ inputs.api-key }}
+        TT_CHAT_URL: ${{ inputs.api-url }}
+        CONFIG: ${{ inputs.config }}
+        EXPECTED_JOBS: ${{ inputs.expected-jobs }}
+        RUN_RESULT: ${{ inputs.run-result }}
+      run: |
+        TOOL_DIR="${{ steps.config.outputs.tool_dir }}"
+
+        # ubuntu-latest has no active venv; create one in /tmp (cleaned up
+        # below). --clear handles a leftover venv from a prior run on the
+        # same self-hosted host (defensive even though this action targets
+        # ubuntu-latest).
+        VENV=/tmp/ai-summary/venv
+        uv venv --clear --quiet "$VENV"
+        uv pip install --no-cache --quiet --python "$VENV/bin/python" "$TOOL_DIR"
+        source "$VENV/bin/activate"
+
+        STDERR_FILE=$(mktemp)
+        trap 'rm -f "$STDERR_FILE"' EXIT
+
+        CMD_ARGS=(--config "$CONFIG")
+        [ -n "$EXPECTED_JOBS" ] && CMD_ARGS+=(--expected-jobs "$EXPECTED_JOBS")
+        [ -n "$RUN_RESULT" ]    && CMD_ARGS+=(--run-result "$RUN_RESULT")
+
+        echo "::group::AI Run Summary"
+        # `2> >(tee ...)` runs tee in a process substitution coprocess that
+        # bash does NOT wait for at command boundary. Without `wait`, the
+        # subsequent grep on $STDERR_FILE could miss the final line and
+        # produce a spurious "Could not locate report file" warning.
+        ai-run-summary "${CMD_ARGS[@]}" 2> >(tee "$STDERR_FILE" >&2)
+        status=$?
+        wait
+        if [ $status -ne 0 ]; then
+          echo "::endgroup::"
+          echo "::warning::ai-run-summary failed, check logs"
+          echo "report_file=" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        echo "::endgroup::"
+
+        REPORT_FILE=$(grep -m 1 "^Report written to:" "$STDERR_FILE" | sed 's/Report written to: //')
+        if [ -z "$REPORT_FILE" ] || [ ! -f "$REPORT_FILE" ]; then
+          echo "::warning::Could not locate report file"
+          echo "report_file=" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        echo "report_file=$REPORT_FILE" >> "$GITHUB_OUTPUT"
+
+    - name: Upload run summary
+      if: always() && !cancelled() && steps.summarize.outputs.report_file != ''
+      continue-on-error: true
+      uses: actions/upload-artifact@v4
+      with:
+        name: ai_run_summary_${{ github.run_id }}
+        path: ${{ steps.summarize.outputs.report_file }}
+
+    - name: Decide whether to deliver Slack
+      id: slack-gate
+      # GHA expressions can't easily test list membership against
+      # github.ref, so resolve it in shell. send=1 means proceed; send=0
+      # means skip render + send-slack. Empty slack-on-branches means
+      # always send (when other Slack inputs are set).
+      shell: bash
+      env:
+        SLACK_ON_BRANCHES: ${{ inputs.slack-on-branches }}
+      run: |
+        if [ -z "$SLACK_ON_BRANCHES" ]; then
+          echo "send=1" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        IFS=',' read -ra ALLOWED <<< "$SLACK_ON_BRANCHES"
+        for b in "${ALLOWED[@]}"; do
+          b="${b//[[:space:]]/}"
+          if [ "$GITHUB_REF" = "refs/heads/$b" ]; then
+            echo "send=1" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+        done
+        echo "send=0" >> "$GITHUB_OUTPUT"
+
+    - name: Render report image
+      id: render
+      # Skipping render here also skips send-slack below (its png_file
+      # dependency stays empty).
+      if: >-
+        always() && !cancelled()
+        && steps.summarize.outputs.report_file != ''
+        && inputs.slack-bot-token != ''
+        && inputs.slack-channel-id != ''
+        && steps.slack-gate.outputs.send == '1'
+      continue-on-error: true
+      shell: bash
+      env:
+        REPORT_FILE: ${{ steps.summarize.outputs.report_file }}
+      run: |
+        HTML_FILE="${REPORT_FILE%.md}.html"
+        PNG_FILE="/tmp/ai_run_summary.png"
+        if [ ! -f "$HTML_FILE" ]; then
+          echo "::warning::HTML report not found: $HTML_FILE"
+          exit 0
+        fi
+        node -e "
+        const puppeteer = require('puppeteer');
+        (async () => {
+          const browser = await puppeteer.launch({args: ['--no-sandbox']});
+          const page = await browser.newPage();
+          await page.setViewport({width: 1400, height: 800, deviceScaleFactor: 2});
+          await page.goto('file://' + require('path').resolve(process.argv[1]), {waitUntil: 'networkidle0'});
+          const body = await page.\$('body');
+          await body.screenshot({path: process.argv[2], type: 'png'});
+          await browser.close();
+        })();
+        " "$HTML_FILE" "$PNG_FILE" || { echo "::warning::Puppeteer failed"; exit 0; }
+        [ -s "$PNG_FILE" ] && echo "png_file=$PNG_FILE" >> "$GITHUB_OUTPUT" || echo "::warning::Puppeteer produced empty PNG"
+
+    - name: Send Slack notification
+      if: >-
+        always() && !cancelled()
+        && steps.render.outputs.png_file != ''
+      continue-on-error: true
+      uses: slackapi/slack-github-action@v3
+      with:
+        method: files.uploadV2
+        token: ${{ inputs.slack-bot-token }}
+        payload: |
+          channel_id: "${{ inputs.slack-channel-id }}"
+          initial_comment: "🤖 AI Run Summary\nRun: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          file: "${{ steps.render.outputs.png_file }}"
+          filename: "ai_run_summary.png"
+
+    - name: Cleanup temporary files
+      if: always()
+      shell: bash
+      env:
+        REPORT_FILE: ${{ steps.summarize.outputs.report_file }}
+      run: |
+        rm -f "${{ steps.render.outputs.png_file }}"
+        [ -n "$REPORT_FILE" ] && rm -f "${REPORT_FILE%.md}.html"
+        rm -rf /tmp/ai-summary
+
+        # Safety guard: only clean input_dir if it's under $GITHUB_WORKSPACE
+        # and contains exclusively the artefact files we wrote. Refuses to
+        # recurse anywhere else, so a config typo (e.g. input_dir: ".")
+        # can't nuke the workspace.
+        INPUT_DIR="${{ steps.config.outputs.input_dir }}"
+        if [ -n "$INPUT_DIR" ] && [ -d "$INPUT_DIR" ]; then
+          REAL_DIR=$(realpath "$INPUT_DIR")
+          REAL_WS=$(realpath "$GITHUB_WORKSPACE")
+          if [[ "$REAL_DIR" == "$REAL_WS"/* ]]; then
+            STRAY=$(find "$REAL_DIR" -mindepth 1 \
+              ! -name "ai_job_summary_*.json" \
+              ! -name "ai_job_summary_*.md" \
+              ! -type d 2>/dev/null | head -1)
+            if [ -z "$STRAY" ]; then
+              rm -rf "$REAL_DIR"
+            else
+              echo "::warning::input_dir contains unexpected file(s); leaving for inspection"
+            fi
+          else
+            echo "::warning::input_dir resolves outside workspace ($REAL_DIR); refusing to delete"
+          fi
+        fi
+        # output_dir is kept so callers can add a Show report step after this action.

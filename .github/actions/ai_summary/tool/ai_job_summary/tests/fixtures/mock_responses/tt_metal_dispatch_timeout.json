@@ -1,0 +1,12 @@
+{
+  "status": "CRASH",
+  "category": "tt-metal:dispatch",
+  "subcategory": "device_timeout",
+  "layer": "framework",
+  "problematic_layer": "serving",
+  "root_cause": "Device timeout in fetch queue wait during ttnn.mesh_partition operation while processing a large prefill request, indicating a potential hang in the dispatch system.",
+  "error_message": "TIMEOUT: device timeout in fetch queue wait, potential hang detected",
+  "failed_tests": ["workflow:benchmarks", "workflow:evals"],
+  "suggested_action": "Reduce max_prefill_chunk_size or max_seq_len in model config to avoid dispatch timeout on large prefill sequences.",
+  "confidence": "high"
+}

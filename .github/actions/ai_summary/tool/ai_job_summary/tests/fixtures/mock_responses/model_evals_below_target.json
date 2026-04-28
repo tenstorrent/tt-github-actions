@@ -1,0 +1,11 @@
+{
+  "status": "EVALS_BELOW_TARGET",
+  "category": "model:accuracy",
+  "subcategory": "image_quality_below_threshold",
+  "layer": "application",
+  "root_cause": "FLUX.1-schnell image generation failed quality checks: FID score 204.12 exceeds maximum threshold, CLIP score 29.03 below minimum threshold.",
+  "error_message": "FLUX.1-schnell                 100      4   204.1167     29.0291 ± 3.1633     FAIL        ❌",
+  "failed_tests": [],
+  "suggested_action": "Investigate model weights or generation parameters affecting image quality.",
+  "confidence": "high"
+}

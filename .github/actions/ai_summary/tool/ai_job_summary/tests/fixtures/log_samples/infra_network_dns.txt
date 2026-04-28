@@ -1,0 +1,136 @@
+using CACHE_ROOT: /home/container_app_user/cache_root
+Mounted CACHE_ROOT volume is owned by UID:GID - 0:0
+setting permissions for /home/container_app_user/cache_root ...
+Mounted volume permissions setup completed.
+2026-03-05 01:23:35,839 - INFO - Settings init: MODEL='Wan2.2-T2V-A14B-Diffusers', DEVICE='p150x4', model_runner(default)='tt-sdxl-trace', device_ids(default)='(0),(1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),(13),(14),(15),(16),(17),(18),(19),(20),(21),(22),(23),(24),(25),(26),(27),(28),(29),(30),(31)', is_galaxy(default)=True, device_mesh_shape(default)=(1, 1)
+2026-03-05 01:23:35,839 - INFO - Config lookup: runner=ModelRunners.TT_WAN_2_2, device_type=DeviceTypes.P150X4, key_exists=True, matching_config={'device_mesh_shape': (1, 4), 'is_galaxy': False, 'device_ids': '(0,1,2,3)', 'max_batch_size': 1, 'download_weights_from_service': False}
+2026-03-05 01:23:35,839 - INFO - After config overrides: model_runner='tt-wan2.2', device_ids='(0,1,2,3)', is_galaxy=False, device_mesh_shape=(1, 4)
+2026-03-05 01:23:35,839 - INFO - After mesh overrides: device_mesh_shape=(1, 4)
+2026-03-05 01:23:35,839 - INFO - _set_device_pairs_overrides: is_galaxy=False, device_mesh_shape=(1, 4), device_ids(before)='(0,1,2,3)'
+2026-03-05 01:23:35,839 - INFO - Settings resolved: model_runner='tt-wan2.2', model_service='video', device_ids='(0,1,2,3)', is_galaxy=False, device_mesh_shape=(1, 4), model_weights_path='Wan-AI/Wan2.2-T2V-A14B-Diffusers', max_batch_size=1
+2026-03-05 01:23:42,875 - INFO - Setting up Prometheus metrics...
+2026-03-05 01:23:42,875 - INFO - Multiprocess directory ready: /tmp/prometheus_multiproc
+2026-03-05 01:23:42,875 - INFO - Prometheus metrics available at /metrics
+INFO:     Started server process [33]
+INFO:     Waiting for application startup.
+2026-03-05 01:23:42,884 - INFO - Creating new Video service instance
+2026-03-05 01:23:42,886 - INFO - _calculate_worker_count: raw device_ids='(0,1,2,3)'
+2026-03-05 01:23:42,886 - INFO - _calculate_worker_count: split into 1 workers, workers_to_open=['(0,1,2,3)']
+2026-03-05 01:23:42,888 - INFO - [__init__] executed in 0.0014 seconds. Scheduler init
+2026-03-05 01:23:42,888 - INFO - [__init__] executed in 0.0015 seconds. Base service init
+2026-03-05 01:23:50.333 | info     |             UMD | Established firmware bundle version: 19.2.0 (topology_discovery.cpp:418)
+2026-03-05 01:23:50.396 | info     |             UMD | Established firmware bundle version: 19.2.0 (topology_discovery.cpp:418)
+2026-03-05 01:23:50.407 | info     |             UMD | Harvesting masks for chip 1 tensix: 0x0 dram: 0x0 eth: 0x120 pcie: 0x2 l2cpu: 0x0 (cluster.cpp:331)
+2026-03-05 01:23:50.453 | warning  |             UMD | hwloc_set_area_membind(): failed for physical_device_id: 2 on NodeSet: [0] with errno: Operation not permitted (pid: 103 tid: 137326744643392) (cpuset_lib.cpp:443)
+2026-03-05 01:23:50.453 | warning  |             UMD | ---- ttSiliconDevice::init_hugepage: bind_area_to_memory_nodeset() failed (physical_device_id: 2 ch: 0). Hugepage allocation is not on NumaNode matching TT Device. Side-Effect is decreased Device->Host perf (Issue #893). (silicon_sysmem_manager.cpp:188)
+2026-03-05 01:23:50.453 | info     |             UMD | Harvesting masks for chip 0 tensix: 0x0 dram: 0x0 eth: 0x120 pcie: 0x2 l2cpu: 0x0 (cluster.cpp:331)
+2026-03-05 01:23:50.466 | warning  |             UMD | hwloc_set_area_membind(): failed for physical_device_id: 1 on NodeSet: [0] with errno: Operation not permitted (pid: 103 tid: 137326744643392) (cpuset_lib.cpp:443)
+2026-03-05 01:23:50.466 | warning  |             UMD | ---- ttSiliconDevice::init_hugepage: bind_area_to_memory_nodeset() failed (physical_device_id: 1 ch: 0). Hugepage allocation is not on NumaNode matching TT Device. Side-Effect is decreased Device->Host perf (Issue #893). (silicon_sysmem_manager.cpp:188)
+2026-03-05 01:23:50.466 | info     |             UMD | Harvesting masks for chip 2 tensix: 0x0 dram: 0x0 eth: 0x120 pcie: 0x2 l2cpu: 0x0 (cluster.cpp:331)
+2026-03-05 01:23:50.479 | warning  |             UMD | hwloc_set_area_membind(): failed for physical_device_id: 3 on NodeSet: [0] with errno: Operation not permitted (pid: 103 tid: 137326744643392) (cpuset_lib.cpp:443)
+2026-03-05 01:23:50.479 | warning  |             UMD | ---- ttSiliconDevice::init_hugepage: bind_area_to_memory_nodeset() failed (physical_device_id: 3 ch: 0). Hugepage allocation is not on NumaNode matching TT Device. Side-Effect is decreased Device->Host perf (Issue #893). (silicon_sysmem_manager.cpp:188)
+2026-03-05 01:23:50.479 | info     |             UMD | Harvesting masks for chip 3 tensix: 0x0 dram: 0x0 eth: 0x120 pcie: 0x2 l2cpu: 0x0 (cluster.cpp:331)
+2026-03-05 01:23:50.491 | warning  |             UMD | hwloc_set_area_membind(): failed for physical_device_id: 0 on NodeSet: [0] with errno: Operation not permitted (pid: 103 tid: 137326744643392) (cpuset_lib.cpp:443)
+2026-03-05 01:23:50.491 | warning  |             UMD | ---- ttSiliconDevice::init_hugepage: bind_area_to_memory_nodeset() failed (physical_device_id: 0 ch: 0). Hugepage allocation is not on NumaNode matching TT Device. Side-Effect is decreased Device->Host perf (Issue #893). (silicon_sysmem_manager.cpp:188)
+2026-03-05 01:23:50.491 | info     |             UMD | Opening local chip ids/PCIe ids: {0, 1, 2, 3}/[1, 2, 3, 0] and remote chip ids {} (cluster.cpp:180)
+2026-03-05 01:23:50.491 | info     |             UMD | IOMMU: disabled (cluster.cpp:155)
+2026-03-05 01:23:50.491 | info     |             UMD | KMD version: 2.5.0 (cluster.cpp:158)
+2026-03-05 01:23:59,150 - INFO - Device 0,1,2,3: Successfully created multidevice with 4 devices
+2026-03-05 01:23:59,150 - INFO - Device 0,1,2,3: Loading model...
+
+Fetching 3 files:   0%|          | 0/3 [00:00<?, ?it/s]'(MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /Wan-AI/Wan2.2-T2V-A14B-Diffusers/resolve/5be7df9619b54f4e2667b2755bc6a756675b5cd7/text_encoder/model-00002-of-00003.safetensors (Caused by NameResolutionError("HTTPSConnection(host=\'huggingface.co\', port=443): Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: b4588147-8f76-47dd-bca4-0d6512baba31)')' thrown while requesting HEAD https://huggingface.co/Wan-AI/Wan2.2-T2V-A14B-Diffusers/resolve/5be7df9619b54f4e2667b2755bc6a756675b5cd7/text_encoder/model-00002-of-00003.safetensors
+Retrying in 1s [Retry 1/5].
+'(MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /Wan-AI/Wan2.2-T2V-A14B-Diffusers/resolve/5be7df9619b54f4e2667b2755bc6a756675b5cd7/text_encoder/model-00002-of-00003.safetensors (Caused by NameResolutionError("HTTPSConnection(host=\'huggingface.co\', port=443): Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: df5a6608-983d-48bf-9153-2f38c1210512)')' thrown while requesting HEAD https://huggingface.co/Wan-AI/Wan2.2-T2V-A14B-Diffusers/resolve/5be7df9619b54f4e2667b2755bc6a756675b5cd7/text_encoder/model-00002-of-00003.safetensors
+Retrying in 2s [Retry 2/5].
+'(MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /Wan-AI/Wan2.2-T2V-A14B-Diffusers/resolve/5be7df9619b54f4e2667b2755bc6a756675b5cd7/text_encoder/model-00002-of-00003.safetensors (Caused by NameResolutionError("HTTPSConnection(host=\'huggingface.co\', port=443): Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: b4462f44-2d73-4511-ae68-d88dad3c36d2)')' thrown while requesting HEAD https://huggingface.co/Wan-AI/Wan2.2-T2V-A14B-Diffusers/resolve/5be7df9619b54f4e2667b2755bc6a756675b5cd7/text_encoder/model-00002-of-00003.safetensors
+Retrying in 4s [Retry 3/5].
+INFO:     172.17.0.1:46058 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+'(MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /Wan-AI/Wan2.2-T2V-A14B-Diffusers/resolve/5be7df9619b54f4e2667b2755bc6a756675b5cd7/text_encoder/model-00002-of-00003.safetensors (Caused by NameResolutionError("HTTPSConnection(host=\'huggingface.co\', port=443): Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: 3326f1d6-babc-43a6-9a61-909cf9bb4d4d)')' thrown while requesting HEAD https://huggingface.co/Wan-AI/Wan2.2-T2V-A14B-Diffusers/resolve/5be7df9619b54f4e2667b2755bc6a756675b5cd7/text_encoder/model-00002-of-00003.safetensors
+Retrying in 8s [Retry 4/5].
+INFO:     172.17.0.1:45996 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+'(MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /Wan-AI/Wan2.2-T2V-A14B-Diffusers/resolve/5be7df9619b54f4e2667b2755bc6a756675b5cd7/text_encoder/model-00002-of-00003.safetensors (Caused by NameResolutionError("HTTPSConnection(host=\'huggingface.co\', port=443): Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: 3c4a2290-b5db-49dd-8740-81a1209ad80b)')' thrown while requesting HEAD https://huggingface.co/Wan-AI/Wan2.2-T2V-A14B-Diffusers/resolve/5be7df9619b54f4e2667b2755bc6a756675b5cd7/text_encoder/model-00002-of-00003.safetensors
+Retrying in 8s [Retry 5/5].
+'(MaxRetryError('HTTPSConnectionPool(host=\'huggingface.co\', port=443): Max retries exceeded with url: /Wan-AI/Wan2.2-T2V-A14B-Diffusers/resolve/5be7df9619b54f4e2667b2755bc6a756675b5cd7/text_encoder/model-00002-of-00003.safetensors (Caused by NameResolutionError("HTTPSConnection(host=\'huggingface.co\', port=443): Failed to resolve \'huggingface.co\' ([Errno -3] Temporary failure in name resolution)"))'), '(Request ID: 3d52a8fd-e705-40bf-8460-e7c698037e78)')' thrown while requesting HEAD https://huggingface.co/Wan-AI/Wan2.2-T2V-A14B-Diffusers/resolve/5be7df9619b54f4e2667b2755bc6a756675b5cd7/text_encoder/model-00002-of-00003.safetensors
+INFO:     172.17.0.1:46208 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:42676 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:41504 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:55358 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:46090 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:44148 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:34106 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+... (trimmed) ...
+INFO:     172.17.0.1:42782 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:56078 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:35816 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:47526 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:51074 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:33722 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:32896 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:52110 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:53564 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:34002 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:57846 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:33070 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:33568 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:36078 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:38870 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:45642 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:45472 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:58894 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:56462 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:42368 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:40008 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:38722 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:44102 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:57074 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:49788 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:54552 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:45762 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:49214 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:43244 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:51274 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:58900 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:42122 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:53850 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:56034 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:55766 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:46732 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:48088 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:33768 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:50494 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:45486 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:44624 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:43520 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:47456 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:45496 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:58510 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:37166 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:47594 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:39942 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:42704 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:50878 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:59774 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:59354 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:44662 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:40902 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:38418 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:33906 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:51502 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:43844 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:40476 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:35632 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:54066 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:52580 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:41156 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:47258 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:49016 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:32844 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:36246 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:57950 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:36816 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:35992 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:59452 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:45254 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:56984 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:57038 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error
+INFO:     172.17.0.1:47258 - "GET /tt-liveness HTTP/1.1" 500 Internal Server Error

@@ -1,0 +1,12 @@
+{
+  "status": "CRASH",
+  "category": "app:cli",
+  "subcategory": "unrecognized_argument",
+  "layer": "application",
+  "problematic_layer": "application",
+  "root_cause": "The vLLM API server failed to start because it received an unrecognized argument '--num-scheduler-steps', causing the server to never become healthy and all subsequent workflows (evals, benchmarks) to timeout waiting for the server.",
+  "error_message": "run_vllm_api_server.py: error: unrecognized arguments: --num-scheduler-steps",
+  "failed_tests": [],
+  "suggested_action": "Remove '--num-scheduler-steps' argument from vLLM server startup command or update to a compatible vLLM version that supports this parameter.",
+  "confidence": "high"
+}

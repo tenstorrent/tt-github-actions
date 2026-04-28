@@ -1,0 +1,317 @@
+# Bundled analysis config for AI summary tool.
+# Covers: generic CI infra, TT hardware, TT-Metal, vLLM, models.
+# Consumers extend via analysis_config: in their workflow YAML, and pick
+# the LLM model via the per-project config file's `model:` field.
+
+repos:
+  default_branches:
+    - main
+    - dev
+
+categories:
+  # GENERIC
+  runtime:exception:
+    description: "Unhandled Python exception in any component — LLM determines actual layer and category"
+    patterns:
+      - "Traceback (most recent call last)"
+      - "AssertionError"
+      - "RuntimeError"
+
+  # INFRASTRUCTURE
+  infra:machine:
+    description: "Physical machine or runner issues"
+    patterns:
+      - "runner crash"
+      - "disk full"
+      - "No space left on device"
+      - "OOM"
+      - "Out of memory"
+      - "Cannot allocate memory"
+      - "machine offline"
+      - "node unavailable"
+      - "killed"
+      - "SIGKILL"
+    action: "Retrigger the job or contact infra team"
+    severity: high
+
+  infra:ci:
+    description: "CI/CD pipeline issues"
+    patterns:
+      - "workflow failed"
+      - "job dispatch"
+      - "artifact download"
+      - "docker pull"
+      - "image not found"
+      - "checkout failed"
+      - "action failed"
+      - "step failed"
+    action: "Check CI configuration and retry"
+    severity: medium
+
+  infra:network:
+    description: "Network connectivity issues"
+    patterns:
+      - "connection refused"
+      - "connection timed out"
+      - "network unreachable"
+      - "DNS"
+      - "SSL"
+      - "certificate"
+      - "HTTP 5"
+      - "socket"
+      - "ECONNRESET"
+    action: "Check network connectivity and retry"
+    severity: medium
+
+  # HARDWARE/DRIVER
+  hw:device:
+    description: "Device detection/initialization issues"
+    patterns:
+      - "tt-smi"
+      - "device not found"
+      - "No chips detected"
+      - "chip not detected"
+      - "ttSiliconDevice"
+      - "physical_device_id"
+      - "device initialization"
+      - "Requested mesh grid shape"
+      - "number of available devices"
+    action: "Check device state, may need machine reset"
+    severity: high
+
+  hw:umd:
+    description: "UMD (User Mode Driver) issues"
+    patterns:
+      - "umd"
+      - "UMD"
+      - "tt_device"
+      - "pcie"
+      - "PCIE"
+      - "driver"
+    action: "Check driver state"
+    severity: high
+
+  hw:fabric:
+    description: "Ethernet/fabric link issues"
+    patterns:
+      - "eth link"
+      - "ethernet"
+      - "link training"
+      - "fabric init"
+    action: "Check ethernet link status"
+    severity: high
+
+  # TT-METAL
+  tt-metal:trace:
+    description: "Trace buffer allocation failures"
+    patterns:
+      - "trace buffers of size"
+      - "allocated for trace region"
+      - "trace_region_size"
+      - "mesh_trace.cpp"
+
+  tt-metal:device:
+    description: "Device detection/initialization failures"
+    patterns:
+      - "No chips detected"
+      - "tt_cluster.cpp"
+      - "device initialization"
+      - "physical_device_id"
+      - "MeshDevice"
+
+  tt-metal:dispatch:
+    description: "Command dispatch/queue issues"
+    patterns:
+      - "dispatch timeout"
+      - "CommandQueue"
+      - "DISPATCH_TIMEOUT"
+      - "EnqueueProgram"
+      - "command_queue"
+
+  tt-metal:memory:
+    description: "Device memory allocation issues"
+    patterns:
+      - "allocation failed"
+      - "buffer allocation"
+      - "out of memory"
+      - "DRAM"
+      - "L1"
+      - "CBHandle"
+
+  tt-metal:compile:
+    description: "Kernel compilation issues"
+    patterns:
+      - "TT_THROW"
+      - "TT_FATAL"
+      - "compile error"
+      - "kernel compilation"
+      - "not declared in this scope"
+      - "trisc"
+
+  tt-metal:fabric:
+    description: "Multi-chip fabric/mesh issues"
+    patterns:
+      - "fabric"
+      - "ethernet"
+      - "mesh timeout"
+      - "chip-to-chip"
+
+  # VLLM
+  vllm:engine:
+    description: "vLLM engine initialization/runtime errors"
+    patterns:
+      - "EngineCore"
+      - "AsyncLLMEngine"
+      - "LLMEngine"
+      - "engine.py"
+      - "run_mp_engine"
+
+  vllm:worker:
+    description: "vLLM worker process errors"
+    patterns:
+      - "WorkerProc"
+      - "worker"
+      - "multiprocessing"
+      - "Error in worker"
+
+  vllm:config:
+    description: "vLLM configuration errors"
+    patterns:
+      - "max_model_len"
+      - "max_num_seqs"
+      - "block_size"
+      - "scheduler"
+      - "override_tt_config"
+
+  vllm:connection:
+    description: "vLLM server connection errors"
+    patterns:
+      - "ConnectionError"
+      - "HTTPConnectionPool"
+      - "Max retries exceeded"
+      - "port 8000"
+      - "connection refused"
+
+  # TT-INFERENCE-SERVER
+  app:cli:
+    description: "CLI argument/startup errors"
+    patterns:
+      - "error: unrecognized arguments"
+      - "error: invalid choice"
+      - "error: the following arguments are required"
+      - "argparse"
+      - "usage:"
+
+  app:server:
+    description: "Inference server startup/runtime errors"
+    patterns:
+      - "inference-server"
+      - "server startup"
+      - "server failed"
+      - "[SERVER]"
+
+  app:api:
+    description: "API/endpoint errors"
+    patterns:
+      - "HTTP"
+      - "endpoint"
+      - "request failed"
+      - "API error"
+
+  app:cache:
+    description: "Model cache generation issues"
+    patterns:
+      - "Cache generation"
+      - "cache timeout"
+      - "cache failed"
+
+  # TTNN
+  ttnn:op:
+    description: "TTNN operator errors"
+    patterns:
+      - "ttnn::"
+      - "operation failed"
+      - "op constraint"
+
+  ttnn:shape:
+    description: "Tensor shape/layout errors"
+    patterns:
+      - "shape mismatch"
+      - "dimension"
+      - "layout"
+
+  # MODEL
+  model:load:
+    description: "Model loading errors"
+    patterns:
+      - "model load"
+      - "checkpoint"
+      - "from_pretrained"
+      - "safetensors"
+
+  model:accuracy:
+    description: "Model accuracy/correctness errors"
+    patterns:
+      - "PCC"
+      - "accuracy"
+      - "mismatch"
+      - "AllClose"
+
+layers:
+  - name: framework
+    description: "TT-Metal framework layer"
+    path_patterns:
+      - "/tt_metal/"
+      - "/ttnn/cpp/"
+      - "mesh_trace.cpp"
+      - "tt_cluster.cpp"
+      - "dispatch"
+      - "command_queue"
+    priority: 20
+
+  - name: operations
+    description: "TTNN operations layer"
+    path_patterns:
+      - "/ttnn/operations/"
+      - "op_library"
+    priority: 30
+
+  - name: model
+    description: "Model implementations"
+    path_patterns:
+      - "/models/"
+      - "/tt-train/"
+    priority: 40
+
+  - name: serving
+    description: "vLLM serving layer"
+    path_patterns:
+      - "/vllm/"
+      - "site-packages/vllm"
+      - "engine.py"
+      - "llm_engine.py"
+    priority: 50
+
+  - name: application
+    description: "Application layer"
+    path_patterns:
+      - "/tt-inference-server/"
+      - "[SERVER]"
+      - "inference"
+    priority: 60
+
+test_patterns:
+  - name: return_codes_array
+    pattern: 'failed with return codes?:\s*\[([^\]]+)\]'
+    type: return_codes
+  - name: pytest_summary
+    pattern: '(\d+)\s+passed.*?(\d+)\s+failed'
+    type: passed_failed
+
+failed_test_patterns:
+  - pattern: 'FAILED\s+(\S+::\S+)'
+  - pattern: 'workflow:\s*(\w+),?\s*failed'
+    prefix: "workflow:"
+  - pattern: 'test_(\w+)\[.*\].*ConnectionError'
+    prefix: "connection:"
+  - pattern: 'Test case (\w+) exited: Test failed'

@@ -1,0 +1,15 @@
+# Virtual environment
+.venv/
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Lock file (deps are simple enough)
+uv.lock

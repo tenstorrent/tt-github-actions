@@ -1,0 +1,9 @@
+{
+  "category": "infra:no_logs",
+  "root_cause": "Missing log dirs: ['tt-inference-server/workflow_logs/docker_server']",
+  "_job": {
+    "name": "run-release-FLUX.1-schnell-t3k",
+    "status": "INFRA_FAILURE",
+    "status_code": "PURPLE"
+  }
+}

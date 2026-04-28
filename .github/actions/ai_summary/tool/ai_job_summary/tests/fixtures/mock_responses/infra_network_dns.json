@@ -1,0 +1,12 @@
+{
+  "status": "CRASH",
+  "category": "infra:network",
+  "subcategory": "dns_resolution_failure",
+  "layer": "application",
+  "problematic_layer": "application",
+  "root_cause": "DNS resolution failure when attempting to download model files from huggingface.co. The server failed to load the model due to 'Temporary failure in name resolution' errors, causing all liveness checks to return 500 Internal Server Error.",
+  "error_message": "Failed to resolve 'huggingface.co' ([Errno -3] Temporary failure in name resolution)",
+  "failed_tests": [],
+  "suggested_action": "Check network connectivity and DNS configuration. Verify internet access from the CI runner. Consider using cached model files or a local mirror if network is restricted.",
+  "confidence": "high"
+}
