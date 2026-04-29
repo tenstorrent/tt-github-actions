@@ -609,6 +609,8 @@ class GuideLLMBenchmarkDataMapper(_BenchmarkDataMapper):
             top_args_redacted = dict(top_args)
             if "backend_kwargs" in top_args_redacted:
                 top_args_redacted["backend_kwargs"] = self._redact_api_key(top_args_redacted.get("backend_kwargs"))
+            
+            dataset_name = top_args.get("processor", None)
 
             results = []
             for benchmark in report_data.get("benchmarks") or []:
@@ -680,7 +682,7 @@ class GuideLLMBenchmarkDataMapper(_BenchmarkDataMapper):
                         config_params=config_params,
                         input_seq_length=prompt_tokens,
                         output_seq_length=output_tokens,
-                        dataset_name=data_spec_str,
+                        dataset_name=dataset_name,
                         docker_image=(model_spec_data or {}).get("docker_image") or job.docker_image,
                     )
                 )

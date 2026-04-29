@@ -463,6 +463,7 @@ SAMPLE_GUIDELLM_OUTPUT = {
             "model": "deepseek-ai/DeepSeek-R1-0528",
             "api_key": "warsaw2026",
         },
+        "processor": "deepseek-ai/DeepSeek-R1-0528",
         "max_seconds": 3600,
         "max_errors": 500,
     },
@@ -643,9 +644,16 @@ def test_guidellm_input_output_seq_length_from_args_data(guidellm_mapper, guidel
     assert result[0].output_sequence_length == 3000
 
 
-def test_guidellm_dataset_name_is_data_spec(guidellm_mapper, guidellm_pipeline):
+def test_guidellm_dataset_name_is_processor(guidellm_mapper, guidellm_pipeline):
     result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, SAMPLE_GUIDELLM_OUTPUT)
-    assert result[0].dataset_name == SAMPLE_GUIDELLM_OUTPUT["args"]["data"][0]
+    assert result[0].dataset_name == "deepseek-ai/DeepSeek-R1-0528"
+
+
+def test_guidellm_dataset_name_missing_processor(guidellm_mapper, guidellm_pipeline):
+    data = {**SAMPLE_GUIDELLM_OUTPUT, "args": {**SAMPLE_GUIDELLM_OUTPUT["args"]}}
+    data["args"].pop("processor", None)
+    result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, data)
+    assert result[0].dataset_name is None
 
 
 def test_guidellm_flattens_all_numeric_metrics(guidellm_mapper, guidellm_pipeline):
