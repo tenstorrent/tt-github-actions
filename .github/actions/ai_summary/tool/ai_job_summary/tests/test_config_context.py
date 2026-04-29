@@ -40,9 +40,8 @@ class TestExtractConfigExamplesFromLog:
         # Pattern 2 matches when the JSON value contains no inner quotes
         # (integer/boolean values). String values with escaped quotes won't match
         # since [^"]{0,2000} stops at any unescaped quote.
-        log = '"override_tt_config": "{"trace_region_size": 51934848}"'
-        # This format appears in logs where the JSON is embedded as a plain string
-        # with no inner quotes — typically integer/bool-only configs
+        # This format appears in logs where the JSON is embedded as a plain
+        # string with no inner quotes — typically integer/bool-only configs.
         log = '"override_tt_config": "{trace_region_size: 51934848}"'
         result = extract_config_examples_from_log(log)
         # Pattern 2 expects valid JSON after .replace('\\"', '"') — plain non-JSON won't parse

@@ -1057,5 +1057,3 @@ def calculate_time_after_error(
         delta = job_end_ts - error_ts
         if delta.total_seconds() > 0:  # Only if job continued after error
             extracted_log.time_after_crash_seconds = int(delta.total_seconds())
-
-

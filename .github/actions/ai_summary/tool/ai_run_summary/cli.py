@@ -238,6 +238,14 @@ def main():
         print("Error: config must specify output_dir", file=sys.stderr)
         sys.exit(1)
 
+    # Reject '..' components in config-provided paths. Defense-in-depth:
+    # callers are trusted (the workflow author), but a typo shouldn't be
+    # able to walk out of the workspace.
+    for key, value in (("input_dir", input_dir), ("output_dir", output_dir)):
+        if any(part == ".." for part in Path(value).parts):
+            print(f"::error::config[{key}] must not contain '..' components: {value}", file=sys.stderr)
+            sys.exit(1)
+
     # workspace anchors relative paths; absolute paths pass through unchanged.
     # expandvars on workspace lets callers use $GITHUB_WORKSPACE for the
     # in-container path (the github.workspace expression renders the host

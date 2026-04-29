@@ -181,6 +181,32 @@ class TestConfigParsing:
         with pytest.raises(SystemExit):
             _run_cli(["--config", config])
 
+    def test_dotdot_in_input_dirs_exits(self, tmp_path, capsys):
+        config = json.dumps(
+            {
+                "model": "test",
+                "workspace": str(tmp_path),
+                "input_dirs": ["../escape"],
+                "output_dir": str(tmp_path),
+            }
+        )
+        with pytest.raises(SystemExit):
+            _run_cli(["--config", config])
+        assert "must not contain '..'" in capsys.readouterr().err
+
+    def test_dotdot_in_output_dir_exits(self, tmp_path, capsys):
+        config = json.dumps(
+            {
+                "model": "test",
+                "workspace": str(tmp_path),
+                "input_dirs": ["logs"],
+                "output_dir": "../out",
+            }
+        )
+        with pytest.raises(SystemExit):
+            _run_cli(["--config", config])
+        assert "must not contain '..'" in capsys.readouterr().err
+
 
 # ── workspace anchoring ───────────────────────────────────────────────────────
 

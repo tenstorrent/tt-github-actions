@@ -116,6 +116,10 @@ runs:
     - name: Install Puppeteer
       if: inputs.slack-bot-token != '' && inputs.slack-channel-id != ''
       shell: bash
+      # Installs node_modules/ into the workspace. Acceptable here because
+      # this action only runs on ubuntu-latest (ephemeral runner — the VM
+      # is destroyed after the job). On a self-hosted runner this would
+      # leak deps across runs and we'd need to install under /tmp instead.
       run: npm install puppeteer
 
     - name: Generate run summary

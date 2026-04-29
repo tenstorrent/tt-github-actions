@@ -13,7 +13,10 @@ Environment variables (checked in order):
     TT_CHAT_API_KEY + TT_CHAT_URL     Tenstorrent internal LLMs
     TT_CHAT_MODEL                     Model (default: anthropic/claude-sonnet-4-5-20250929)
 
-    API_KEY + BASE_URL + MODEL        Generic OpenAI-compatible (from .env)
+    API_KEY + BASE_URL + MODEL        Generic OpenAI-compatible endpoint
+                                      (no .env loading; export the vars
+                                      yourself or use a .env loader of
+                                      your choice)
 
     OPENAI_API_KEY                    OpenAI API directly
 """
@@ -101,7 +104,7 @@ class LLMClient:
 
         Checks (in order):
         1. TT_CHAT_API_KEY + TT_CHAT_URL (Tenstorrent internal)
-        2. API_KEY + BASE_URL + MODEL (generic, from .env)
+        2. API_KEY + BASE_URL + MODEL (generic OpenAI-compatible endpoint)
         3. OPENAI_API_KEY (OpenAI direct)
         """
         # Check for TT internal LLM
@@ -114,14 +117,20 @@ class LLMClient:
                 model=os.environ.get("TT_CHAT_MODEL", "anthropic/claude-sonnet-4-5-20250929"),
             )
 
-        # Check for generic .env style
+        # Generic OpenAI-compatible endpoint requires BOTH API_KEY and
+        # BASE_URL. Without BASE_URL the OpenAI SDK silently falls back to
+        # the default OpenAI endpoint, which produces hard-to-diagnose 401s
+        # when the key is for a different provider.
         api_key = os.environ.get("API_KEY")
-        if api_key:
+        base_url = os.environ.get("BASE_URL")
+        if api_key and base_url:
             return cls(
                 api_key=api_key,
-                base_url=os.environ.get("BASE_URL"),
+                base_url=base_url,
                 model=os.environ.get("MODEL", "gpt-4o"),
             )
+        if api_key and not base_url:
+            raise ValueError("API_KEY is set but BASE_URL is missing — set BASE_URL or use OPENAI_API_KEY")
 
         # Check for OpenAI direct
         openai_key = os.environ.get("OPENAI_API_KEY")

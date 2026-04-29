@@ -128,6 +128,20 @@ class TestMain:
                 main()
         assert exc.value.code == 1
 
+    def test_dotdot_in_input_dir_exits(self, tmp_path, capsys):
+        config_str = self._config_json(tmp_path, input_dir="../escape", output_dir="out")
+        with pytest.raises(SystemExit):
+            with patch("sys.argv", ["ai-run-summary", "--config", config_str]):
+                main()
+        assert "must not contain '..'" in capsys.readouterr().err
+
+    def test_dotdot_in_output_dir_exits(self, tmp_path, capsys):
+        config_str = self._config_json(tmp_path, input_dir="in", output_dir="../out")
+        with pytest.raises(SystemExit):
+            with patch("sys.argv", ["ai-run-summary", "--config", config_str]):
+                main()
+        assert "must not contain '..'" in capsys.readouterr().err
+
     def test_model_none_skips_llm(self, tmp_path):
         self._write_summaries(tmp_path)
         config_str = self._config_json(tmp_path, input_dir=str(tmp_path), output_dir=str(tmp_path), model="none")

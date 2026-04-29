@@ -111,6 +111,18 @@ def _build_json(
     return output
 
 
+def _reject_dotdot(value: str, key: str) -> None:
+    """Reject any '..' component in a config-provided path.
+
+    Defense-in-depth: callers are trusted (the workflow author), but a typo
+    or misconfigured project config shouldn't be able to walk out of the
+    workspace. Workspace itself is exempt (callers pass $GITHUB_WORKSPACE).
+    """
+    if any(part == ".." for part in Path(value).parts):
+        print(f"::error::config[{key}] must not contain '..' components: {value}", file=sys.stderr)
+        sys.exit(1)
+
+
 def _check_config(config: dict) -> None:
     """Validate required config fields. Exits with error if any are missing."""
     required = {"input_dirs": "list of log directories to analyze", "output_dir": "directory to write summaries"}
@@ -119,6 +131,9 @@ def _check_config(config: dict) -> None:
         for e in errors:
             print(f"::error::{e}", file=sys.stderr)
         sys.exit(1)
+    for d in config.get("input_dirs", []):
+        _reject_dotdot(d, "input_dirs")
+    _reject_dotdot(config["output_dir"], "output_dir")
 
 
 def _parse_config_arg(config_arg: str) -> dict:

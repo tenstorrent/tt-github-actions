@@ -32,6 +32,11 @@ runs:
         CHECK_RUN_ID: ${{ job.check_run_id }}
         JOB_NAME: ${{ inputs.job-name || job.name }}
       run: |
+        # CHECK_RUN_ID is the numeric job id, used both for the per-leg
+        # artifact filename suffix and the JOB_URL. It is always present
+        # in Tenstorrent CI environments. The fallback below would
+        # collide across matrix legs that share GITHUB_JOB and is only a
+        # safety net for ad-hoc / non-CI invocations.
         JOB_ID="${CHECK_RUN_ID:-${GITHUB_RUN_ID}_${GITHUB_JOB}}"
         JOB_URL=""
         if [ -n "$CHECK_RUN_ID" ] && [ -n "$GITHUB_SERVER_URL" ] && [ -n "$GITHUB_REPOSITORY" ] && [ -n "$GITHUB_RUN_ID" ]; then
