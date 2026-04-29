@@ -652,9 +652,7 @@ def test_guidellm_flattens_all_numeric_metrics(guidellm_mapper, guidellm_pipelin
     result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, SAMPLE_GUIDELLM_OUTPUT)
     by_name = {m.name: m.value for m in result[0].measurements}
     assert by_name["metrics_time_to_first_token_ms_successful_mean"] == pytest.approx(49.23)
-    assert by_name["metrics_time_to_first_token_ms_successful_percentiles_p99"] == pytest.approx(
-        77.79
-    )
+    assert by_name["metrics_time_to_first_token_ms_successful_percentiles_p99"] == pytest.approx(77.79)
     assert by_name["metrics_time_per_output_token_ms_successful_mean"] == pytest.approx(11.99)
     assert by_name["metrics_inter_token_latency_ms_successful_std_dev"] == pytest.approx(0.06)
     assert by_name["metrics_requests_per_second_total_mean"] == pytest.approx(2.49)

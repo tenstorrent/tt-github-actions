@@ -600,9 +600,7 @@ class GuideLLMBenchmarkDataMapper(_BenchmarkDataMapper):
             metadata = report_data.get("metadata") or {}
 
             args_data = top_args.get("data") or []
-            data_spec_str = (
-                args_data[0] if args_data and isinstance(args_data[0], str) else None
-            )
+            data_spec_str = args_data[0] if args_data and isinstance(args_data[0], str) else None
             data_spec = self._parse_data_spec(data_spec_str)
 
             prompt_tokens = int(data_spec["prompt_tokens"]) if "prompt_tokens" in data_spec else None
@@ -610,30 +608,18 @@ class GuideLLMBenchmarkDataMapper(_BenchmarkDataMapper):
 
             top_args_redacted = dict(top_args)
             if "backend_kwargs" in top_args_redacted:
-                top_args_redacted["backend_kwargs"] = self._redact_api_key(
-                    top_args_redacted.get("backend_kwargs")
-                )
+                top_args_redacted["backend_kwargs"] = self._redact_api_key(top_args_redacted.get("backend_kwargs"))
 
             results = []
             for benchmark in report_data.get("benchmarks") or []:
                 model_id = self._safe_get(benchmark, "config.backend.model") or ""
-                model_name = (
-                    model_id.split("/", 1)[-1] if "/" in model_id else model_id
-                )
+                model_name = model_id.split("/", 1)[-1] if "/" in model_id else model_id
 
                 flat_metrics = {}
+                flat_metrics.update(self._flatten_numeric(benchmark.get("metrics") or {}, "metrics"))
+                flat_metrics.update(self._flatten_numeric(benchmark.get("scheduler_state") or {}, "scheduler_state"))
                 flat_metrics.update(
-                    self._flatten_numeric(benchmark.get("metrics") or {}, "metrics")
-                )
-                flat_metrics.update(
-                    self._flatten_numeric(
-                        benchmark.get("scheduler_state") or {}, "scheduler_state"
-                    )
-                )
-                flat_metrics.update(
-                    self._flatten_numeric(
-                        benchmark.get("scheduler_metrics") or {}, "scheduler_metrics"
-                    )
+                    self._flatten_numeric(benchmark.get("scheduler_metrics") or {}, "scheduler_metrics")
                 )
                 start = self._safe_get(benchmark, "scheduler_state.start_time")
                 end = self._safe_get(benchmark, "scheduler_state.end_time")
@@ -695,8 +681,7 @@ class GuideLLMBenchmarkDataMapper(_BenchmarkDataMapper):
                         input_seq_length=prompt_tokens,
                         output_seq_length=output_tokens,
                         dataset_name=data_spec_str,
-                        docker_image=(model_spec_data or {}).get("docker_image")
-                        or job.docker_image,
+                        docker_image=(model_spec_data or {}).get("docker_image") or job.docker_image,
                     )
                 )
             return results
