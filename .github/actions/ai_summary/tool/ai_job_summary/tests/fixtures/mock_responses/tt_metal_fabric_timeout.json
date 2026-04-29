@@ -1,0 +1,12 @@
+{
+  "status": "CRASH",
+  "category": "tt-metal:fabric",
+  "subcategory": "ethernet_timeout",
+  "layer": "framework",
+  "problematic_layer": "framework",
+  "root_cause": "Ethernet core service timeout during multi-chip communication while executing prefill_forward_text on mesh_device, causing EngineCore to crash and server to terminate.",
+  "error_message": "RuntimeError: Timeout waiting for Ethernet core service remote IO request.",
+  "failed_tests": [],
+  "suggested_action": "Check ethernet fabric connectivity between chips in T3K mesh. Verify firmware compatibility and review mesh_device synchronization timeout settings.",
+  "confidence": "high"
+}

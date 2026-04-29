@@ -1,0 +1,164 @@
+INFO 03-10 08:42:58 [importing.py:44] Triton is installed but 0 active driver(s) found (expected 1). Disabling Triton to prevent runtime errors.
+INFO 03-10 08:42:58 [importing.py:68] Triton not installed or not compatible; certain GPU-related functions will not be available.
+2026-03-10 08:42:58,150 - __main__ - INFO - Using pre-resolved runtime model spec from RUNTIME_MODEL_SPEC_JSON_PATH=/home/container_app_user/model_specs/runtime_model_spec_2026-03-10_08-42-47_id_tt-transformers_gemma-3-4b-it_n300_EL_A1PC5.json
+2026-03-10 08:42:58,150 - __main__ - INFO - Loading runtime model spec from: /home/container_app_user/model_specs/runtime_model_spec_2026-03-10_08-42-47_id_tt-transformers_gemma-3-4b-it_n300_EL_A1PC5.json
+2026-03-10 08:42:58,150 - __main__ - INFO - Set MESH_DEVICE to N300
+2026-03-10 08:42:58,150 - __main__ - INFO - Set TT_CACHE_PATH to /home/container_app_user/cache_root/tt_metal_cache/cache_gemma-3-4b-it/N300
+2026-03-10 08:42:58,150 - __main__ - INFO - Downloading weights from google/gemma-3-4b-it to /home/container_app_user/cache_root/weights/gemma-3-4b-it
+
+Fetching 15 files:   0%|          | 0/15 [00:00<?, ?it/s]
+Fetching 15 files:   7%|▋         | 1/15 [00:00<00:02,  5.00it/s]
+Fetching 15 files:  47%|████▋     | 7/15 [00:08<00:10,  1.28s/it]
+Fetching 15 files:  53%|█████▎    | 8/15 [00:08<00:07,  1.09s/it]
+Fetching 15 files: 100%|██████████| 15/15 [00:08<00:00,  1.70it/s]
+2026-03-10 08:43:07,052 - __main__ - INFO - Using model spec: id_tt-transformers_gemma-3-4b-it_n300
+2026-03-10 08:43:07,052 - __main__ - INFO - Set TT_METAL_OPERATION_TIMEOUT_SECONDS=5.0
+2026-03-10 08:43:07,052 - __main__ - INFO - Set TT_METAL_DISPATCH_TIMEOUT_COMMAND_TO_EXECUTE=/home/container_app_user/tt-metal/python_env/bin/python /home/container_app_user/tt-metal/tools/triage/triage.py --disable-progress > /home/container_app_user/logs/tt-triage-$(date +%Y%m%d-%H%M%S).log 2>&1
+2026-03-10 08:43:07,052 - __main__ - WARNING - env var WH_ARCH_YAML is already set to wormhole_b0_80_arch_eth_dispatch.yaml, overriding with wormhole_b0_80_arch_eth_dispatch.yaml
+2026-03-10 08:43:07,053 - __main__ - INFO - setting env var: WH_ARCH_YAML=wormhole_b0_80_arch_eth_dispatch.yaml
+2026-03-10 08:43:07,053 - __main__ - WARNING - env var MESH_DEVICE is already set to N300, overriding with N300
+2026-03-10 08:43:07,053 - __main__ - INFO - setting env var: MESH_DEVICE=N300
+2026-03-10 08:43:07,053 - __main__ - WARNING - env var ARCH_NAME is already set to wormhole_b0, overriding with wormhole_b0
+2026-03-10 08:43:07,053 - __main__ - INFO - setting env var: ARCH_NAME=wormhole_b0
+2026-03-10 08:43:07,053 - __main__ - INFO - setting env var: VLLM_CONFIGURE_LOGGING=1
+2026-03-10 08:43:07,053 - __main__ - INFO - setting env var: VLLM_RPC_TIMEOUT=900000
+2026-03-10 08:43:07,053 - __main__ - WARNING - env var VLLM_TARGET_DEVICE is already set to tt, overriding with tt
+2026-03-10 08:43:07,053 - __main__ - INFO - setting env var: VLLM_TARGET_DEVICE=tt
+2026-03-10 08:43:07,053 - __main__ - INFO - setting env var: TORCHDYNAMO_DISABLE=1
+[... 47 lines omitted ...]
+(APIServer pid=1) INFO 03-10 08:43:20 tt.py:377] Automatic prefix caching is disabled
+(APIServer pid=1) DEBUG 03-10 08:43:20 __init__.py:32] No plugins for group vllm.stat_logger_plugins found.
+(APIServer pid=1) DEBUG 03-10 08:43:25 __init__.py:33] No IOProcessor plugins requested by the model
+INFO 03-10 08:43:34 [importing.py:44] Triton is installed but 0 active driver(s) found (expected 1). Disabling Triton to prevent runtime errors.
+INFO 03-10 08:43:34 [importing.py:68] Triton not installed or not compatible; certain GPU-related functions will not be available.
+(APIServer pid=1) DEBUG 03-10 08:43:35 utils.py:1026] Waiting for 1 local, 0 remote core engine proc(s) to connect.
+(APIServer pid=1) DEBUG 03-10 08:43:35 utils.py:1144] HELLO from local core engine process 0.
+[... 6 lines omitted ...]
+2026-03-10 08:43:38.268 | info     |             UMD | Established firmware bundle version: 19.3.0 (topology_discovery.cpp:433)
+2026-03-10 08:43:38.285 | info     |             UMD | Creating TopologyDiscovery for architecture: wormhole_b0 (topology_discovery.cpp:64)
+2026-03-10 08:43:38.299 | info     |             UMD | Established firmware bundle version: 19.3.0 (topology_discovery.cpp:433)
+2026-03-10 08:43:38.328 | info     |             UMD | Harvesting masks for chip 0 tensix: 0x201 dram: 0x0 eth: 0x0 pcie: 0x0 l2cpu: 0x0 (cluster.cpp:331)
+2026-03-10 08:43:38.426 | warning  |             UMD | hwloc_set_area_membind(): failed for physical_device_id: 0 on NodeSet: [0] with errno: Operation not permitted (pid: 344 tid: 140673569038336) (cpuset_lib.cpp:443)
+2026-03-10 08:43:38.426 | warning  |             UMD | ---- ttSiliconDevice::init_hugepage: bind_area_to_memory_nodeset() failed (physical_device_id: 0 ch: 0). Hugepage allocation is not on NumaNode matching TT Device. Side-Effect is decreased Device->Host perf (Issue #893). (silicon_sysmem_manager.cpp:188)
+2026-03-10 08:43:38.426 | warning  |             UMD | hwloc_set_area_membind(): failed for physical_device_id: 0 on NodeSet: [0] with errno: Operation not permitted (pid: 344 tid: 140673569038336) (cpuset_lib.cpp:443)
+2026-03-10 08:43:38.426 | warning  |             UMD | ---- ttSiliconDevice::init_hugepage: bind_area_to_memory_nodeset() failed (physical_device_id: 0 ch: 1). Hugepage allocation is not on NumaNode matching TT Device. Side-Effect is decreased Device->Host perf (Issue #893). (silicon_sysmem_manager.cpp:188)
+2026-03-10 08:43:38.427 | info     |             UMD | Harvesting masks for chip 1 tensix: 0x202 dram: 0x0 eth: 0x0 pcie: 0x0 l2cpu: 0x0 (cluster.cpp:331)
+2026-03-10 08:43:38.448 | info     |             UMD | Opening local chip ids/PCIe ids: {0}/[0] and remote chip ids {1} (cluster.cpp:180)
+2026-03-10 08:43:38.448 | info     |             UMD | IOMMU: disabled (cluster.cpp:155)
+2026-03-10 08:43:38.448 | info     |             UMD | KMD version: 2.5.0 (cluster.cpp:158)
+[... 164 lines omitted ...]
+2026-03-10 08:47:35.514 | info     |              Op | Multicast eligibility: 8/8 chains using mcast (all-or-nothing) (sdpa_program_factory.cpp:1266)
+(APIServer pid=1) DEBUG 03-10 08:47:35 utils.py:1031] Waiting for 1 local, 0 remote core engine proc(s) to start.
+(APIServer pid=1) DEBUG 03-10 08:47:45 utils.py:1031] Waiting for 1 local, 0 remote core engine proc(s) to start.
+2026-03-10 08:47:50.480 | info     |              Op | DRAM Auto slice with 1386080 free memory (op_slicing.cpp:182)
+2026-03-10 08:47:50.480 | info     |              Op | Determining slice config: output_layout=ROW_MAJOR, output_height=16, output_width=16, auto_slice_type=true (op_slicing.cpp:189)
+2026-03-10 08:47:50.480 | info     |              Op | Max possible slices for ROW_MAJOR layout and width-slicing: 16 (output_sliced_dim=16) (op_slicing.cpp:205)
+2026-03-10 08:47:50.480 | info     |              Op | Found valid config with num_slices=1, L1 usage=295488 (op_slicing.cpp:220)
+[... 980 lines omitted ...]
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:48.319 | INFO     | models.tt_transformers.tt.generator:prefill_forward_text:536 - Prefill seq len: 1024, max_prefill_chunk_size: 131072, trace: False
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:48.404 | INFO     | models.demos.multimodal.gemma3.tt.gemma_e2e_model:compute_vision_token:166 - Starting vision encoder for 1 image(s) in 1 batch(es)
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:48.404 | INFO     | models.demos.multimodal.gemma3.tt.gemma_e2e_model:compute_vision_token:171 - Processing batch 1/1
+2026-03-10 08:54:48.692 | info     |              Op | DRAM Auto slice with 1386080 free memory (op_slicing.cpp:182)
+2026-03-10 08:54:48.692 | info     |              Op | Determining slice config: output_layout=ROW_MAJOR, output_height=16, output_width=16, auto_slice_type=true (op_slicing.cpp:189)
+2026-03-10 08:54:48.692 | info     |              Op | Max possible slices for ROW_MAJOR layout and width-slicing: 16 (output_sliced_dim=16) (op_slicing.cpp:205)
+2026-03-10 08:54:48.692 | info     |              Op | Found valid config with num_slices=1, L1 usage=295488 (op_slicing.cpp:220)
+[... 4 lines omitted ...]
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:49.104 | INFO     | models.tt_transformers.tt.generator:prefill_forward_text:536 - Prefill seq len: 1024, max_prefill_chunk_size: 131072, trace: False
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:49.187 | INFO     | models.demos.multimodal.gemma3.tt.gemma_e2e_model:compute_vision_token:166 - Starting vision encoder for 1 image(s) in 1 batch(es)
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:49.187 | INFO     | models.demos.multimodal.gemma3.tt.gemma_e2e_model:compute_vision_token:171 - Processing batch 1/1
+2026-03-10 08:54:49.473 | info     |              Op | DRAM Auto slice with 1386080 free memory (op_slicing.cpp:182)
+2026-03-10 08:54:49.473 | info     |              Op | Determining slice config: output_layout=ROW_MAJOR, output_height=16, output_width=16, auto_slice_type=true (op_slicing.cpp:189)
+2026-03-10 08:54:49.473 | info     |              Op | Max possible slices for ROW_MAJOR layout and width-slicing: 16 (output_sliced_dim=16) (op_slicing.cpp:205)
+2026-03-10 08:54:49.473 | info     |              Op | Found valid config with num_slices=1, L1 usage=295488 (op_slicing.cpp:220)
+[... 4 lines omitted ...]
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:49.919 | INFO     | models.tt_transformers.tt.generator:prefill_forward_text:536 - Prefill seq len: 1024, max_prefill_chunk_size: 131072, trace: False
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:50.000 | INFO     | models.demos.multimodal.gemma3.tt.gemma_e2e_model:compute_vision_token:166 - Starting vision encoder for 1 image(s) in 1 batch(es)
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:50.000 | INFO     | models.demos.multimodal.gemma3.tt.gemma_e2e_model:compute_vision_token:171 - Processing batch 1/1
+2026-03-10 08:54:50.287 | info     |              Op | DRAM Auto slice with 1386080 free memory (op_slicing.cpp:182)
+2026-03-10 08:54:50.287 | info     |              Op | Determining slice config: output_layout=ROW_MAJOR, output_height=16, output_width=16, auto_slice_type=true (op_slicing.cpp:189)
+2026-03-10 08:54:50.287 | info     |              Op | Max possible slices for ROW_MAJOR layout and width-slicing: 16 (output_sliced_dim=16) (op_slicing.cpp:205)
+2026-03-10 08:54:50.287 | info     |              Op | Found valid config with num_slices=1, L1 usage=295488 (op_slicing.cpp:220)
+[... 4 lines omitted ...]
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:50.681 | INFO     | models.tt_transformers.tt.generator:prefill_forward_text:536 - Prefill seq len: 1024, max_prefill_chunk_size: 131072, trace: False
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:50.770 | INFO     | models.demos.multimodal.gemma3.tt.gemma_e2e_model:compute_vision_token:166 - Starting vision encoder for 1 image(s) in 1 batch(es)
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:50.770 | INFO     | models.demos.multimodal.gemma3.tt.gemma_e2e_model:compute_vision_token:171 - Processing batch 1/1
+2026-03-10 08:54:51.062 | info     |              Op | DRAM Auto slice with 1386080 free memory (op_slicing.cpp:182)
+2026-03-10 08:54:51.062 | info     |              Op | Determining slice config: output_layout=ROW_MAJOR, output_height=16, output_width=16, auto_slice_type=true (op_slicing.cpp:189)
+2026-03-10 08:54:51.062 | info     |              Op | Max possible slices for ROW_MAJOR layout and width-slicing: 16 (output_sliced_dim=16) (op_slicing.cpp:205)
+2026-03-10 08:54:51.062 | info     |              Op | Found valid config with num_slices=1, L1 usage=295488 (op_slicing.cpp:220)
+[... 4 lines omitted ...]
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:51.486 | INFO     | models.tt_transformers.tt.generator:prefill_forward_text:536 - Prefill seq len: 1024, max_prefill_chunk_size: 131072, trace: False
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:51.570 | INFO     | models.demos.multimodal.gemma3.tt.gemma_e2e_model:compute_vision_token:166 - Starting vision encoder for 1 image(s) in 1 batch(es)
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:51.571 | INFO     | models.demos.multimodal.gemma3.tt.gemma_e2e_model:compute_vision_token:171 - Processing batch 1/1
+2026-03-10 08:54:51.859 | info     |              Op | DRAM Auto slice with 1386080 free memory (op_slicing.cpp:182)
+2026-03-10 08:54:51.859 | info     |              Op | Determining slice config: output_layout=ROW_MAJOR, output_height=16, output_width=16, auto_slice_type=true (op_slicing.cpp:189)
+2026-03-10 08:54:51.859 | info     |              Op | Max possible slices for ROW_MAJOR layout and width-slicing: 16 (output_sliced_dim=16) (op_slicing.cpp:205)
+2026-03-10 08:54:51.859 | info     |              Op | Found valid config with num_slices=1, L1 usage=295488 (op_slicing.cpp:220)
+[... 4 lines omitted ...]
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:52.289 | INFO     | models.tt_transformers.tt.generator:prefill_forward_text:536 - Prefill seq len: 1024, max_prefill_chunk_size: 131072, trace: False
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:52.375 | INFO     | models.demos.multimodal.gemma3.tt.gemma_e2e_model:compute_vision_token:166 - Starting vision encoder for 1 image(s) in 1 batch(es)
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:52.375 | INFO     | models.demos.multimodal.gemma3.tt.gemma_e2e_model:compute_vision_token:171 - Processing batch 1/1
+2026-03-10 08:54:52.669 | info     |              Op | DRAM Auto slice with 1386080 free memory (op_slicing.cpp:182)
+2026-03-10 08:54:52.669 | info     |              Op | Determining slice config: output_layout=ROW_MAJOR, output_height=16, output_width=16, auto_slice_type=true (op_slicing.cpp:189)
+2026-03-10 08:54:52.669 | info     |              Op | Max possible slices for ROW_MAJOR layout and width-slicing: 16 (output_sliced_dim=16) (op_slicing.cpp:205)
+2026-03-10 08:54:52.669 | info     |              Op | Found valid config with num_slices=1, L1 usage=295488 (op_slicing.cpp:220)
+[... 4 lines omitted ...]
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:53.096 | INFO     | models.tt_transformers.tt.generator:prefill_forward_text:536 - Prefill seq len: 1024, max_prefill_chunk_size: 131072, trace: False
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:53.182 | INFO     | models.demos.multimodal.gemma3.tt.gemma_e2e_model:compute_vision_token:166 - Starting vision encoder for 1 image(s) in 1 batch(es)
+(EngineCore_DP0 pid=344) 2026-03-10 08:54:53.183 | INFO     | models.demos.multimodal.gemma3.tt.gemma_e2e_model:compute_vision_token:171 - Processing batch 1/1
+[... 5440 lines omitted ...]
+(EngineCore_DP0 pid=344) 2026-03-10 09:08:36.298 | INFO     | models.tt_transformers.tt.generator:prefill_forward_text:536 - Prefill seq len: 65536, max_prefill_chunk_size: 131072, trace: False
+2026-03-10 09:08:56.581 | error    |           Metal | Timeout detected (metal_context.cpp:890)
+2026-03-10 09:08:56.581 | info     |           Metal | Serializing Inspector RPC data (metal_context.cpp:893)
+2026-03-10 09:08:56.584 | info     |           Metal | Executing command: /home/container_app_user/tt-metal/python_env/bin/python /home/container_app_user/tt-metal/tools/triage/triage.py --disable-progress > /home/container_app_user/logs/tt-triage-$(date +%Y%m%d-%H%M%S).log 2>&1 (metal_context.cpp:900)
+2026-03-10 09:08:56.645 | warning  |           Metal | Timeout command '/home/container_app_user/tt-metal/python_env/bin/python /home/container_app_user/tt-metal/tools/triage/triage.py --disable-progress > /home/container_app_user/logs/tt-triage-$(date +%Y%m%d-%H%M%S).log 2>&1' returned non-zero exit code: 1 (metal_context.cpp:906)
+2026-03-10 09:08:56.645 | critical |          Always | TT_THROW: TIMEOUT: device timeout in fetch queue wait, potential hang detected (assert.hpp:104)
+(EngineCore_DP0 pid=344) ERROR 03-10 09:08:56 [dump_input.py:72] Dumping input data for V1 LLM engine (v0.1.dev11679+g1f567b7c2) with config: model='google/gemma-3-4b-it', speculative_config=None, tokenizer='google/gemma-3-4b-it', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=131072, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=True, quantization=None, enforce_eager=False, kv_cache_dtype=auto, device_config=MeshDevice(1x2 grid, 2 devices), structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None), seed=9472, served_model_name=google/gemma-3-4b-it, enable_prefix_caching=False, enable_chunked_prefill=False, pooler_config=None, override_tt_config={'l1_small_size': 4096, 'fabric_config': 'FABRIC_1D'}, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'eager', 'custom_ops': ['all'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer'], 'compile_mm_encoder': False, 'use_inductor': None, 'compile_sizes': None, 'inductor_compile_config': {'enable_auto_functionalized_v2': False}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.NONE: 0>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': None, 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {}, 'max_cudagraph_capture_size': None, 'local_cache_dir': None},
+(EngineCore_DP0 pid=344) ERROR 03-10 09:08:56 [dump_input.py:79] Dumping scheduler output for model execution: SchedulerOutput(scheduled_new_reqs=[NewRequestData(req_id=cmpl-6f07f10bb8814b16b44fb3013c18a4d5-0,prompt_token_ids_len=64459,mm_features=[],sampling_params=SamplingParams(n=1, presence_penalty=0.0, frequency_penalty=0.0, repetition_penalty=1.0, temperature=0.0, top_p=1.0, top_k=0, min_p=0.0, seed=1234, stop=[], stop_token_ids=[106], bad_words=[], include_stop_str_in_output=False, ignore_eos=False, max_tokens=256, min_tokens=0, logprobs=None, prompt_logprobs=None, skip_special_tokens=True, spaces_between_special_tokens=True, truncate_prompt_tokens=None, structured_outputs=None, extra_args=None),block_ids=([546, 547, 578, 647, 712, 598, 599, 622, 689, 464, 465, 466, 467, 526, 586, 653, 721, 571, 572, 573, 623, 690, 640, 641, 670, 613, 614, 634, 702, 638, 639, 648, 563, 564, 565, 609, 675, 549, 550, 561, 630, 583, 584, 585, 612, 679, 579, 580, 610, 676, 574, 575, 576, 637, 556, 557, 596, 657, 422, 423, 424, 438, 513, 560, 629, 590, 591, 592, 732, 659, 619, 618, 671, 628, 627, 687, 626, 625, 624, 733, 668, 667, 666, 688, 620, 551, 502, 492, 491, 490, 729, 655, 594, 528, 523, 522, 730, 656, 595, 570, 569, 568, 701, 633, 603, 602, 759, 696, 684, 683, 770, 706, 636, 589, 588, 587, 755, 680, 617, 616, 615, 788, 736, 669, 646, 645, 758, 726, 725, 786, 734, 686, 685, 760, 697, 678, 677, 757, 695, 694, 693, 797, 753, 751, 750, 774, 713, 652, 651, 650, 813, 756, 717, 716, 782, 731, 658, 606, 605, 604, 787, 735, 719, 718, 795, 768, 767, 831, 772, 708, 699, 698, 818, 763, 700, 692, 691, 819, 764, 711, 710, 709, 834, 773, 740, 739, 839, 776, 748, 747, 857, 794, 749, 738, 737, 838, 775, 720, 682, 681, 858, 796, 752, 672, 662, 661, 871, 815, 799, 798, 830, 771, 707, 674, 673, 832, 817, 816, 854, 790, 745, 728, 727, 848, 785, 766, 765, 843, 780, 723, 654, 644, 643, 860, 807, 806, 805, 901, 841, 777, 722, 665, 664, 663, 855, 793, 746, 742, 741, 867, 812, 811, 810, 886, 829, 828, 827, 884, 825, 769, 705, 704, 703, 876, 820, 792, 791, 933, 870, 814, 784, 783, 940, 887, 852, 851, 903, 844, 781, 724, 715, 714, 921, 856, 822, 821, 915, 878, 877, 947, 897, 866, 865, 946, 896, 862, 861, 927, 859, 800, 754, 744, 743, 926, 889, 888, 975, 929, 891, 890, 944, 892, 833, 824, 823, 960, 909, 881, 880, 964, 911, 853, 789, 762, 761, 939, 885, 826, 779, 778, 945, 895, 875, 874, 961, 910, 905, 904, 988, 934, 917, 916, 982, 931, 869, 846, 845, 970, 920, 919, 918, 948, 898, 837, 802, 801, 971, 938, 937, 995, 935, 923, 922, 1019, 956, 902, 842, 836, 835, 983, 932, 894, 893, 965, 912, 883, 882, 996, 936, 879, 850, 849, 979, 930, 868, 864, 863, 1016, 952, 900, 840, 809, 808, 1015, 967, 966, 1022, 959, 906, 847, 804, 803, 1042, 974, 928, 908, 907, 998, 991, 990, 105, 994, 985, 984, 1047, 977, 963, 962, 1011, 981, 980, 1017, 953, 925, 924, 148, 1018, 973, 972, 1039, 993, 992, 1036, 1003, 1002, 16, 1004, 969, 968, 1052, 978, 951, 950, 162, 989, 958, 957, 79, 1046, 976, 943, 942, 180, 1033, 1032, 67, 1014, 949, 899, 873, 872, 117, 1021, 1020, 81, 1041, 1006, 1005, 145, 1029, 987, 986, 74, 1038, 1037, 15, 1028, 1027, 48, 1055, 1026, 1025, 38, 108, 1031, 1030, 80, 1043, 1008, 1007, 23, 1049, 1013, 1012, 65, 114, 1024, 1023, 184, 169, 1051, 1050, 20, 17, 18, 109, 66, 1045, 1044, 82, 1040, 1001, 1000, 164, 19, 999, 941, 914, 913, 64, 71, 72, 94, 14, 1035, 1034, 35, 171, 997, 955, 954, 7, 175, 1048, 1010, 1009, 95, 40, 41, 144, 49, 146, 125, 39, 106, 107, 63, 155, 190, 193, 178, 115, 116, 60, 149, 181, 8, 83, 173, 113, 3, 96, 97, 59, 199, 47, 92, 93, 177, 70, 1, 98, 119, 120, 229, 126, 170, 4, 112, 152, 133, 9, 84, 85, 166, 122, 123, 91, 135, 136, 2, 57, 58, 132, 287, 127, 279, 130, 159, 198, 168, 176, 121, 68, 69, 191, 158, 214, 62, 12, 124, 86, 87, 156, 5, 61, 161, 270, 137, 154, 188, 167, 230, 153, 56, 73, 1054, 1053, 11, 271, 88, 160, 46, 90, 200, 165, 118, 42, 231, 189, 36, 37, 241, 44, 13, 236, 21, 22, 310, 43, 10, 128, 129, 239, 258, 131, 6, 110, 111, 172, 242, 45, 89, 249, 134, 51, 52, 53, 54, 55, 78, 151, 183, 269, 50, 257, 329, 75, 76, 77, 286, 138, 139, 147, 179, 24, 25, 26, 157, 192, 354, 280, 281, 282, 290, 210, 211, 212, 213, 288, 103, 104, 174, 240, 313, 324, 99, 100, 101, 102, 322, 250, 251, 252, 253, 235, 302, 237, 238, 247, 266, 338, 232, 233, 234, 32, 33, 34, 150, 182, 27, 28, 29, 30, 31, 201, 202, 203, 277, 351, 143, 163, 205, 295, 371, 246, 321, 140, 141, 142, 368, 222, 223, 224, 225, 195, 196, 197, 204, 289, 227, 228, 272, 345, 194, 208, 209, 278, 352, 226, 293, 294, 358, 206, 207, 268, 341, 412, 291, 292, 342, 413, 260, 261, 262, 398, 317, 318, 319, 320, 297, 298, 299, 300, 312, 314, 315, 316, 344, 415, 274, 275, 276, 339, 409, 264, 265, 330, 407, 273, 336, 337, 353, 420, 263, 307, 308, 309, 355, 425, 284, 285, 346, 417, 306, 325, 326, 343, 414, 283, 304, 305, 311, 397, 462, 256, 301, 380, 441, 303, 360, 392, 446, 254, 255, 221, 296, 372, 436, 359, 331, 408, 478, 219, 220, 450, 185, 186, 187, 259, 429, 348, 349, 350, 395, 457, 361, 362, 363, 364, 332, 333, 334, 335, 396, 471, 356, 357, 393, 448, 217, 218, 248, 323, 403, 384, 445, 516, 215, 216, 340, 411, 485, 369, 370, 538, 243, 244, 245, 267, 374, 375, 376, 410, 483, 442, 443, 444, 447, 520, 458, 459, 460, 461, 521, 430, 431, 432, 480, 537, 493, 542, 529, 530, 533, 535, 327, 328, 347, 418, 541, 433, 434, 435, 479, 555, 468, 469, 470, 489, 540, 399, 400, 428, 504, 381, 382, 383, 416, 488, 367, 373, 437, 512, 559, 496, 497, 544, 365, 366, 402, 421, 499, 548, 495, 507, 508, 532, 600, 401, 451, 452, 494, 543, 506, 473, 474, 484, 539, 608, 394, 449, 524, 581, 472, 505, 558, 377, 378, 379, 487, 519, 577, 481, 482, 501, 503, 554, 621, 486, 440, 515, 567, 635, 500, 536, 607, 385],),num_computed_tokens=0,lora_request=None,prompt_embeds_shape=None)], scheduled_cached_reqs=CachedRequestData(req_ids=[], resumed_req_ids=[], new_token_ids=[], all_token_ids={}, new_block_ids=[], num_computed_tokens=[], num_output_tokens=[]), num_scheduled_tokens={cmpl-6f07f10bb8814b16b44fb3013c18a4d5-0: 64459}, total_num_scheduled_tokens=64459, scheduled_spec_decode_tokens={}, scheduled_encoder_inputs={}, num_common_prefix_blocks=[0], finished_req_ids=['cmpl-38fb551600584de592cab48bee34feae-0'], free_encoder_mm_hashes=[], structured_output_request_ids=null, grammar_bitmask=null, pending_structured_output_tokens=false, kv_connector_metadata=null, ec_connector_metadata=null)
+(EngineCore_DP0 pid=344) ERROR 03-10 09:08:56 [dump_input.py:81] Dumping scheduler stats: SchedulerStats(num_running_reqs=1, num_waiting_reqs=30, step_counter=0, current_wave=0, kv_cache_usage=0.9554502369668246, prefix_cache_stats=PrefixCacheStats(reset=False, requests=0, queries=0, hits=0, preempted_requests=0, preempted_queries=0, preempted_hits=0), connector_prefix_cache_stats=None, spec_decoding_stats=None, kv_connector_stats=None, waiting_lora_adapters={}, running_lora_adapters={})
+(EngineCore_DP0 pid=344) ERROR 03-10 09:08:56 [core.py:931] EngineCore encountered a fatal error.
+(EngineCore_DP0 pid=344) ERROR 03-10 09:08:56 [core.py:931] Traceback (most recent call last):
+[... 37 lines omitted ...]
+(EngineCore_DP0 pid=344) ERROR 03-10 09:08:56 [core.py:931]     return self.forward(*args, **kwargs)
+(EngineCore_DP0 pid=344) ERROR 03-10 09:08:56 [core.py:931]   File "/home/container_app_user/tt-metal/models/tt_transformers/tt/decoder.py", line 276, in forward
+(EngineCore_DP0 pid=344) ERROR 03-10 09:08:56 [core.py:931]     hidden_states = ttnn.mesh_partition(
+(EngineCore_DP0 pid=344) ERROR 03-10 09:08:56 [core.py:931]   File "/home/container_app_user/tt-metal/ttnn/ttnn/decorators.py", line 451, in __call__
+(EngineCore_DP0 pid=344) ERROR 03-10 09:08:56 [core.py:931]     result = self.function(*function_args, **function_kwargs)
+(EngineCore_DP0 pid=344) ERROR 03-10 09:08:56 [core.py:931] RuntimeError: TT_THROW @ /home/container_app_user/tt-metal/tt_metal/impl/dispatch/system_memory_manager.cpp:576: tt::exception
+(EngineCore_DP0 pid=344) ERROR 03-10 09:08:56 [core.py:931] info:
+(EngineCore_DP0 pid=344) ERROR 03-10 09:08:56 [core.py:931] TIMEOUT: device timeout in fetch queue wait, potential hang detected
+(EngineCore_DP0 pid=344) ERROR 03-10 09:08:56 [core.py:931] backtrace:
+(EngineCore_DP0 pid=344) ERROR 03-10 09:08:56 [core.py:931]  --- /home/container_app_user/tt-metal/build/lib/_ttnncpp.so(+0x69fb59) [0x7ff06232db59]
+(EngineCore_DP0 pid=344) ERROR 03-10 09:08:56 [core.py:931]  --- /home/container_app_user/tt-metal/build/lib/libtt_metal.so(+0x5ecbe0) [0x7ff06144abe0]
+(EngineCore_DP0 pid=344) ERROR 03-10 09:08:56 [core.py:931]  --- tt::tt_metal::SystemMemoryManager::fetch_queue_reserve_back(unsigned char)
+(EngineCore_DP0 pid=344) ERROR 03-10 09:08:56 [core.py:931]  --- tt::tt_metal::program_dispatch::write_program_command_sequence(tt::tt_metal::ProgramCommandSequence const&, tt::tt_metal::SystemMemoryManager&, unsigned int, tt::CoreType, bool, bool, bool)
+[... 157 lines omitted ...]
+(EngineCore_DP0 pid=344)     return self.forward(*args, **kwargs)
+(EngineCore_DP0 pid=344)   File "/home/container_app_user/tt-metal/models/tt_transformers/tt/decoder.py", line 276, in forward
+(EngineCore_DP0 pid=344)     hidden_states = ttnn.mesh_partition(
+(EngineCore_DP0 pid=344)   File "/home/container_app_user/tt-metal/ttnn/ttnn/decorators.py", line 451, in __call__
+(EngineCore_DP0 pid=344)     result = self.function(*function_args, **function_kwargs)
+(EngineCore_DP0 pid=344) RuntimeError: TT_THROW @ /home/container_app_user/tt-metal/tt_metal/impl/dispatch/system_memory_manager.cpp:576: tt::exception
+(EngineCore_DP0 pid=344) info:
+(EngineCore_DP0 pid=344) TIMEOUT: device timeout in fetch queue wait, potential hang detected
+(EngineCore_DP0 pid=344) backtrace:
+(EngineCore_DP0 pid=344)  --- /home/container_app_user/tt-metal/build/lib/_ttnncpp.so(+0x69fb59) [0x7ff06232db59]
+(EngineCore_DP0 pid=344)  --- /home/container_app_user/tt-metal/build/lib/libtt_metal.so(+0x5ecbe0) [0x7ff06144abe0]
+(EngineCore_DP0 pid=344)  --- tt::tt_metal::SystemMemoryManager::fetch_queue_reserve_back(unsigned char)
+(EngineCore_DP0 pid=344)  --- tt::tt_metal::program_dispatch::write_program_command_sequence(tt::tt_metal::ProgramCommandSequence const&, tt::tt_metal::SystemMemoryManager&, unsigned int, tt::CoreType, bool, bool, bool)
+[... 442 lines omitted ...]
+ - ... skipped remainder
+nanobind: leaked 3193 functions!
+ - leaked function ""
+ - leaked function ""
+ - leaked function "__call__"
+ - leaked function ""
+ - leaked function ""
+ - leaked function ""
+ - leaked function ""
+ - leaked function ""
+ - leaked function "__call__"
+ - leaked function ""
+ - ... skipped remainder
+nanobind: this is likely caused by a reference counting issue in the binding code.
+See https://nanobind.readthedocs.io/en/latest/refleaks.html

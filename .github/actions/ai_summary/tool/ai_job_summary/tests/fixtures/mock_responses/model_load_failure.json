@@ -1,0 +1,12 @@
+{
+  "status": "CRASH",
+  "category": "model:load",
+  "subcategory": "unsupported_mesh_configuration",
+  "layer": "model",
+  "problematic_layer": "model",
+  "root_cause": "Mochi pipeline creation failed because the requested mesh configuration (1, 4) is not supported. The model only has default configurations for specific mesh shapes, and (1, 4) is not in the default_config dictionary.",
+  "error_message": "KeyError: (1, 4)",
+  "failed_tests": [],
+  "suggested_action": "Use a supported mesh configuration for Mochi model (e.g., 2x2 configuration) or add (1, 4) mesh shape to the default_config in pipeline_mochi.py.",
+  "confidence": "high"
+}

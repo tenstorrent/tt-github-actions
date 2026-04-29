@@ -1,0 +1,12 @@
+{
+  "status": "CRASH",
+  "category": "vllm:config",
+  "subcategory": "max_model_len_exceeds_device_limit",
+  "layer": "serving",
+  "problematic_layer": "application",
+  "root_cause": "vLLM engine initialization failed because max_model_len=65536 exceeds the N150 device limit of 32768 for TT-Llama8B/11B models. The server never started, causing all subsequent tests to fail with connection refused errors.",
+  "error_message": "ValueError: TT-LLama8B and TT-Llama11B do not support max_model_len greater than 32768 on N150 (received 65536). Set --max_model_len to 32768 or lower in vLLM.",
+  "failed_tests": [],
+  "suggested_action": "Set --max_model_len to 32768 or lower when launching vLLM server for Llama-3.1-8B-Instruct on N150 device.",
+  "confidence": "high"
+}

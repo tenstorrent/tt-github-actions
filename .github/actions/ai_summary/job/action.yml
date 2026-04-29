@@ -1,0 +1,154 @@
+name: AI Job Summary
+description: Use AI to summarize CI job logs
+
+inputs:
+  config:
+    description: >-
+      JSON config string. Required keys: `model`, `workspace`,
+      `input_dirs`, `output_dir`. See README for the schema.
+    required: true
+  api-key:
+    description: "LLM API key (secret)"
+    required: true
+  api-url:
+    description: "LLM API URL"
+    required: true
+  job-name:
+    description: "Job name for the summary header (defaults to GitHub Actions job.name)"
+    required: false
+
+outputs:
+  summary-dir:
+    description: Directory containing ai_job_summary_<numeric-job-id>.md and .json
+    value: ${{ steps.summarize.outputs.summary_dir }}
+
+runs:
+  using: composite
+  steps:
+    - name: Detect job metadata
+      id: job-meta
+      shell: bash
+      env:
+        CHECK_RUN_ID: ${{ job.check_run_id }}
+        JOB_NAME: ${{ inputs.job-name || job.name }}
+      run: |
+        # CHECK_RUN_ID is the numeric job id, used both for the per-leg
+        # artifact filename suffix and the JOB_URL. It is always present
+        # in Tenstorrent CI environments. The fallback below would
+        # collide across matrix legs that share GITHUB_JOB and is only a
+        # safety net for ad-hoc / non-CI invocations.
+        JOB_ID="${CHECK_RUN_ID:-${GITHUB_RUN_ID}_${GITHUB_JOB}}"
+        JOB_URL=""
+        if [ -n "$CHECK_RUN_ID" ] && [ -n "$GITHUB_SERVER_URL" ] && [ -n "$GITHUB_REPOSITORY" ] && [ -n "$GITHUB_RUN_ID" ]; then
+          JOB_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/job/${CHECK_RUN_ID}"
+        elif [ -n "$GITHUB_SERVER_URL" ] && [ -n "$GITHUB_REPOSITORY" ] && [ -n "$GITHUB_RUN_ID" ]; then
+          JOB_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+        fi
+        echo "job_id=${JOB_ID}" >> "$GITHUB_OUTPUT"
+        echo "job_name=${JOB_NAME}" >> "$GITHUB_OUTPUT"
+        echo "job_url=${JOB_URL}" >> "$GITHUB_OUTPUT"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+
+    - name: Setup tool
+      id: setup
+      shell: bash
+      env:
+        CONFIG: ${{ inputs.config }}
+      run: |
+        # The tool lives next to the actions in the same ai_summary/
+        # directory, so it moves with them as a single unit.
+        TOOL_DIR="$(realpath "${GITHUB_ACTION_PATH}/../tool")"
+        if [ ! -f "$TOOL_DIR/pyproject.toml" ]; then
+          echo "::error::Tool not found at $TOOL_DIR (missing pyproject.toml)"
+          exit 1
+        fi
+
+        # If a venv is already active (Docker pattern), install into it.
+        # Otherwise build an ephemeral one in /tmp (bare runner pattern) —
+        # never write into the action cache. --clear handles a leftover
+        # venv from a prior run on the same self-hosted host (the cleanup
+        # step at the end of this action is best-effort and may not run
+        # if the job is killed mid-step).
+        if [ -n "$VIRTUAL_ENV" ]; then
+          uv pip install --no-cache --quiet "$TOOL_DIR"
+        else
+          VENV=/tmp/ai-summary/venv
+          uv venv --clear --quiet "$VENV"
+          uv pip install --no-cache --quiet --python "$VENV/bin/python" "$TOOL_DIR"
+          echo "$VENV/bin" >> "$GITHUB_PATH"
+        fi
+
+        # Compute the absolute output_dir for the upload-artifact step
+        # (which runs outside the tool). Mirrors the tool's resolution:
+        # expandvars on workspace only — callers use $GITHUB_WORKSPACE for
+        # the in-container path. output_dir is project-relative.
+        OUTPUT_DIR=$(python3 - <<'PY'
+        import json, os, sys, pathlib
+        c = json.loads(os.environ["CONFIG"])
+        ws = os.path.expandvars(c.get("workspace") or "") or os.getcwd()
+        od = c.get("output_dir", "")
+        if not od:
+            print("::error::output_dir not set in config", file=sys.stderr)
+            sys.exit(1)
+        print(pathlib.Path(ws) / od)
+        PY
+        ) || exit 1
+        echo "output_dir=$OUTPUT_DIR" >> "$GITHUB_OUTPUT"
+
+    - name: AI job summary
+      id: summarize
+      shell: bash
+      env:
+        TT_CHAT_API_KEY: ${{ inputs.api-key }}
+        TT_CHAT_URL: ${{ inputs.api-url }}
+        # Pass the JSON via env so its quotes/braces don't fight shell parsing.
+        CONFIG: ${{ inputs.config }}
+      run: |
+        OUTPUT_DIR="${{ steps.setup.outputs.output_dir }}"
+        JOB_NAME="${{ steps.job-meta.outputs.job_name }}"
+        JOB_URL="${{ steps.job-meta.outputs.job_url }}"
+
+        CMD_ARGS=(--config "$CONFIG")
+        [ -n "$JOB_URL" ]  && CMD_ARGS+=(--job-url "$JOB_URL")
+        [ -n "$JOB_NAME" ] && CMD_ARGS+=(--job-name "$JOB_NAME")
+
+        echo "::group::AI Job Summary"
+        ai-job-summary "${CMD_ARGS[@]}" || {
+          echo "::endgroup::"
+          echo "::warning::ai-job-summary failed, check logs"
+          echo "summary_dir=" >> "$GITHUB_OUTPUT"
+          exit 0
+        }
+        echo "::endgroup::"
+        echo "summary_dir=$OUTPUT_DIR" >> "$GITHUB_OUTPUT"
+
+        MD_FILE=$(find "$OUTPUT_DIR" -name "*.md" -type f | head -1)
+        if [ -n "$MD_FILE" ]; then
+          echo ""
+          echo "========================================"
+          echo "          AI JOB SUMMARY"
+          echo "========================================"
+          cat "$MD_FILE"
+          echo "========================================"
+        fi
+
+    - name: Upload AI summary
+      if: always() && !cancelled() && steps.summarize.outputs.summary_dir != ''
+      continue-on-error: true
+      uses: actions/upload-artifact@v4
+      with:
+        name: ai_job_summary_${{ steps.job-meta.outputs.job_id }}
+        path: |
+          ${{ steps.summarize.outputs.summary_dir }}/*.json
+          ${{ steps.summarize.outputs.summary_dir }}/*.md
+
+    - name: Cleanup ephemeral venv
+      if: always()
+      shell: bash
+      run: |
+        # Best-effort cleanup so the next run on this self-hosted host
+        # starts fresh. Only touches the /tmp path the bare-runner branch
+        # uses; the Docker $VIRTUAL_ENV path is never created by us.
+        rm -rf /tmp/ai-summary

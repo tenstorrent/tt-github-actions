@@ -1,0 +1,82 @@
+INFO 03-15 00:35:44 [importing.py:44] Triton is installed but 0 active driver(s) found (expected 1). Disabling Triton to prevent runtime errors.
+INFO 03-15 00:35:44 [importing.py:68] Triton not installed or not compatible; certain GPU-related functions will not be available.
+2026-03-15 00:35:45,071 - __main__ - INFO - Using pre-resolved runtime model spec from RUNTIME_MODEL_SPEC_JSON_PATH=/home/container_app_user/model_specs/runtime_model_spec_2026-03-15_00-35-35_id_tt-transformers_Qwen3-32B_t3k_s7kvIGHt.json
+2026-03-15 00:35:45,071 - __main__ - INFO - Loading runtime model spec from: /home/container_app_user/model_specs/runtime_model_spec_2026-03-15_00-35-35_id_tt-transformers_Qwen3-32B_t3k_s7kvIGHt.json
+2026-03-15 00:35:45,071 - __main__ - INFO - Set MESH_DEVICE to T3K
+2026-03-15 00:35:45,072 - __main__ - INFO - Set TT_CACHE_PATH to /home/container_app_user/cache_root/tt_metal_cache/cache_Qwen3-32B/T3K
+2026-03-15 00:35:45,072 - __main__ - INFO - Weights already exist at /home/container_app_user/cache_root/weights/Qwen3-32B
+2026-03-15 00:35:45,072 - __main__ - INFO - Using model spec: id_tt-transformers_Qwen3-32B_t3k
+2026-03-15 00:35:45,072 - __main__ - INFO - Set TT_METAL_OPERATION_TIMEOUT_SECONDS=5.0
+2026-03-15 00:35:45,072 - __main__ - INFO - Set TT_METAL_DISPATCH_TIMEOUT_COMMAND_TO_EXECUTE=/home/container_app_user/tt-metal/python_env/bin/python /home/container_app_user/tt-metal/tools/triage/triage.py --disable-progress > /home/container_app_user/logs/tt-triage-$(date +%Y%m%d-%H%M%S).log 2>&1
+2026-03-15 00:35:45,072 - __main__ - WARNING - env var WH_ARCH_YAML is already set to wormhole_b0_80_arch_eth_dispatch.yaml, overriding with wormhole_b0_80_arch_eth_dispatch.yaml
+2026-03-15 00:35:45,072 - __main__ - INFO - setting env var: WH_ARCH_YAML=wormhole_b0_80_arch_eth_dispatch.yaml
+2026-03-15 00:35:45,072 - __main__ - WARNING - env var MESH_DEVICE is already set to T3K, overriding with T3K
+2026-03-15 00:35:45,072 - __main__ - INFO - setting env var: MESH_DEVICE=T3K
+2026-03-15 00:35:45,072 - __main__ - WARNING - env var ARCH_NAME is already set to wormhole_b0, overriding with wormhole_b0
+2026-03-15 00:35:45,072 - __main__ - INFO - setting env var: ARCH_NAME=wormhole_b0
+2026-03-15 00:35:45,072 - __main__ - INFO - setting env var: VLLM_CONFIGURE_LOGGING=1
+2026-03-15 00:35:45,072 - __main__ - INFO - setting env var: VLLM_RPC_TIMEOUT=900000
+2026-03-15 00:35:45,072 - __main__ - WARNING - env var VLLM_TARGET_DEVICE is already set to tt, overriding with tt
+2026-03-15 00:35:45,072 - __main__ - INFO - setting env var: VLLM_TARGET_DEVICE=tt
+... (trimmed, 383 lines skipped) ...
+(EngineCore_DP0 pid=197) ERROR 03-15 02:00:19 [core.py:931]     return func(*args, **kwargs)
+(EngineCore_DP0 pid=197) ERROR 03-15 02:00:19 [core.py:931]   File "/home/container_app_user/vllm/vllm/v1/worker/worker_base.py", line 367, in execute_model
+(EngineCore_DP0 pid=197) ERROR 03-15 02:00:19 [core.py:931]     return self.worker.execute_model(scheduler_output, *args, **kwargs)
+(EngineCore_DP0 pid=197) ERROR 03-15 02:00:19 [core.py:931]   File "/home/container_app_user/vllm/vllm/v1/worker/tt_worker.py", line 214, in execute_model
+(EngineCore_DP0 pid=197) ERROR 03-15 02:00:19 [core.py:931]     output = self.model_runner.execute_model(scheduler_output)
+(EngineCore_DP0 pid=197) ERROR 03-15 02:00:19 [core.py:931]   File "/home/container_app_user/tt-metal/python_env/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+(EngineCore_DP0 pid=197) ERROR 03-15 02:00:19 [core.py:931]     return func(*args, **kwargs)
+(EngineCore_DP0 pid=197) ERROR 03-15 02:00:19 [core.py:931]   File "/home/container_app_user/vllm/vllm/v1/worker/tt_model_runner.py", line 1310, in execute_model
+(EngineCore_DP0 pid=197) ERROR 03-15 02:00:19 [core.py:931]     sampled_token_ids_per_dp, logprobs_per_dp = self.execute_with_model_input(  # noqa: E501
+(EngineCore_DP0 pid=197) ERROR 03-15 02:00:19 [core.py:931]   File "/home/container_app_user/vllm/vllm/v1/worker/tt_model_runner.py", line 1457, in execute_with_model_input
+(EngineCore_DP0 pid=197) ERROR 03-15 02:00:19 [core.py:931]     tt_out = self.model.prefill_forward(**kwargs)
+(EngineCore_DP0 pid=197) ERROR 03-15 02:00:19 [core.py:931]   File "/home/container_app_user/tt-metal/models/tt_transformers/tt/generator_vllm.py", line 335, in prefill_forward
+(EngineCore_DP0 pid=197) ERROR 03-15 02:00:19 [core.py:931]     return super().prefill_forward_text(*args, **kwargs)
+(EngineCore_DP0 pid=197) ERROR 03-15 02:00:19 [core.py:931]   File "/home/container_app_user/tt-metal/models/tt_transformers/tt/generator.py", line 756, in prefill_forward_text
+(EngineCore_DP0 pid=197) ERROR 03-15 02:00:19 [core.py:931]     ttnn.synchronize_device(self.model[model_id].mesh_device)
+(EngineCore_DP0 pid=197) ERROR 03-15 02:00:19 [core.py:931] RuntimeError: Timeout waiting for Ethernet core service remote IO request.
+(EngineCore_DP0 pid=197) Process EngineCore_DP0:
+(EngineCore_DP0 pid=197) Traceback (most recent call last):
+(EngineCore_DP0 pid=197)   File "/usr/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+(EngineCore_DP0 pid=197)     self.run()
+(EngineCore_DP0 pid=197)   File "/usr/lib/python3.10/multiprocessing/process.py", line 108, in run
+(EngineCore_DP0 pid=197)     self._target(*self._args, **self._kwargs)
+(EngineCore_DP0 pid=197)   File "/home/container_app_user/vllm/vllm/v1/engine/core.py", line 933, in run_engine_core
+(EngineCore_DP0 pid=197)     raise e
+(EngineCore_DP0 pid=197)   File "/home/container_app_user/vllm/vllm/v1/engine/core.py", line 922, in run_engine_core
+(EngineCore_DP0 pid=197)     engine_core.run_busy_loop()
+(EngineCore_DP0 pid=197)   File "/home/container_app_user/vllm/vllm/v1/engine/core.py", line 949, in run_busy_loop
+(EngineCore_DP0 pid=197)   File "/usr/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+(EngineCore_DP0 pid=197)     return self.__get_result()
+(EngineCore_DP0 pid=197)   File "/usr/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+(EngineCore_DP0 pid=197)     raise self._exception
+(EngineCore_DP0 pid=197)   File "/home/container_app_user/vllm/vllm/v1/executor/uniproc_executor.py", line 79, in collective_rpc
+(EngineCore_DP0 pid=197)     result = run_method(self.driver_worker, method, args, kwargs)
+(EngineCore_DP0 pid=197)   File "/home/container_app_user/vllm/vllm/v1/serial_utils.py", line 479, in run_method
+(EngineCore_DP0 pid=197)     tt_out = self.model.prefill_forward(**kwargs)
+(EngineCore_DP0 pid=197)   File "/home/container_app_user/tt-metal/models/tt_transformers/tt/generator_vllm.py", line 335, in prefill_forward
+(EngineCore_DP0 pid=197)     return super().prefill_forward_text(*args, **kwargs)
+(EngineCore_DP0 pid=197)   File "/home/container_app_user/tt-metal/models/tt_transformers/tt/generator.py", line 756, in prefill_forward_text
+(EngineCore_DP0 pid=197)     ttnn.synchronize_device(self.model[model_id].mesh_device)
+(EngineCore_DP0 pid=197) RuntimeError: Timeout waiting for Ethernet core service remote IO request.
+(APIServer pid=1) INFO:     172.17.0.1:50932 - "POST /v1/completions HTTP/1.1" 500 Internal Server Error
+(APIServer pid=1) INFO:     172.17.0.1:50896 - "POST /v1/completions HTTP/1.1" 500 Internal Server Error
+(APIServer pid=1) INFO:     172.17.0.1:50912 - "POST /v1/completions HTTP/1.1" 500 Internal Server Error
+(APIServer pid=1) INFO:     172.17.0.1:50916 - "POST /v1/completions HTTP/1.1" 500 Internal Server Error
+(APIServer pid=1) INFO:     172.17.0.1:50882 - "POST /v1/completions HTTP/1.1" 500 Internal Server Error
+... (trimmed) ...
+ - ... skipped remainder
+nanobind: leaked 3197 functions!
+ - leaked function ""
+ - leaked function ""
+ - leaked function "__call__"
+ - leaked function "__getitem__"
+ - leaked function ""
+ - leaked function ""
+ - leaked function ""
+ - leaked function ""
+ - leaked function "__call__"
+ - leaked function "__call__"
+ - ... skipped remainder
+nanobind: this is likely caused by a reference counting issue in the binding code.
+See https://nanobind.readthedocs.io/en/latest/refleaks.html

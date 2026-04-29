@@ -1,0 +1,104 @@
+INFO 03-05 00:29:07 [importing.py:44] Triton is installed but 0 active driver(s) found (expected 1). Disabling Triton to prevent runtime errors.
+INFO 03-05 00:29:07 [importing.py:68] Triton not installed or not compatible; certain GPU-related functions will not be available.
+2026-03-05 00:29:07,489 - __main__ - INFO - Using pre-resolved runtime model spec from RUNTIME_MODEL_SPEC_JSON_PATH=/home/container_app_user/model_specs/runtime_model_spec_2026-03-05_01-28-56_id_tt-transformers_Llama-3.1-8B-Instruct_n150_1juL_8hw.json
+2026-03-05 00:29:07,489 - __main__ - INFO - Loading runtime model spec from: /home/container_app_user/model_specs/runtime_model_spec_2026-03-05_01-28-56_id_tt-transformers_Llama-3.1-8B-Instruct_n150_1juL_8hw.json
+2026-03-05 00:29:07,489 - __main__ - INFO - Set MESH_DEVICE to N150
+2026-03-05 00:29:07,489 - __main__ - INFO - Set TT_CACHE_PATH to /home/container_app_user/cache_root/tt_metal_cache/cache_Llama-3.1-8B-Instruct/N150
+2026-03-05 00:29:07,489 - __main__ - INFO - Downloading weights from meta-llama/Llama-3.1-8B-Instruct to /home/container_app_user/cache_root/weights/Llama-3.1-8B-Instruct
+
+Fetching 17 files:   0%|          | 0/17 [00:00<?, ?it/s]
+Fetching 17 files:   6%|▌         | 1/17 [00:00<00:08,  1.94it/s]
+Fetching 17 files:  12%|█▏        | 2/17 [00:00<00:04,  3.19it/s]
+Fetching 17 files:  41%|████      | 7/17 [02:20<03:47, 22.71s/it]
+Fetching 17 files:  47%|████▋     | 8/17 [02:27<02:57, 19.73s/it]
+Fetching 17 files:  71%|███████   | 12/17 [03:57<01:45, 21.13s/it]
+Fetching 17 files: 100%|██████████| 17/17 [03:57<00:00, 13.97s/it]
+2026-03-05 00:33:05,439 - __main__ - INFO - Using model spec: id_tt-transformers_Llama-3.1-8B-Instruct_n150
+2026-03-05 00:33:05,439 - __main__ - WARNING - env var MESH_DEVICE is already set to N150, overriding with N150
+2026-03-05 00:33:05,439 - __main__ - INFO - setting env var: MESH_DEVICE=N150
+2026-03-05 00:33:05,439 - __main__ - WARNING - env var ARCH_NAME is already set to wormhole_b0, overriding with wormhole_b0
+2026-03-05 00:33:05,439 - __main__ - INFO - setting env var: ARCH_NAME=wormhole_b0
+2026-03-05 00:33:05,439 - __main__ - INFO - setting env var: VLLM_CONFIGURE_LOGGING=1
+2026-03-05 00:33:05,439 - __main__ - INFO - setting env var: VLLM_RPC_TIMEOUT=900000
+2026-03-05 00:33:05,439 - __main__ - WARNING - env var VLLM_TARGET_DEVICE is already set to tt, overriding with tt
+2026-03-05 00:33:05,439 - __main__ - INFO - setting env var: VLLM_TARGET_DEVICE=tt
+2026-03-05 00:33:05,439 - __main__ - INFO - setting env var: TORCHDYNAMO_DISABLE=1
+}
+2026-03-05 00:33:05,468 - utils.prompt_client - INFO - Starting background trace capture process...
+2026-03-05 00:33:05,468 - utils.prompt_client - INFO - Using 10 trace context lengths (max_context=65536)
+2026-03-05 00:33:05,469 - utils.prompt_client - INFO - Waiting for vLLM service to become healthy (base timeout: 1200.0s)
+2026-03-05 00:33:05,469 - utils.cache_monitor - INFO - 🔍 No cache content found - treating as first run
+2026-03-05 00:33:05,469 - utils.cache_monitor - INFO - Creating cache directory: /home/container_app_user/cache_root/tt_metal_cache/cache_Llama-3.1-8B-Instruct/N150
+2026-03-05 00:33:05,469 - utils.cache_monitor - INFO - ✅ Created cache first run marker: /home/container_app_user/cache_root/tt_metal_cache/cache_Llama-3.1-8B-Instruct/N150/TT_METAL_CACHE_FIRST_RUN_STARTED
+2026-03-05 00:33:05,470 - utils.prompt_client - INFO - 🔄 Cache generation in progress - this may take 40-60 minutes for new models
+2026-03-05 00:33:05,470 - utils.prompt_client - INFO - ⏰ using extended timeout:=5400.0s due to cache generation
+2026-03-05 00:33:05,471 - utils.prompt_client - INFO - 🔄 Cache generation in progress. Waited 0.0s, next check in 10.0s (timeout: 5400.0s)
+DEBUG 03-05 00:33:06 utils.py:175] Setting VLLM_WORKER_MULTIPROC_METHOD to 'spawn'
+DEBUG 03-05 00:33:06 __init__.py:40] Available plugins for group vllm.general_plugins:
+DEBUG 03-05 00:33:06 __init__.py:42] - lora_filesystem_resolver -> vllm.plugins.lora_resolvers.filesystem_resolver:register_filesystem_resolver
+(APIServer pid=1) INFO 03-05 00:33:06 utils.py:253] non-default args: {'max_log_len': 32, 'model': 'meta-llama/Llama-3.1-8B-Instruct', 'seed': 9472, 'max_model_len': 65536, 'block_size': 64, 'max_num_batched_tokens': 65536, 'max_num_seqs': 32}
+(APIServer pid=1) DEBUG 03-05 00:33:08 registry.py:599] Cached model info file for class vllm.model_executor.models.llama.LlamaForCausalLM not found
+(APIServer pid=1) DEBUG 03-05 00:33:08 registry.py:659] Cache model info for class vllm.model_executor.models.llama.LlamaForCausalLM miss. Loading model instead.
+2026-03-05 00:33:15,479 - utils.prompt_client - INFO - 🔄 Cache generation in progress. Waited 10.0s, next check in 10.0s (timeout: 5400.0s)
+(APIServer pid=1) DEBUG 03-05 00:33:15 registry.py:669] Loaded model info for class vllm.model_executor.models.llama.LlamaForCausalLM
+(APIServer pid=1) DEBUG 03-05 00:33:15 flashinfer.py:55] FlashInfer unavailable since package was not found
+(APIServer pid=1) DEBUG 03-05 00:33:15 log_time.py:29] Registry inspect model class: Elapsed time 7.7562685 secs
+(APIServer pid=1) INFO 03-05 00:33:16 tt.py:377] Automatic prefix caching is enabled
+(APIServer pid=1) DEBUG 03-05 00:33:16 __init__.py:32] No plugins for group vllm.stat_logger_plugins found.
+(APIServer pid=1) DEBUG 03-05 00:33:19 __init__.py:33] No IOProcessor plugins requested by the model
+INFO 03-05 00:33:25 [importing.py:44] Triton is installed but 0 active driver(s) found (expected 1). Disabling Triton to prevent runtime errors.
+INFO 03-05 00:33:25 [importing.py:68] Triton not installed or not compatible; certain GPU-related functions will not be available.
+2026-03-05 00:33:25,490 - utils.prompt_client - INFO - 🔄 Cache generation in progress. Waited 20.0s, next check in 10.0s (timeout: 5400.0s)
+(APIServer pid=1) DEBUG 03-05 00:33:25 utils.py:1144] HELLO from local core engine process 0.
+(EngineCore_DP0 pid=142) INFO 03-05 00:33:25 [core.py:96] Initializing a V1 LLM engine (v0.1.dev11677+g38dee8c11) with config: model='meta-llama/Llama-3.1-8B-Instruct', speculative_config=None, tokenizer='meta-llama/Llama-3.1-8B-Instruct', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=65536, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=True, quantization=None, enforce_eager=False, kv_cache_dtype=auto, device_config=None, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None), seed=9472, served_model_name=meta-llama/Llama-3.1-8B-Instruct, enable_prefix_caching=True, enable_chunked_prefill=False, pooler_config=None, override_tt_config={}, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'eager', 'custom_ops': ['all'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer'], 'compile_mm_encoder': False, 'use_inductor': None, 'compile_sizes': None, 'inductor_compile_config': {'enable_auto_functionalized_v2': False}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.NONE: 0>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': None, 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {}, 'max_cudagraph_capture_size': None, 'local_cache_dir': None}
+(EngineCore_DP0 pid=142) INFO 03-05 00:33:25 [tt.py:377] Automatic prefix caching is enabled
+2026-03-05 00:33:26.099 | info     |          Fabric | Multi-mesh mapping succeeded after 1 attempt(s): 1 mesh pair(s) mapped (topology_mapper_utils.cpp:1234)
+(EngineCore_DP0 pid=142) INFO 03-05 00:33:28 [tt_worker.py:624] multidevice with 1 devices and grid (1, 1) is created
+(EngineCore_DP0 pid=142) INFO 03-05 00:33:28 [tt_model_runner.py:144] TTModelRunner: trace_mode=all, sample_on_device_mode=None, enable_model_warmup=True
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929] EngineCore failed to start.
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929] Traceback (most recent call last):
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929]   File "/home/container_app_user/vllm/vllm/v1/engine/core.py", line 920, in run_engine_core
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929]     engine_core = EngineCoreProc(*args, **kwargs)
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929]   File "/home/container_app_user/vllm/vllm/v1/engine/core.py", line 693, in __init__
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929]     super().__init__(
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929]   File "/home/container_app_user/vllm/vllm/v1/engine/core.py", line 105, in __init__
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929]     self.model_executor = executor_class(vllm_config)
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929]   File "/home/container_app_user/vllm/vllm/v1/executor/abstract.py", line 101, in __init__
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929]     self._init_executor()
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929]   File "/home/container_app_user/vllm/vllm/v1/executor/uniproc_executor.py", line 48, in _init_executor
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929]     self.driver_worker.load_model()
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929]   File "/home/container_app_user/vllm/vllm/v1/worker/tt_worker.py", line 112, in load_model
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929]     self.model_runner.load_model()
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929]   File "/home/container_app_user/vllm/vllm/v1/worker/tt_model_runner.py", line 190, in load_model
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929]     self.model = loader.load_model(
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929]   File "/home/container_app_user/vllm/vllm/model_executor/model_loader/tt_loader.py", line 36, in load_model
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929]     model = model_class.initialize_vllm_model(
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929]   File "/home/container_app_user/tt-metal/models/tt_transformers/tt/generator_vllm.py", line 263, in initialize_vllm_model
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929]     raise ValueError(
+(EngineCore_DP0 pid=142) ERROR 03-05 00:33:28 [core.py:929] ValueError: TT-LLama8B and TT-Llama11B do not support max_model_len greater than 32768 on N150 (received 65536). Set --max_model_len to 32768 or lower in vLLM.
+(EngineCore_DP0 pid=142) Process EngineCore_DP0:
+(EngineCore_DP0 pid=142) Traceback (most recent call last):
+(EngineCore_DP0 pid=142)   File "/usr/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+(EngineCore_DP0 pid=142)   File "/home/container_app_user/vllm/vllm/model_executor/model_loader/tt_loader.py", line 36, in load_model
+(EngineCore_DP0 pid=142)     model = model_class.initialize_vllm_model(
+(EngineCore_DP0 pid=142)   File "/home/container_app_user/tt-metal/models/tt_transformers/tt/generator_vllm.py", line 263, in initialize_vllm_model
+(EngineCore_DP0 pid=142)     raise ValueError(
+(EngineCore_DP0 pid=142) ValueError: TT-LLama8B and TT-Llama11B do not support max_model_len greater than 32768 on N150 (received 65536). Set --max_model_len to 32768 or lower in vLLM.
+nanobind: leaked 2 instances!
+ - leaked instance 0x7fa2cbc1f198 of type "ttnn._ttnn.device.DispatchCoreConfig"
+ - leaked instance 0x5595d4026150 of type "ttnn._ttnn.multi_device.MeshDevice"
+(APIServer pid=1)   File "/home/container_app_user/vllm/vllm/v1/engine/async_llm.py", line 133, in __init__
+(APIServer pid=1)     self.engine_core = EngineCoreClient.make_async_mp_client(
+(APIServer pid=1)   File "/home/container_app_user/vllm/vllm/v1/engine/core_client.py", line 121, in make_async_mp_client
+(APIServer pid=1)     return AsyncMPClient(*client_args)
+(APIServer pid=1)   File "/home/container_app_user/vllm/vllm/v1/engine/core_client.py", line 808, in __init__
+(APIServer pid=1)     super().__init__(
+(APIServer pid=1)   File "/home/container_app_user/vllm/vllm/v1/engine/core_client.py", line 469, in __init__
+(APIServer pid=1)     with launch_core_engines(vllm_config, executor_class, log_stats) as (
+(APIServer pid=1)   File "/usr/lib/python3.10/contextlib.py", line 142, in __exit__
+(APIServer pid=1)     next(self.gen)
+(APIServer pid=1)   File "/home/container_app_user/vllm/vllm/v1/engine/utils.py", line 984, in launch_core_engines
+(APIServer pid=1)     wait_for_engine_startup(
+(APIServer pid=1)   File "/home/container_app_user/vllm/vllm/v1/engine/utils.py", line 1041, in wait_for_engine_startup
+(APIServer pid=1)     raise RuntimeError(
+(APIServer pid=1) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}

@@ -1,0 +1,21 @@
+{
+  "category": "model:accuracy",
+  "subcategory": "pcc",
+  "layer": "model",
+  "root_cause": "HumanEval pass@1 dropped from 0.72 to 0.41 after weight update",
+  "is_your_code": true,
+  "confidence": "medium",
+  "failed_tests": [
+    "humaneval_pass_at_1"
+  ],
+  "_job": {
+    "name": "run-evals-Llama-3.2-3B-Instruct-llmbox-n150",
+    "url": "https://github.com/tenstorrent/tt-shield/actions/runs/12345/job/100005",
+    "status": "EVALS BELOW TARGET (1 failed)",
+    "status_code": "YELLOW",
+    "exit_code": 1,
+    "has_crash": false,
+    "has_timeout": false,
+    "failed_tests": []
+  }
+}

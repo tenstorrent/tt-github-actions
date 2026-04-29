@@ -1,0 +1,12 @@
+{
+  "status": "CRASH",
+  "category": "tt-metal:trace",
+  "subcategory": "trace_region_size_insufficient",
+  "layer": "framework",
+  "problematic_layer": "serving",
+  "root_cause": "Trace buffer allocation failed because the required trace buffer size (60899328B) exceeds the allocated trace region size (50000000B). The trace_region_size configuration parameter is too small for the model's trace requirements.",
+  "error_message": "TT_FATAL @ /home/container_app_user/tt-metal/tt_metal/distributed/mesh_trace.cpp:182: mesh_cq.device()->get_trace_buffers_size() <= trace_region_size",
+  "failed_tests": [],
+  "suggested_action": "Increase trace_region_size in model spec override_tt_config to at least 61000000 (or 70000000 for safety margin) to accommodate trace buffer requirements for Qwen3-32B on P150x8.",
+  "confidence": "high"
+}
