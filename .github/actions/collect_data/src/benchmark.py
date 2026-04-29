@@ -609,7 +609,7 @@ class GuideLLMBenchmarkDataMapper(_BenchmarkDataMapper):
             top_args_redacted = dict(top_args)
             if "backend_kwargs" in top_args_redacted:
                 top_args_redacted["backend_kwargs"] = self._redact_api_key(top_args_redacted.get("backend_kwargs"))
-            
+
             dataset_name = top_args.get("processor", None)
 
             results = []
