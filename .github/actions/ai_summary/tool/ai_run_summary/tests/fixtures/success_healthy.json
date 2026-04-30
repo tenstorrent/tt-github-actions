@@ -1,0 +1,27 @@
+{
+  "category": "",
+  "subcategory": "",
+  "layer": "",
+  "root_cause": "",
+  "error_message": "",
+  "is_your_code": null,
+  "confidence": "",
+  "failed_tests": [],
+  "status": "SUCCESS",
+  "_job": {
+    "name": "run-release-Llama-3.2-3B-Instruct-llmbox-n300",
+    "url": "https://github.com/tenstorrent/tt-shield/actions/runs/12345/job/100001",
+    "status": "SUCCESS",
+    "status_code": "GREEN",
+    "exit_code": 0,
+    "has_crash": false,
+    "has_timeout": false,
+    "failed_tests": []
+  },
+  "_llm_usage": {
+    "model": "anthropic/claude-sonnet-4-5-20250929",
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "response_time_ms": 0
+  }
+}

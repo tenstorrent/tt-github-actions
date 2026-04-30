@@ -1,0 +1,47 @@
+2026-03-05 01:05:10,454 - run.py:495 - INFO: TT-Inference version: 0.9.0
+2026-03-05 01:05:10,454 - run.py:496 - INFO: TT-Inference SHA: db11cc1708c3
+2026-03-05 01:05:10,454 - run.py:497 - INFO:
+============================================================
+tt-inference-server run.py CLI args summary
+============================================================
+
+Model Options:
+  model:                      whisper-large-v3
+  device:                     galaxy
+  impl:                       whisper
+  engine:                     media
+  workflow:                   release
+  tools:                      vllm
+
+Optional args:
+  dev_mode:                   True
+  docker_server:              True
+  local_server:               False
+  no_auth:                    False
+Traceback (most recent call last):
+File "/home/ubuntu/actions-runner/_work/tt-shield/tt-shield/tt-inference-server/.workflow_venvs/.venv_evals_audio/lib/python3.10/site-packages/lmms_eval/__main__.py", line 349, in cli_evaluate
+results, samples = cli_evaluate_single(args)
+File "/home/ubuntu/actions-runner/_work/tt-shield/tt-shield/tt-inference-server/.workflow_venvs/.venv_evals_audio/lib/python3.10/site-packages/lmms_eval/__main__.py", line 476, in cli_evaluate_single
+raise ValueError(
+ValueError: Tasks not found: librispeech_test_other. Try `lmms-eval --tasks {list_groups,list_subtasks,list_tags,list}` to list out all available names for task groupings; only (sub)tasks; tags; or all of the above, or pass '--verbosity DEBUG' to troubleshoot task registration issues.
+[32m2026-03-05 01:10:29[0m | [31m[1mERROR   [0m | [36mlmms_eval.__main__[0m:[36mcli_evaluate[0m:[36m371[0m - [31m[1mError during evaluation: Tasks not found: librispeech_test_other. Try `lmms-eval --tasks {list_groups,list_subtasks,list_tags,list}` to list out all available names for task groupings; only (sub)tasks; tags; or all of the above, or pass '--verbosity DEBUG' to troubleshoot task registration issues.. Please set `--verbosity=DEBUG` to get more information.[0m
+2026-03-05 01:10:30,687 - run_evals.py:414 - INFO: ✅ Completed evals
+2026-03-05 01:10:31,416 - run_workflows.py:105 - INFO: ✅ Completed workflow: evals
+2026-03-05 01:10:31,416 - run_workflows.py:132 - INFO: Next workflow in release: BENCHMARKS
+2026-03-05 01:10:31,417 - utils.py:234 - INFO: Running command: /home/ubuntu/actions-runner/_work/tt-shield/tt-shield/tt-inference-server/.workflow_venvs/.venv_bootstrap_uv/bin/uv venv --managed-python --python=3.11 /home/ubuntu/actions-runner/_work/tt-shield/tt-shield/tt-inference-server/.workflow_venvs/.venv_benchmarks_vllm --allow-existing
+Using CPython 3.11.14
+2026-03-05 01:11:39,148 - run_reports.py:3332 - INFO: Adding target_checks to Audio benchmark release data
+2026-03-05 01:11:39,161 - utils.py:288 - ERROR: ⛔ subprocess.Popen command failed with return code: 1
+command: /home/ubuntu/actions-runner/_work/tt-shield/tt-shield/tt-inference-server/.workflow_venvs/.venv_reports_run_script/bin/python /home/ubuntu/actions-runner/_work/tt-shield/tt-shield/tt-inference-server/workflows/run_reports.py --runtime-model-spec-json /home/ubuntu/actions-runner/_work/tt-shield/tt-shield/tt-inference-server/workflow_logs/runtime_model_specs/runtime_model_spec_2026-03-05_01-05-10_id_whisper_whisper-large-v3_galaxy_wZyxS2hR.json --output-path /home/ubuntu/actions-runner/_work/tt-shield/tt-shield/tt-inference-server/workflow_logs/reports_output --model whisper-large-v3 --device galaxy
+
+See error messages in logs above this RuntimeError for details on actual cause of failure.
+
+This command is optional or can be recovered from failure (check=False set). Continuing ...
+
+2026-03-05 01:11:39,161 - run_workflows.py:101 - ERROR: ⛔ workflow: reports, failed with return code: 1
+2026-03-05 01:11:39,161 - run.py:549 - ERROR: run.py failed with return codes: [0, 0, 0, 1]. See logs above for details.
+2026-03-05 01:11:39,161 - run.py:558 - INFO: The output of the workflows is not checked and any errors will be in the logs above and in the saved log file.
+2026-03-05 01:11:39,161 - run.py:562 - INFO: If you encounter any issues please share the log file in a GitHub issue and server log if available.
+2026-03-05 01:11:39,161 - run.py:566 - INFO: This log file is saved on local machine at: /home/ubuntu/actions-runner/_work/tt-shield/tt-shield/tt-inference-server/workflow_logs/run_logs/run_2026-03-05_01-05-10_id_whisper_whisper-large-v3_galaxy_release_N47FaWHo.log
+2026-03-05 01:11:39,161 - run_docker_server.py:329 - INFO: atexit: Stopping inference server Docker container ...
+2026-03-05 01:11:56,695 - run_docker_server.py:333 - INFO: run_docker cleanup finished.

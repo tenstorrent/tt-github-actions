@@ -1,0 +1,13 @@
+{
+  "status": "TESTS_FAILED",
+  "category": "UNKNOWN",
+  "subcategory": "eval_task_not_found",
+  "layer": "application",
+  "problematic_layer": "application",
+  "unknown_pattern": "ValueError: Tasks not found: librispeech_test_other. Try `lmms-eval --tasks",
+  "root_cause": "The evaluation task 'librispeech_test_other' is not registered or available in the lmms-eval framework, causing the evaluation workflow to fail after the server successfully started and passed health checks.",
+  "error_message": "ValueError: Tasks not found: librispeech_test_other. Try `lmms-eval --tasks {list_groups,list_subtasks,list_tags,list}` to list out all available names for task groupings",
+  "failed_tests": [],
+  "suggested_action": "Run `lmms-eval --tasks list` to verify available task names and update the eval configuration to use a valid task name.",
+  "confidence": "high"
+}

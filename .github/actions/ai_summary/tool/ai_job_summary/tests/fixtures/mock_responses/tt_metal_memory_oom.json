@@ -1,0 +1,12 @@
+{
+  "status": "CRASH",
+  "category": "tt-metal:memory",
+  "subcategory": "dram_buffer_allocation_failure",
+  "layer": "framework",
+  "problematic_layer": "serving",
+  "root_cause": "Out of memory during prefill warmup for 131072 token sequence: attempted to allocate 1140850688 B DRAM buffer across 12 banks (95071616 B per bank) but only 187700320 B free with largest block 94678624 B. The max_prefill_chunk_size=131072 is too large for available DRAM.",
+  "error_message": "Out of Memory: Not enough space to allocate 1140850688 B DRAM buffer across 12 banks, where each bank needs to store 95071616 B, but bank size is 1021821792 B (allocated: 834121472 B, free: 187700320 B, largest free block: 94678624 B)",
+  "failed_tests": ["workflow:benchmarks", "workflow:evals"],
+  "suggested_action": "Reduce max_prefill_chunk_size to 65536 or lower via override_tt_config in vLLM configuration to fit within available DRAM budget.",
+  "confidence": "high"
+}

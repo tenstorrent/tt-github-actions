@@ -1,0 +1,155 @@
+INFO 03-10 02:13:26 [importing.py:44] Triton is installed but 0 active driver(s) found (expected 1). Disabling Triton to prevent runtime errors.
+INFO 03-10 02:13:26 [importing.py:68] Triton not installed or not compatible; certain GPU-related functions will not be available.
+2026-03-10 02:13:26,387 - __main__ - INFO - Using pre-resolved runtime model spec from RUNTIME_MODEL_SPEC_JSON_PATH=/home/container_app_user/model_specs/runtime_model_spec_2026-03-10_03-13-18_id_tt-transformers_Llama-3.2-1B-Instruct_n150_xzlunFJ1.json
+2026-03-10 02:13:26,387 - __main__ - INFO - Loading runtime model spec from: /home/container_app_user/model_specs/runtime_model_spec_2026-03-10_03-13-18_id_tt-transformers_Llama-3.2-1B-Instruct_n150_xzlunFJ1.json
+2026-03-10 02:13:26,387 - __main__ - INFO - Set MESH_DEVICE to N150
+2026-03-10 02:13:26,387 - __main__ - INFO - Set TT_CACHE_PATH to /home/container_app_user/cache_root/tt_metal_cache/cache_Llama-3.2-1B-Instruct/N150
+2026-03-10 02:13:26,387 - __main__ - INFO - Weights already exist at /home/container_app_user/cache_root/weights/Llama-3.2-1B-Instruct
+2026-03-10 02:13:26,387 - __main__ - INFO - Using model spec: id_tt-transformers_Llama-3.2-1B-Instruct_n150
+2026-03-10 02:13:26,387 - __main__ - INFO - Set TT_METAL_OPERATION_TIMEOUT_SECONDS=5.0
+2026-03-10 02:13:26,388 - __main__ - INFO - Set TT_METAL_DISPATCH_TIMEOUT_COMMAND_TO_EXECUTE=/home/container_app_user/tt-metal/python_env/bin/python /home/container_app_user/tt-metal/tools/triage/triage.py --disable-progress > /home/container_app_user/logs/tt-triage-$(date +%Y%m%d-%H%M%S).log 2>&1
+2026-03-10 02:13:26,388 - __main__ - WARNING - env var MESH_DEVICE is already set to N150, overriding with N150
+2026-03-10 02:13:26,388 - __main__ - INFO - setting env var: MESH_DEVICE=N150
+2026-03-10 02:13:26,388 - __main__ - WARNING - env var ARCH_NAME is already set to wormhole_b0, overriding with wormhole_b0
+2026-03-10 02:13:26,388 - __main__ - INFO - setting env var: ARCH_NAME=wormhole_b0
+2026-03-10 02:13:26,388 - __main__ - INFO - setting env var: VLLM_CONFIGURE_LOGGING=1
+2026-03-10 02:13:26,388 - __main__ - INFO - setting env var: VLLM_RPC_TIMEOUT=900000
+2026-03-10 02:13:26,388 - __main__ - WARNING - env var VLLM_TARGET_DEVICE is already set to tt, overriding with tt
+2026-03-10 02:13:26,388 - __main__ - INFO - setting env var: VLLM_TARGET_DEVICE=tt
+2026-03-10 02:13:26,388 - __main__ - INFO - setting env var: TORCHDYNAMO_DISABLE=1
+2026-03-10 02:13:26,388 - __main__ - WARNING - env var value:=1 is not a string, converting to string: 1
+[... 46 lines omitted ...]
+(APIServer pid=1) INFO 03-10 02:13:37 tt.py:377] Automatic prefix caching is enabled
+(APIServer pid=1) DEBUG 03-10 02:13:37 __init__.py:32] No plugins for group vllm.stat_logger_plugins found.
+(APIServer pid=1) DEBUG 03-10 02:13:39 __init__.py:33] No IOProcessor plugins requested by the model
+INFO 03-10 02:13:45 [importing.py:44] Triton is installed but 0 active driver(s) found (expected 1). Disabling Triton to prevent runtime errors.
+INFO 03-10 02:13:45 [importing.py:68] Triton not installed or not compatible; certain GPU-related functions will not be available.
+(APIServer pid=1) DEBUG 03-10 02:13:46 utils.py:1144] HELLO from local core engine process 0.
+(EngineCore_DP0 pid=93) INFO 03-10 02:13:46 [core.py:96] Initializing a V1 LLM engine (v0.1.dev11679+g1f567b7c2) with config: model='meta-llama/Llama-3.2-1B-Instruct', speculative_config=None, tokenizer='meta-llama/Llama-3.2-1B-Instruct', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=131072, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=True, quantization=None, enforce_eager=False, kv_cache_dtype=auto, device_config=None, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None), seed=9472, served_model_name=meta-llama/Llama-3.2-1B-Instruct, enable_prefix_caching=True, enable_chunked_prefill=False, pooler_config=None, override_tt_config={}, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'eager', 'custom_ops': ['all'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer'], 'compile_mm_encoder': False, 'use_inductor': None, 'compile_sizes': None, 'inductor_compile_config': {'enable_auto_functionalized_v2': False}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.NONE: 0>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': None, 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {}, 'max_cudagraph_capture_size': None, 'local_cache_dir': None}
+[... 8 lines omitted ...]
+2026-03-10 02:13:46.556 | info     |             UMD | Creating TopologyDiscovery for architecture: wormhole_b0 (topology_discovery.cpp:64)
+2026-03-10 02:13:46.556 | warning  |             UMD | Running with IOMMU support prior to KMD version 2.0.0 is of limited support. (pci_device.cpp:387)
+2026-03-10 02:13:46.564 | info     |             UMD | Established firmware bundle version: 18.10.0 (topology_discovery.cpp:433)
+2026-03-10 02:13:46.567 | info     |             UMD | Harvesting masks for chip 0 tensix: 0x200 dram: 0x0 eth: 0x0 pcie: 0x0 l2cpu: 0x0 (cluster.cpp:331)
+2026-03-10 02:13:46.573 | warning  |             UMD | Running with IOMMU support prior to KMD version 2.0.0 is of limited support. (pci_device.cpp:387)
+2026-03-10 02:13:46.577 | info     |             UMD | Initializing iommu for sysmem (size: 0x40000000). (silicon_sysmem_manager.cpp:277)
+2026-03-10 02:13:46.577 | info     |             UMD | Allocating sysmem without hugepages (size: 0x40000000). (silicon_sysmem_manager.cpp:283)
+[... 97 lines omitted ...]
+(EngineCore_DP0 pid=93) 2026-03-10 02:15:16.281 | INFO     | models.tt_transformers.tt.generator:prefill_forward_text:785 - Finished prefill for all users up to 65536 tokens, Starting decode...
+(EngineCore_DP0 pid=93) 2026-03-10 02:15:16.282 | INFO     | models.tt_transformers.tt.generator:warmup_model_prefill:159 - Warming up prefill for sequence length: 131072 for batch size: 1 with sampling params: None
+(EngineCore_DP0 pid=93) 2026-03-10 02:15:16.282 | INFO     | models.tt_transformers.tt.generator:prefill_forward_text:495 - Prefilling User 1 up to 131072 tokens
+(EngineCore_DP0 pid=93) 2026-03-10 02:15:16.282 | INFO     | models.tt_transformers.tt.generator:prefill_forward_text:536 - Prefill seq len: 131072, max_prefill_chunk_size: 131072, trace: False
+(APIServer pid=1) DEBUG 03-10 02:15:16 utils.py:1031] Waiting for 1 local, 0 remote core engine proc(s) to start.
+2026-03-10 02:15:23.560 | critical |          Always | TT_FATAL: Out of Memory: Not enough space to allocate 1140850688 B DRAM buffer across 12 banks, where each bank needs to store 95071616 B, but bank size is 1021821792 B (allocated: 834121472 B, free: 187700320 B, largest free block: 94678624 B) (assert.hpp:104)
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929] EngineCore failed to start.
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929] Traceback (most recent call last):
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]   File "/home/container_app_user/vllm/vllm/v1/engine/core.py", line 920, in run_engine_core
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]     engine_core = EngineCoreProc(*args, **kwargs)
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]   File "/home/container_app_user/vllm/vllm/v1/engine/core.py", line 693, in __init__
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]     super().__init__(
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]   File "/home/container_app_user/vllm/vllm/v1/engine/core.py", line 112, in __init__
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]     num_gpu_blocks, num_cpu_blocks, kv_cache_config = self._initialize_kv_caches(
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]   File "/home/container_app_user/vllm/vllm/v1/engine/core.py", line 251, in _initialize_kv_caches
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]     self.model_executor.initialize_from_config(kv_cache_configs)
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]   File "/home/container_app_user/vllm/vllm/v1/executor/abstract.py", line 116, in initialize_from_config
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]     self.collective_rpc("compile_or_warm_up_model")
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]   File "/home/container_app_user/vllm/vllm/v1/executor/uniproc_executor.py", line 75, in collective_rpc
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]     result = run_method(self.driver_worker, method, args, kwargs)
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]   File "/home/container_app_user/vllm/vllm/v1/serial_utils.py", line 479, in run_method
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]     return func(*args, **kwargs)
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]   File "/home/container_app_user/vllm/vllm/v1/worker/tt_worker.py", line 207, in compile_or_warm_up_model
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]     self.model_runner.warmup_model()
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]   File "/home/container_app_user/vllm/vllm/v1/worker/tt_model_runner.py", line 1812, in warmup_model
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]     self.model.warmup_model_prefill(
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]   File "/home/container_app_user/tt-metal/models/tt_transformers/tt/generator.py", line 162, in warmup_model_prefill
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]     self.prefill_forward_text(
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]   File "/home/container_app_user/tt-metal/models/tt_transformers/tt/generator.py", line 608, in prefill_forward_text
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]     logits = self.prefill_forward_single_user_text(
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]   File "/home/container_app_user/tt-metal/models/tt_transformers/tt/generator.py", line 910, in prefill_forward_single_user_text
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]     tt_logits = self.model[model_id].ttnn_prefill_forward(
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]   File "/home/container_app_user/tt-metal/models/tt_transformers/tt/model.py", line 568, in ttnn_prefill_forward
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]     return self.forward(
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]   File "/home/container_app_user/tt-metal/models/tt_transformers/tt/model.py", line 697, in forward
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]     x = layer(
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]   File "/home/container_app_user/tt-metal/models/common/lightweightmodule.py", line 12, in __call__
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]     return self.forward(*args, **kwargs)
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]   File "/home/container_app_user/tt-metal/models/tt_transformers/tt/decoder.py", line 296, in forward
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]     hidden_states = self.feed_forward.forward(hidden_states, mode)
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]   File "/home/container_app_user/tt-metal/models/tt_transformers/tt/mlp.py", line 236, in forward
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]     w2_in = ttnn.mul(
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]   File "/home/container_app_user/tt-metal/ttnn/ttnn/decorators.py", line 451, in __call__
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]     result = self.function(*function_args, **function_kwargs)
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929] RuntimeError: TT_FATAL @ /home/container_app_user/tt-metal/tt_metal/impl/allocator/bank_manager.cpp:434: false
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929] info:
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929] Out of Memory: Not enough space to allocate 1140850688 B DRAM buffer across 12 banks, where each bank needs to store 95071616 B, but bank size is 1021821792 B (allocated: 834121472 B, free: 187700320 B, largest free block: 94678624 B)
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929] backtrace:
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- /home/container_app_user/tt-metal/build/lib/libtt_metal.so(+0x6f1d21) [0x7fdd6e946d21]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- tt::tt_metal::BankManager::allocate_buffer(unsigned long, unsigned long, bool, tt::tt_metal::CoreRangeSet const&, std::optional<unsigned int>, ttsl::StrongType<unsigned int, tt::tt_metal::AllocatorIDTag>)
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- tt::tt_metal::AllocatorImpl::allocate_buffer(tt::tt_metal::Buffer*)
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- tt::tt_metal::Buffer::allocate_impl()
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- tt::tt_metal::Buffer::create(tt::tt_metal::IDevice*, unsigned long, unsigned long, tt::tt_metal::BufferType, tt::tt_metal::BufferShardingArgs const&, std::optional<bool>, std::optional<ttsl::StrongType<unsigned char, tt::tt_metal::SubDeviceIdTag> >)
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- tt::tt_metal::distributed::MeshBuffer::create(std::variant<tt::tt_metal::distributed::ReplicatedBufferConfig, tt::tt_metal::distributed::ShardedBufferConfig> const&, tt::tt_metal::distributed::DeviceLocalBufferConfig const&, tt::tt_metal::distributed::MeshDevice*, std::optional<unsigned long>)
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- tt::tt_metal::tensor_impl::allocate_device_buffer(tt::tt_metal::distributed::MeshDevice*, tt::tt_metal::TensorSpec const&)
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- tt::tt_metal::create_device_tensor(tt::tt_metal::TensorSpec const&, tt::tt_metal::IDevice*)
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- ttnn::operations::binary_ng::BinaryNgDeviceOperation::create_output_tensors(ttnn::operations::binary_ng::BinaryNgDeviceOperation::operation_attributes_t const&, ttnn::operations::binary_ng::BinaryNgDeviceOperation::tensor_args_t const&)
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- /home/container_app_user/tt-metal/build/lib/_ttnncpp.so(_ZN4ttnn16device_operation6detail6launchITkNS0_22DeviceOperationConceptENS_10operations9binary_ng23BinaryNgDeviceOperationEEENT_21tensor_return_value_tERKNS6_22operation_attributes_tERKNS6_13tensor_args_tE+0x1aa) [0x7fdd6fdd5b4a]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- /home/container_app_user/tt-metal/build/lib/_ttnncpp.so(_ZN4ttnn4prim9binary_ngERKN2tt8tt_metal6TensorES5_NS_10operations6binary12BinaryOpTypeERKSt8optionalIKNS2_8DataTypeEERKS9_INS2_12MemoryConfigEERKS9_IS3_ERKS9_IbESt4spanIKNS6_5unary19BasicUnaryWithParamIJfijEEELm18446744073709551615EESU_SU_S9_ISt7variantIJjifEEERKS9_INS2_12CoreRangeSetEE+0x997) [0x7fdd6fdc6657]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- /home/container_app_user/tt-metal/build/lib/_ttnncpp.so(+0xd09b51) [0x7fdd6fd8eb51]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- /home/container_app_user/tt-metal/build/lib/_ttnncpp.so(_ZN4ttnn10operations6binary26MulOperationWithFastApproxILNS1_12BinaryOpTypeE2EE6invokeERKN2tt8tt_metal6TensorES9_RKSt8optionalIKNS6_8DataTypeEERKSA_INS6_12MemoryConfigEERKSA_IS7_ESt4spanIKNS0_5unary19BasicUnaryWithParamIJfijEEELm18446744073709551615EESS_SS_RKSA_IbESV_RKSA_INS6_12CoreRangeSetEE+0xcc) [0x7fdd6fd97b3c]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- /home/container_app_user/tt-metal/ttnn/ttnn/_ttnn.so(+0x59f3a3) [0x7fdd70f9e3a3]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- /home/container_app_user/tt-metal/ttnn/ttnn/_ttnn.so(+0x59f237) [0x7fdd70f9e237]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- /home/container_app_user/tt-metal/ttnn/ttnn/_ttnn.so(+0x244425) [0x7fdd70c43425]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(_PyObject_FastCallDictTstate+0x16d) [0x55e7272acb0d]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(_PyObject_Call_Prepend+0x5c) [0x55e7272c184c]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(+0x29cde4) [0x55e7273c8de4]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(PyObject_Call+0xbb) [0x55e7272c532b]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(_PyEval_EvalFrameDefault+0x286b) [0x55e7272a3d7b]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(_PyFunction_Vectorcall+0x7c) [0x55e7272b768c]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(_PyObject_FastCallDictTstate+0x16d) [0x55e7272acb0d]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(_PyObject_Call_Prepend+0x5c) [0x55e7272c184c]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(+0x29cde4) [0x55e7273c8de4]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(_PyObject_MakeTpCall+0x25b) [0x55e7272ad89b]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(_PyEval_EvalFrameDefault+0x6a5b) [0x55e7272a7f6b]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(_PyFunction_Vectorcall+0x7c) [0x55e7272b768c]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(_PyEval_EvalFrameDefault+0x807) [0x55e7272a1d17]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(+0x1986f1) [0x55e7272c46f1]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(PyObject_Call+0x122) [0x55e7272c5392]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(_PyEval_EvalFrameDefault+0x286b) [0x55e7272a3d7b]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(_PyFunction_Vectorcall+0x7c) [0x55e7272b768c]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(_PyObject_FastCallDictTstate+0x16d) [0x55e7272acb0d]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(_PyObject_Call_Prepend+0x5c) [0x55e7272c184c]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(+0x29cde4) [0x55e7273c8de4]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(_PyObject_MakeTpCall+0x25b) [0x55e7272ad89b]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(_PyEval_EvalFrameDefault+0x6a5b) [0x55e7272a7f6b]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(+0x1986f1) [0x55e7272c46f1]
+(EngineCore_DP0 pid=93) ERROR 03-10 02:15:23 [core.py:929]  --- VLLM::EngineCore(_PyEval_EvalFrameDefault+0x1992) [0x55e7272a2ea2]
+[... 92 lines omitted ...]
+(EngineCore_DP0 pid=93)     hidden_states = self.feed_forward.forward(hidden_states, mode)
+(EngineCore_DP0 pid=93)   File "/home/container_app_user/tt-metal/models/tt_transformers/tt/mlp.py", line 236, in forward
+(EngineCore_DP0 pid=93)     w2_in = ttnn.mul(
+(EngineCore_DP0 pid=93)   File "/home/container_app_user/tt-metal/ttnn/ttnn/decorators.py", line 451, in __call__
+(EngineCore_DP0 pid=93)     result = self.function(*function_args, **function_kwargs)
+(EngineCore_DP0 pid=93) RuntimeError: TT_FATAL @ /home/container_app_user/tt-metal/tt_metal/impl/allocator/bank_manager.cpp:434: false
+(EngineCore_DP0 pid=93) info:
+(EngineCore_DP0 pid=93) Out of Memory: Not enough space to allocate 1140850688 B DRAM buffer across 12 banks, where each bank needs to store 95071616 B, but bank size is 1021821792 B (allocated: 834121472 B, free: 187700320 B, largest free block: 94678624 B)
+(EngineCore_DP0 pid=93) backtrace:
+(EngineCore_DP0 pid=93)  --- /home/container_app_user/tt-metal/build/lib/libtt_metal.so(+0x6f1d21) [0x7fdd6e946d21]
+(EngineCore_DP0 pid=93)  --- tt::tt_metal::BankManager::allocate_buffer(unsigned long, unsigned long, bool, tt::tt_metal::CoreRangeSet const&, std::optional<unsigned int>, ttsl::StrongType<unsigned int, tt::tt_metal::AllocatorIDTag>)
+(EngineCore_DP0 pid=93)  --- tt::tt_metal::AllocatorImpl::allocate_buffer(tt::tt_metal::Buffer*)
+(EngineCore_DP0 pid=93)  --- tt::tt_metal::Buffer::allocate_impl()
+[... 153 lines omitted ...]
+(APIServer pid=1)   File "/home/container_app_user/vllm/vllm/v1/engine/async_llm.py", line 133, in __init__
+(APIServer pid=1)     self.engine_core = EngineCoreClient.make_async_mp_client(
+(APIServer pid=1)   File "/home/container_app_user/vllm/vllm/v1/engine/core_client.py", line 121, in make_async_mp_client
+(APIServer pid=1)     return AsyncMPClient(*client_args)
+(APIServer pid=1)   File "/home/container_app_user/vllm/vllm/v1/engine/core_client.py", line 808, in __init__
+(APIServer pid=1)     super().__init__(
+(APIServer pid=1)   File "/home/container_app_user/vllm/vllm/v1/engine/core_client.py", line 469, in __init__
+(APIServer pid=1)     with launch_core_engines(vllm_config, executor_class, log_stats) as (
+(APIServer pid=1)   File "/usr/lib/python3.10/contextlib.py", line 142, in __exit__
+(APIServer pid=1)     next(self.gen)
+(APIServer pid=1)   File "/home/container_app_user/vllm/vllm/v1/engine/utils.py", line 984, in launch_core_engines
+(APIServer pid=1)     wait_for_engine_startup(
+(APIServer pid=1)   File "/home/container_app_user/vllm/vllm/v1/engine/utils.py", line 1041, in wait_for_engine_startup
+(APIServer pid=1)     raise RuntimeError(
+(APIServer pid=1) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}

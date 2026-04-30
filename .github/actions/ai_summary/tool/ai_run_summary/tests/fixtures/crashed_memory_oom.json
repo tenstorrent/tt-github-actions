@@ -1,0 +1,20 @@
+{
+  "category": "tt-metal:memory",
+  "subcategory": "oom",
+  "layer": "framework",
+  "root_cause": "L1 buffer allocation failed: requested 2MB, available 512KB",
+  "error_message": "TT_FATAL @ buffer.cpp:89 - allocation failed",
+  "is_your_code": false,
+  "confidence": "high",
+  "failed_tests": [],
+  "_job": {
+    "name": "run-release-Mistral-7B-Instruct-v0.3-llmbox-n300",
+    "url": "https://github.com/tenstorrent/tt-shield/actions/runs/12345/job/100003",
+    "status": "CRASHED",
+    "status_code": "RED",
+    "exit_code": 1,
+    "has_crash": true,
+    "has_timeout": false,
+    "failed_tests": []
+  }
+}

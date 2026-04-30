@@ -1,0 +1,21 @@
+{
+  "category": "tt-metal:dispatch",
+  "subcategory": "timeout",
+  "layer": "framework",
+  "root_cause": "Command dispatch timeout on device 0 after 120s",
+  "error_message": "TT_THROW @ dispatch.cpp:234 - dispatch timeout",
+  "is_your_code": false,
+  "confidence": "high",
+  "failed_tests": [],
+  "status": "CRASH",
+  "_job": {
+    "name": "run-release-Qwen2.5-7B-Instruct-llmbox-t3k",
+    "url": "https://github.com/tenstorrent/tt-shield/actions/runs/12345/job/100002",
+    "status": "CRASHED",
+    "status_code": "RED",
+    "exit_code": 1,
+    "has_crash": true,
+    "has_timeout": false,
+    "failed_tests": []
+  }
+}
