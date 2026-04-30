@@ -461,7 +461,7 @@ SAMPLE_GUIDELLM_OUTPUT = {
         "backend_kwargs": {
             "target": "http://blaze-superpod-server:8000",
             "model": "deepseek-ai/DeepSeek-R1-0528",
-            "api_key": "warsaw2026",
+            "api_key": "test_api_key",
         },
         "processor": "deepseek-ai/DeepSeek-R1-0528",
         "max_seconds": 3600,
@@ -483,7 +483,7 @@ SAMPLE_GUIDELLM_OUTPUT = {
                 "backend": {
                     "target": "http://blaze-superpod-server:8000",
                     "model": "deepseek-ai/DeepSeek-R1-0528",
-                    "api_key": "warsaw2026",
+                    "api_key": "test_api_key",
                     "http2": True,
                 },
                 "profile": {"type_": "concurrent"},
