@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import math
 import os
 import pathlib
 import json
@@ -546,9 +547,161 @@ class VllmBenchmarkDataMapper(_BenchmarkDataMapper):
             return None
 
 
+class GuideLLMBenchmarkDataMapper(_BenchmarkDataMapper):
+    @staticmethod
+    def _safe_get(obj, path):
+        cur = obj
+        for k in path.split("."):
+            if not isinstance(cur, dict):
+                return None
+            cur = cur.get(k)
+        return cur
+
+    @staticmethod
+    def _flatten_numeric(obj, prefix=""):
+        out = {}
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                new_key = f"{prefix}_{k}" if prefix else str(k)
+                out.update(GuideLLMBenchmarkDataMapper._flatten_numeric(v, new_key))
+        if isinstance(obj, (int, float)) and math.isfinite(obj):
+            out[prefix] = obj
+        return out
+
+    @staticmethod
+    def _parse_data_spec(s):
+        if not isinstance(s, str):
+            return {}
+        out = {}
+        for tok in s.split(","):
+            if "=" in tok:
+                k, v = tok.split("=", 1)
+                out[k.strip()] = v.strip()
+        return out
+
+    @staticmethod
+    def _redact_api_key(d):
+        if not isinstance(d, dict):
+            return d
+        copy = dict(d)
+        if "api_key" in copy:
+            copy["api_key"] = "***REDACTED***"
+        return copy
+
+    def map_benchmark_data(
+        self, pipeline, job_id, report_data, model_spec_data=None
+    ) -> List[CompleteBenchmarkRun] | None:
+        job = self._get_job(pipeline, job_id)
+        if job is None:
+            return None
+
+        try:
+            top_args = report_data.get("args") or {}
+            metadata = report_data.get("metadata") or {}
+
+            args_data = top_args.get("data") or []
+            data_spec_str = args_data[0] if args_data and isinstance(args_data[0], str) else None
+            data_spec = self._parse_data_spec(data_spec_str)
+
+            try:
+                prompt_tokens = int(data_spec["prompt_tokens"]) if "prompt_tokens" in data_spec else None
+                output_tokens = int(data_spec["output_tokens"]) if "output_tokens" in data_spec else None
+            except ValueError:
+                logger.warning(f"Could not parse prompt_tokens or output_tokens as int in data_spec: {data_spec}")
+                prompt_tokens, output_tokens = None, None
+
+            top_args_redacted = dict(top_args)
+            if "backend_kwargs" in top_args_redacted:
+                top_args_redacted["backend_kwargs"] = self._redact_api_key(top_args_redacted.get("backend_kwargs"))
+
+            dataset_name = top_args.get("processor", None)
+
+            results = []
+            for benchmark in report_data.get("benchmarks") or []:
+                model_id = self._safe_get(benchmark, "config.backend.model") or ""
+                model_name = model_id.split("/", 1)[-1] if "/" in model_id else model_id
+
+                flat_metrics = {}
+                flat_metrics.update(self._flatten_numeric(benchmark.get("metrics") or {}, "metrics"))
+                flat_metrics.update(self._flatten_numeric(benchmark.get("scheduler_state") or {}, "scheduler_state"))
+                flat_metrics.update(
+                    self._flatten_numeric(benchmark.get("scheduler_metrics") or {}, "scheduler_metrics")
+                )
+                start = self._safe_get(benchmark, "scheduler_state.start_time")
+                end = self._safe_get(benchmark, "scheduler_state.end_time")
+                if isinstance(start, (int, float)) and isinstance(end, (int, float)):
+                    flat_metrics["duration"] = end - start
+
+                measurements = self._create_measurements(
+                    job, "guidellm_benchmark", flat_metrics, list(flat_metrics.keys())
+                )
+
+                bench_config = dict(self._safe_get(benchmark, "config") or {})
+                if "backend" in bench_config:
+                    bench_config["backend"] = self._redact_api_key(bench_config["backend"])
+
+                config_params = {
+                    "metadata": metadata,
+                    "args": top_args_redacted,
+                    "benchmark_id": benchmark.get("id_"),
+                    "run_id": benchmark.get("run_id"),
+                    "run_index": benchmark.get("run_index"),
+                    "type_": benchmark.get("type_"),
+                    "config": bench_config,
+                    "scheduler_state_timestamps": {
+                        k: self._safe_get(benchmark, f"scheduler_state.{k}")
+                        for k in (
+                            "start_time",
+                            "end_time",
+                            "start_requests_time",
+                            "end_requests_time",
+                            "end_queuing_time",
+                            "end_processing_time",
+                        )
+                    },
+                    "scheduler_metrics_timestamps": {
+                        k: self._safe_get(benchmark, f"scheduler_metrics.{k}")
+                        for k in (
+                            "start_time",
+                            "request_start_time",
+                            "measure_start_time",
+                            "measure_end_time",
+                            "request_end_time",
+                            "end_time",
+                        )
+                    },
+                    "data_spec": data_spec_str,
+                }
+
+                results.append(
+                    self._create_complete_benchmark_run(
+                        pipeline=pipeline,
+                        job=job,
+                        data=benchmark,
+                        run_type="guidellm_benchmark",
+                        measurements=measurements,
+                        device_info=None,
+                        model_name=model_name,
+                        batch_size=self._safe_get(benchmark, "config.strategy.max_concurrency"),
+                        config_params=config_params,
+                        input_seq_length=prompt_tokens,
+                        output_seq_length=output_tokens,
+                        dataset_name=dataset_name,
+                        docker_image=(model_spec_data or {}).get("docker_image") or job.docker_image,
+                    )
+                )
+            return results
+        except ValidationError as e:
+            failure_happened()
+            logger.error(f"Validation error: {e}")
+            return None
+
+
 _REPORT_TYPE_MAPPERS = {
     ("tt-shield", "vllm_bench_serve"): VllmBenchmarkDataMapper,
     ("tt-inference-server", "vllm_bench_serve"): VllmBenchmarkDataMapper,
+    ("tt-shield", "guidellm_benchmark"): GuideLLMBenchmarkDataMapper,
+    ("tt-inference-server", "guidellm_benchmark"): GuideLLMBenchmarkDataMapper,
 }
 
 

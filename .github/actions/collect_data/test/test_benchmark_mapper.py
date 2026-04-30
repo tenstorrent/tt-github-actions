@@ -3,7 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 import pytest
 from unittest.mock import MagicMock
-from benchmark import ShieldBenchmarkDataMapper, VllmBenchmarkDataMapper, CompleteBenchmarkRun
+from benchmark import (
+    ShieldBenchmarkDataMapper,
+    VllmBenchmarkDataMapper,
+    GuideLLMBenchmarkDataMapper,
+    CompleteBenchmarkRun,
+)
 
 
 @pytest.fixture
@@ -433,3 +438,331 @@ def test_vllm_missing_metrics_still_works(vllm_mapper, vllm_pipeline):
     assert len(result) == 1
     assert result[0].ml_model_name == "model"
     assert len(result[0].measurements) == 2
+
+
+# --- GuideLLMBenchmarkDataMapper tests ---
+
+SAMPLE_GUIDELLM_OUTPUT = {
+    "metadata": {
+        "version": 1,
+        "guidellm_version": "0.6.0",
+        "python_version": "3.10.19",
+        "platform": "Linux",
+    },
+    "args": {
+        "data": [
+            "turns=3,prompt_tokens=400,prompt_tokens_stdev=150,prompt_tokens_min=50,"
+            "prompt_tokens_max=1500,output_tokens=3000,output_tokens_stdev=120,"
+            "output_tokens_min=1000,output_tokens_max=1024"
+        ],
+        "profile": "concurrent",
+        "rate": [32],
+        "backend": "openai_http",
+        "backend_kwargs": {
+            "target": "http://blaze-superpod-server:8000",
+            "model": "deepseek-ai/DeepSeek-R1-0528",
+            "api_key": "test_api_key",
+        },
+        "processor": "deepseek-ai/DeepSeek-R1-0528",
+        "max_seconds": 3600,
+        "max_errors": 500,
+    },
+    "benchmarks": [
+        {
+            "type_": "generative_benchmark",
+            "id_": "1b33b4d1-5b31-47a2-bc49-f479a6a66020",
+            "run_id": "7313a0e4-3220-472b-8a8a-a83cdd07bc80",
+            "run_index": 0,
+            "config": {
+                "strategy": {
+                    "type_": "concurrent",
+                    "worker_count": 10,
+                    "max_concurrency": 32,
+                    "streams": 32,
+                },
+                "backend": {
+                    "target": "http://blaze-superpod-server:8000",
+                    "model": "deepseek-ai/DeepSeek-R1-0528",
+                    "api_key": "test_api_key",
+                    "http2": True,
+                },
+                "profile": {"type_": "concurrent"},
+            },
+            "scheduler_state": {
+                "node_id": 0,
+                "num_processes": 10,
+                "start_time": 1777451316.0,
+                "end_time": 1777451697.0,
+                "start_requests_time": 1777451316.4,
+                "end_requests_time": 1777451697.25,
+                "end_queuing_time": 1777451697.25,
+                "end_processing_time": 1777451697.25,
+                "created_requests": 706,
+                "queued_requests": 0,
+                "successful_requests": 32,
+                "errored_requests": 500,
+                "cancelled_requests": 174,
+            },
+            "scheduler_metrics": {
+                "start_time": 1777451316.0,
+                "request_start_time": 1777451316.4,
+                "measure_start_time": 1777451496.4,
+                "measure_end_time": 1777451697.25,
+                "request_end_time": 1777451697.25,
+                "end_time": 1777451697.0,
+                "queued_time_avg": 94.5,
+                "request_time_avg": 9.45,
+                "resolve_time_avg": 21.6,
+            },
+            "metrics": {
+                "request_totals": {
+                    "successful": 32,
+                    "errored": 500,
+                    "incomplete": 31,
+                    "total": 531,
+                },
+                "time_to_first_token_ms": {
+                    "successful": {
+                        "mean": 49.23,
+                        "median": 48.7,
+                        "std_dev": 5.58,
+                        "percentiles": {"p50": 48.5, "p99": 77.79},
+                    },
+                    "errored": {
+                        "mean": 199.15,
+                        "median": 0.0,
+                        "std_dev": 771.06,
+                        "percentiles": {"p50": 0.0, "p99": 3476.5},
+                    },
+                    "incomplete": {"mean": 0.0, "percentiles": {"p99": 0.0}},
+                    "total": {
+                        "mean": 187.52,
+                        "median": 0.0,
+                        "percentiles": {"p99": 3476.5},
+                    },
+                },
+                "time_per_output_token_ms": {
+                    "successful": {
+                        "mean": 11.99,
+                        "median": 11.62,
+                        "std_dev": 1.75,
+                        "percentiles": {"p99": 23.59},
+                    },
+                },
+                "inter_token_latency_ms": {
+                    "successful": {
+                        "mean": 6.79,
+                        "median": 6.77,
+                        "std_dev": 0.06,
+                        "percentiles": {"p99": 7.11},
+                    },
+                },
+                "requests_per_second": {
+                    "successful": {"mean": 2.49, "median": 0.01},
+                    "total": {"mean": 2.49, "median": 0.01},
+                },
+                "output_tokens_per_second": {
+                    "successful": {"mean": 51.76},
+                },
+                "tokens_per_second": {
+                    "successful": {"mean": 616.86},
+                },
+                "prompt_token_count": {
+                    "successful": {"total_sum": 208831, "count": 500},
+                },
+                "output_token_count": {
+                    "successful": {"total_sum": 19128, "count": 500},
+                },
+            },
+        }
+    ],
+}
+
+
+@pytest.fixture
+def guidellm_pipeline():
+    p = MagicMock()
+    p.pipeline_start_ts = "2026-04-29T15:00:00Z"
+    p.pipeline_end_ts = "2026-04-29T16:00:00Z"
+    p.project = "tt-inference-server"
+    p.git_commit_hash = "abc123"
+    p.pipeline_submission_ts = "2026-04-29T14:00:00Z"
+    p.git_branch_name = "main"
+    p.github_pipeline_id = 88888
+    p.github_pipeline_link = "http://example.com/run/88888"
+    p.git_author = "marko"
+    p.jobs = [
+        MagicMock(
+            github_job_id=1,
+            job_start_ts="2026-04-29T15:10:00Z",
+            job_end_ts="2026-04-29T15:50:00Z",
+            docker_image="guidellm_image",
+            host_name="bench_host",
+        )
+    ]
+    return p
+
+
+@pytest.fixture
+def guidellm_mapper():
+    return GuideLLMBenchmarkDataMapper()
+
+
+def test_guidellm_produces_run_per_benchmark(guidellm_mapper, guidellm_pipeline):
+    result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, SAMPLE_GUIDELLM_OUTPUT)
+    assert len(result) == 1
+    assert isinstance(result[0], CompleteBenchmarkRun)
+
+
+def test_guidellm_produces_two_runs_for_two_benchmarks(guidellm_mapper, guidellm_pipeline):
+    data = {
+        **SAMPLE_GUIDELLM_OUTPUT,
+        "benchmarks": SAMPLE_GUIDELLM_OUTPUT["benchmarks"] * 2,
+    }
+    result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, data)
+    assert len(result) == 2
+
+
+def test_guidellm_run_type(guidellm_mapper, guidellm_pipeline):
+    result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, SAMPLE_GUIDELLM_OUTPUT)
+    assert result[0].run_type == "guidellm_benchmark"
+
+
+def test_guidellm_model_name_strips_prefix(guidellm_mapper, guidellm_pipeline):
+    result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, SAMPLE_GUIDELLM_OUTPUT)
+    assert result[0].ml_model_name == "DeepSeek-R1-0528"
+
+
+def test_guidellm_batch_size_from_max_concurrency(guidellm_mapper, guidellm_pipeline):
+    result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, SAMPLE_GUIDELLM_OUTPUT)
+    assert result[0].batch_size == 32
+
+
+def test_guidellm_input_output_seq_length_from_args_data(guidellm_mapper, guidellm_pipeline):
+    result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, SAMPLE_GUIDELLM_OUTPUT)
+    assert result[0].input_sequence_length == 400
+    assert result[0].output_sequence_length == 3000
+
+
+def test_guidellm_dataset_name_is_processor(guidellm_mapper, guidellm_pipeline):
+    result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, SAMPLE_GUIDELLM_OUTPUT)
+    assert result[0].dataset_name == "deepseek-ai/DeepSeek-R1-0528"
+
+
+def test_guidellm_dataset_name_missing_processor(guidellm_mapper, guidellm_pipeline):
+    data = {**SAMPLE_GUIDELLM_OUTPUT, "args": {**SAMPLE_GUIDELLM_OUTPUT["args"]}}
+    data["args"].pop("processor", None)
+    result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, data)
+    assert result[0].dataset_name is None
+
+
+def test_guidellm_flattens_all_numeric_metrics(guidellm_mapper, guidellm_pipeline):
+    result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, SAMPLE_GUIDELLM_OUTPUT)
+    by_name = {m.name: m.value for m in result[0].measurements}
+    assert by_name["metrics_time_to_first_token_ms_successful_mean"] == pytest.approx(49.23)
+    assert by_name["metrics_time_to_first_token_ms_successful_percentiles_p99"] == pytest.approx(77.79)
+    assert by_name["metrics_time_per_output_token_ms_successful_mean"] == pytest.approx(11.99)
+    assert by_name["metrics_inter_token_latency_ms_successful_std_dev"] == pytest.approx(0.06)
+    assert by_name["metrics_requests_per_second_total_mean"] == pytest.approx(2.49)
+    assert by_name["metrics_request_totals_total"] == 531
+    assert by_name["metrics_prompt_token_count_successful_total_sum"] == 208831
+    assert by_name["scheduler_state_successful_requests"] == 32
+    assert by_name["scheduler_state_errored_requests"] == 500
+    assert by_name["scheduler_metrics_request_time_avg"] == pytest.approx(9.45)
+    assert by_name["duration"] == pytest.approx(381.0)
+
+
+def test_guidellm_skips_non_numeric_leaves(guidellm_mapper, guidellm_pipeline):
+    result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, SAMPLE_GUIDELLM_OUTPUT)
+    names = {m.name for m in result[0].measurements}
+    # Non-numeric leaves should not appear as measurements
+    assert not any("type_" in n for n in names)
+    assert not any("api_key" in n for n in names)
+
+
+def test_guidellm_measurement_step_name(guidellm_mapper, guidellm_pipeline):
+    result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, SAMPLE_GUIDELLM_OUTPUT)
+    for m in result[0].measurements:
+        assert m.step_name == "guidellm_benchmark"
+
+
+def test_guidellm_config_params_contains_metadata_and_args(guidellm_mapper, guidellm_pipeline):
+    result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, SAMPLE_GUIDELLM_OUTPUT)
+    cfg = result[0].config_params
+    assert cfg["metadata"]["guidellm_version"] == "0.6.0"
+    assert cfg["args"]["profile"] == "concurrent"
+    assert cfg["config"]["strategy"]["max_concurrency"] == 32
+    assert cfg["benchmark_id"] == "1b33b4d1-5b31-47a2-bc49-f479a6a66020"
+    assert cfg["data_spec"] == SAMPLE_GUIDELLM_OUTPUT["args"]["data"][0]
+
+
+def test_guidellm_redacts_api_key(guidellm_mapper, guidellm_pipeline):
+    result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, SAMPLE_GUIDELLM_OUTPUT)
+    cfg = result[0].config_params
+    assert cfg["args"]["backend_kwargs"]["api_key"] == "***REDACTED***"
+    assert cfg["config"]["backend"]["api_key"] == "***REDACTED***"
+
+
+def test_guidellm_pipeline_metadata_propagated(guidellm_mapper, guidellm_pipeline):
+    result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, SAMPLE_GUIDELLM_OUTPUT)
+    run = result[0]
+    assert run.git_repo_name == "tt-inference-server"
+    assert run.git_commit_hash == "abc123"
+    assert run.git_branch_name == "main"
+    assert run.github_pipeline_id == 88888
+    assert run.user_name == "marko"
+    assert run.device_hostname == "bench_host"
+
+
+def test_guidellm_no_job_found(guidellm_mapper, guidellm_pipeline):
+    result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 999, SAMPLE_GUIDELLM_OUTPUT)
+    assert result is None
+
+
+def test_guidellm_handles_missing_blocks(guidellm_mapper, guidellm_pipeline):
+    minimal = {
+        "metadata": {"guidellm_version": "0.6.0"},
+        "args": {"data": ["prompt_tokens=100,output_tokens=200"]},
+        "benchmarks": [
+            {
+                "config": {
+                    "backend": {"model": "test/model"},
+                    "strategy": {"max_concurrency": 4},
+                },
+            }
+        ],
+    }
+    result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, minimal)
+    assert len(result) == 1
+    assert result[0].ml_model_name == "model"
+    assert result[0].batch_size == 4
+    assert result[0].input_sequence_length == 100
+    assert result[0].output_sequence_length == 200
+    assert result[0].measurements == []
+
+
+def test_guidellm_skips_nan_inf(guidellm_mapper, guidellm_pipeline):
+    data = {
+        "args": {"data": ["prompt_tokens=10,output_tokens=20"]},
+        "benchmarks": [
+            {
+                "config": {"backend": {"model": "x/y"}, "strategy": {"max_concurrency": 1}},
+                "metrics": {
+                    "request_latency": {
+                        "successful": {
+                            "mean": float("nan"),
+                            "max": float("inf"),
+                            "min": -float("inf"),
+                            "median": 5.0,
+                        }
+                    }
+                },
+            }
+        ],
+    }
+    result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, data)
+    by_name = {m.name: m.value for m in result[0].measurements}
+    assert "metrics_request_latency_successful_median" in by_name
+    assert "metrics_request_latency_successful_mean" not in by_name
+    assert "metrics_request_latency_successful_max" not in by_name
+    assert "metrics_request_latency_successful_min" not in by_name
