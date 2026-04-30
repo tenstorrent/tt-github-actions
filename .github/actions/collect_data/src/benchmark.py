@@ -602,7 +602,7 @@ class GuideLLMBenchmarkDataMapper(_BenchmarkDataMapper):
             args_data = top_args.get("data") or []
             data_spec_str = args_data[0] if args_data and isinstance(args_data[0], str) else None
             data_spec = self._parse_data_spec(data_spec_str)
-            
+
             try:
                 prompt_tokens = int(data_spec["prompt_tokens"]) if "prompt_tokens" in data_spec else None
                 output_tokens = int(data_spec["output_tokens"]) if "output_tokens" in data_spec else None
