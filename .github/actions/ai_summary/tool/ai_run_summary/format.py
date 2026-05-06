@@ -188,7 +188,7 @@ def _job_expandable_block(
         parts.append(f"<code>{category}</code>")
 
         if show_root_cause:
-            root_cause = (job.root_cause or "")
+            root_cause = job.root_cause or ""
             if len(root_cause) > _ROOT_CAUSE_COL_MAX:
                 root_cause = root_cause[:_ROOT_CAUSE_COL_MAX] + "\u2026"
             parts.append(root_cause)
