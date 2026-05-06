@@ -326,3 +326,49 @@ class TestFormatRunReport:
         stats = _stats(jobs=jobs)
         report = format_run_report(stats)
         assert "Failed Job Details (2)" in report.md
+
+    def test_commit_sha_section_absent_when_not_provided(self):
+        report = format_run_report(RunStats())
+        assert "TT-Metal" not in report.md
+        assert "tt-inference-server" not in report.md
+        assert "vLLM" not in report.md
+
+    def test_tt_metal_commit_renders_short_sha_with_link(self):
+        sha = "abcdef1234567890abcdef1234567890abcdef12"
+        report = format_run_report(RunStats(), tt_metal_commit=sha)
+        assert "**TT-Metal**" in report.md
+        assert f"[`abcdef1`](https://github.com/tenstorrent/tt-metal/commit/{sha})" in report.md
+
+    def test_vllm_commit_renders(self):
+        sha = "1234567890abcdef1234567890abcdef12345678"
+        report = format_run_report(RunStats(), vllm_commit=sha)
+        assert "**vLLM**" in report.md
+        assert f"[`1234567`]" in report.md
+
+    def test_inference_server_commit_renders(self):
+        sha = "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+        report = format_run_report(RunStats(), inference_server_commit=sha)
+        assert "**tt-inference-server**" in report.md
+        assert "[`deadbee`]" in report.md
+
+    def test_model_details_absent_when_not_provided(self):
+        stats = _stats(jobs=[_job("SUCCESS")])
+        report = format_run_report(stats)
+        assert "Model Details" not in report.md
+
+    def test_model_details_present_when_all_summaries_given(self):
+        jobs = [_job("SUCCESS", job_name="run-release-Llama-3.1-8B-Instruct-n150"), _job("CRASHED")]
+        stats = _stats(jobs=jobs)
+        report = format_run_report(stats, all_summaries=jobs)
+        assert "Model Details (2 jobs)" in report.md
+
+    def test_model_details_sorted_alphabetically(self):
+        jobs = [
+            _job("SUCCESS", job_name="run-release-Zephyr-7B-n150", source_stem="z"),
+            _job("CRASHED", job_name="run-release-Llama-3.1-8B-n150", source_stem="l"),
+        ]
+        stats = _stats(jobs=jobs)
+        report = format_run_report(stats, all_summaries=jobs)
+        llama_pos = report.md.index("Llama-3.1-8B-n150")
+        zephyr_pos = report.md.index("Zephyr-7B-n150")
+        assert llama_pos < zephyr_pos

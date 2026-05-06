@@ -37,6 +37,12 @@ def parse_json_summary(file_path: Path) -> Optional[ParsedJobSummary]:
     if "/job/" in job_url:
         job_id = job_url.rsplit("/job/", 1)[-1].split("?")[0]
 
+    md_path = file_path.with_suffix(".md")
+    try:
+        markdown = md_path.read_text() if md_path.exists() else ""
+    except OSError:
+        markdown = ""
+
     return ParsedJobSummary(
         source_file=file_path,
         job_id=job_id,
@@ -51,6 +57,7 @@ def parse_json_summary(file_path: Path) -> Optional[ParsedJobSummary]:
         error_message=data.get("error_message", ""),
         confidence=data.get("confidence", ""),
         failed_tests=failed_tests,
+        markdown=markdown,
     )
 
 

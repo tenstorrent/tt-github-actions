@@ -21,6 +21,7 @@ from pathlib import Path
 from common.llm_client import get_llm_client
 
 from .aggregate import compute_stats
+from .commits import RunCommits, fetch_run_commits
 from .format import format_run_report
 from .narrative import generate_narrative
 from .parse import parse_summaries_dir
@@ -213,6 +214,10 @@ def main():
         "when 'cancelled' or 'skipped'. Has no effect "
         "unless --expected-jobs is also supplied.",
     )
+    parser.add_argument("--run-id", default="", help="GitHub Actions run ID (used to auto-fetch commit SHAs via gh)")
+    parser.add_argument("--tt-metal-commit", default="", help="TT-Metal commit SHA")
+    parser.add_argument("--vllm-commit", default="", help="vLLM commit SHA")
+    parser.add_argument("--inference-server-commit", default="", help="tt-inference-server commit SHA")
 
     args = parser.parse_args()
 
@@ -309,6 +314,18 @@ def main():
     # Resolve run metadata from environment
     meta = _resolve_run_metadata()
 
+    # Resolve commit SHAs: explicit args take priority; fall back to auto-fetch via gh
+    commits = RunCommits(
+        tt_metal=args.tt_metal_commit,
+        vllm=args.vllm_commit,
+        inference_server=args.inference_server_commit,
+    )
+    run_id_for_commits = args.run_id or meta["run_id"]
+    if run_id_for_commits and not any([commits.tt_metal, commits.vllm, commits.inference_server]):
+        print(f"Fetching commit SHAs for run {run_id_for_commits}...", file=sys.stderr)
+        repo = os.environ.get("GITHUB_REPOSITORY", "tenstorrent/tt-shield")
+        commits = fetch_run_commits(int(run_id_for_commits), repo=repo)
+
     # Format report
     report = format_run_report(
         stats,
@@ -317,6 +334,10 @@ def main():
         run_id=meta["run_id"],
         run_date=meta["run_date"],
         pr=meta["pr"],
+        tt_metal_commit=commits.tt_metal,
+        vllm_commit=commits.vllm,
+        inference_server_commit=commits.inference_server,
+        all_summaries=summaries,
     )
 
     # Write report to output_dir
