@@ -231,64 +231,11 @@ class TestFormatRunReport:
         assert "### PR Impact" in report.md
         assert "#42" in report.md
 
-    def test_failed_jobs_sorted_by_category(self):
-        jobs = [
-            _job("CRASHED", category="vllm:config", source_stem="1"),
-            _job("CRASHED", category="app:server", source_stem="2"),
-            _job("CRASHED", category="tt-metal:memory", source_stem="3"),
-        ]
-        stats = _stats(jobs=jobs)
-        report = format_run_report(stats)
-        app_pos = report.md.index("app:server")
-        tt_pos = report.md.index("tt-metal:memory")
-        vllm_pos = report.md.index("vllm:config")
-        assert app_pos < tt_pos < vllm_pos
-
-    def test_failed_job_link_uses_job_id_and_proper_url(self):
-        job = _job(
-            "CRASHED",
-            job_name="run-tests-with-inference-server",
-            job_url="https://github.com/example/runs/1/job/65000042",
-            job_id="65000042",
-        )
-        stats = _stats(jobs=[job])
-        report = format_run_report(stats, run_url="https://github.com/example/runs/1")
-        assert "[65000042](https://github.com/example/runs/1/job/65000042)" in report.md
-
-    def test_run_column_shows_model_and_device(self):
-        job = _job("CRASHED", job_name="run-release-Llama-3.1-8B-Instruct-n150-n150", source_stem="65000099")
-        stats = _stats(jobs=[job])
-        report = format_run_report(stats)
-        # Full label including device suffix
-        assert "Llama-3.1-8B-Instruct-n150-n150" in report.md
-
-    def test_model_column_shows_dash_when_unknown(self):
-        job = _job(
-            "CRASHED",
-            job_name="run-tests-with-inference-server",
-            root_cause="HTTP 500 on /tt-liveness endpoint",
-            source_stem="65000001",
-        )
-        stats = _stats(jobs=[job])
-        report = format_run_report(stats)
-        assert "| \u2014 |" in report.md
-
     def test_category_has_bars(self):
         cats = [_cat("tt-metal:memory", 5)]
         stats = _stats(jobs=[_job("CRASHED")] * 5, categories=cats)
         report = format_run_report(stats)
-        # Both main category and subcategory rows should have bars
         assert "\u2588" in report.md
-
-    def test_your_code_column_absent_without_pr(self):
-        stats = _stats(jobs=[_job("CRASHED")])
-        report = format_run_report(stats, pr="")
-        assert "Your Code" not in report.md
-
-    def test_your_code_column_present_with_pr(self):
-        stats = _stats(jobs=[_job("CRASHED")])
-        report = format_run_report(stats, pr="42")
-        assert "Your Code" in report.md
 
     def test_stats_footer_present(self):
         report = format_run_report(RunStats())
@@ -304,25 +251,53 @@ class TestFormatRunReport:
         report = format_run_report(stats, narrative=None)
         assert "> " not in report.md
 
-    def test_no_failed_job_details_when_all_pass(self):
-        stats = _stats(jobs=[_job("SUCCESS")])
+    def test_no_failed_job_details_section(self):
+        stats = _stats(jobs=[_job("CRASHED"), _job("SUCCESS")])
         report = format_run_report(stats)
         assert "Failed Job Details" not in report.md
 
-    def test_root_cause_truncated_with_ellipsis(self):
-        job = _job("CRASHED", root_cause="A" * 120)
-        stats = _stats(jobs=[job])
-        report = format_run_report(stats)
-        assert "\u2026" in report.md
+    def test_commit_sha_section_absent_when_not_provided(self):
+        report = format_run_report(RunStats())
+        assert "TT-Metal" not in report.md
+        assert "tt-inference-server" not in report.md
+        assert "vLLM" not in report.md
 
-    def test_pipe_in_root_cause_escaped(self):
-        job = _job("CRASHED", root_cause="error: x | y should be z")
-        stats = _stats(jobs=[job])
-        report = format_run_report(stats)
-        assert r"x \| y" in report.md
+    def test_tt_metal_commit_renders_short_sha_with_link(self):
+        sha = "abcdef1234567890abcdef1234567890abcdef12"
+        report = format_run_report(RunStats(), tt_metal_commit=sha)
+        assert "**TT-Metal**" in report.md
+        assert f"[`abcdef1`](https://github.com/tenstorrent/tt-metal/commit/{sha})" in report.md
 
-    def test_failed_job_count_in_summary(self):
-        jobs = [_job("CRASHED"), _job("CRASHED"), _job("SUCCESS")]
+    def test_vllm_commit_renders(self):
+        sha = "1234567890abcdef1234567890abcdef12345678"
+        report = format_run_report(RunStats(), vllm_commit=sha)
+        assert "**vLLM**" in report.md
+        assert f"[`1234567`]" in report.md
+
+    def test_inference_server_commit_renders(self):
+        sha = "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+        report = format_run_report(RunStats(), inference_server_commit=sha)
+        assert "**tt-inference-server**" in report.md
+        assert "[`deadbee`]" in report.md
+
+    def test_model_details_absent_when_not_provided(self):
+        stats = _stats(jobs=[_job("SUCCESS")])
+        report = format_run_report(stats)
+        assert "Model Details" not in report.md
+
+    def test_model_details_present_when_all_summaries_given(self):
+        jobs = [_job("SUCCESS", job_name="run-release-Llama-3.1-8B-Instruct-n150"), _job("CRASHED")]
         stats = _stats(jobs=jobs)
-        report = format_run_report(stats)
-        assert "Failed Job Details (2)" in report.md
+        report = format_run_report(stats, all_summaries=jobs)
+        assert "Model Details (2)" in report.md
+
+    def test_model_details_sorted_alphabetically(self):
+        jobs = [
+            _job("SUCCESS", job_name="run-release-Zephyr-7B-n150", source_stem="z"),
+            _job("CRASHED", job_name="run-release-Llama-3.1-8B-n150", source_stem="l"),
+        ]
+        stats = _stats(jobs=jobs)
+        report = format_run_report(stats, all_summaries=jobs)
+        llama_pos = report.md.index("Llama-3.1-8B-n150")
+        zephyr_pos = report.md.index("Zephyr-7B-n150")
+        assert llama_pos < zephyr_pos

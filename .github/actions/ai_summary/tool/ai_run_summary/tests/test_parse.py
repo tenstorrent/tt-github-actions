@@ -93,6 +93,24 @@ class TestParseJsonSummary:
         assert parse_json_summary(tmp_path / "nope.json") is None
         assert "Warning" in capsys.readouterr().err
 
+    def test_markdown_sidecar_loaded(self, tmp_path):
+        data = {"_job": {"status": "CRASHED"}}
+        f = tmp_path / "ai_job_summary_123.json"
+        f.write_text(json.dumps(data))
+        md_path = tmp_path / "ai_job_summary_123.md"
+        md_path.write_text("## Summary\nSome details here.")
+        result = parse_json_summary(f)
+        assert result is not None
+        assert result.markdown == "## Summary\nSome details here."
+
+    def test_markdown_sidecar_empty_when_missing(self, tmp_path):
+        data = {"_job": {"status": "SUCCESS"}}
+        f = tmp_path / "ai_job_summary_456.json"
+        f.write_text(json.dumps(data))
+        result = parse_json_summary(f)
+        assert result is not None
+        assert result.markdown == ""
+
 
 class TestParseSummariesDir:
     def test_empty_dir(self, tmp_path):
