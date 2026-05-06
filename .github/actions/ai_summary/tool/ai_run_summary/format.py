@@ -354,49 +354,6 @@ def format_run_report(
         md += f"{narrative.dominant_cause}\n\n"
 
     # -----------------------------------------------------------------------
-    # 8. Failed Job Details -- sorted by status severity then category
-    #    Job column: always the numeric job ID linked to the job URL
-    #    Model column: extracted model name, or "--" when not identifiable
-    # -----------------------------------------------------------------------
-    if stats.failed_jobs:
-        show_your_code = bool(pr)
-        sorted_failures = sorted(
-            stats.failed_jobs,
-            key=lambda j: (
-                _STATUS_PRIORITY.get(j.status, 99),
-                j.category or "UNKNOWN",
-            ),
-        )
-
-        if show_your_code:
-            header = "| Job | Run | Status | Category | Your Code | Root Cause |"
-            sep = "|-----|-----|--------|----------|-----------|------------|"
-        else:
-            header = "| Job | Run | Status | Category | Root Cause |"
-            sep = "|-----|-----|--------|----------|------------|"
-
-        md += f"<details>\n<summary>Failed Job Details ({len(sorted_failures)})</summary>\n\n"
-        md += header + "\n"
-        md += sep + "\n"
-
-        for job in sorted_failures:
-            job_cell = _job_id_cell(job, run_url)
-            model = _extract_run_label(job) or "\u2014"
-            emoji = STATUS_EMOJI.get(job.status, "")
-            category = job.category or "UNKNOWN"
-            root_cause = (job.root_cause or "").replace("|", "\\|")
-            if len(root_cause) > _ROOT_CAUSE_COL_MAX:
-                root_cause = root_cause[:_ROOT_CAUSE_COL_MAX] + "\u2026"
-
-            if show_your_code:
-                yc = "Yes" if job.is_your_code is True else ("No" if job.is_your_code is False else "?")
-                md += f"| {job_cell} | {model} | {emoji} {job.status} | `{category}` | {yc} | {root_cause} |\n"
-            else:
-                md += f"| {job_cell} | {model} | {emoji} {job.status} | `{category}` | {root_cause} |\n"
-
-        md += "\n</details>\n\n"
-
-    # -----------------------------------------------------------------------
     # 10. Model Details -- all jobs alphabetically, each expandable
     # -----------------------------------------------------------------------
     if all_summaries is not None:
@@ -404,7 +361,7 @@ def format_run_report(
             all_summaries,
             key=lambda j: (_extract_run_label(j) or "").lower(),
         )
-        md += f"<details>\n<summary>Model Details ({len(sorted_by_model)} jobs)</summary>\n\n"
+        md += f"<details>\n<summary>Model Details ({len(sorted_by_model)})</summary>\n\n"
         for job in sorted_by_model:
             md += _job_expandable_block(job, run_url, compact=True)
         md += "</details>\n\n"
