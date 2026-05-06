@@ -48,6 +48,18 @@ inputs:
       synthesized (nothing to reconcile).
     required: false
     default: ""
+  tt-metal-commit:
+    description: "TT-Metal commit SHA for this run (shown in report header)"
+    required: false
+    default: ""
+  vllm-commit:
+    description: "vLLM commit SHA for this run (shown in report header)"
+    required: false
+    default: ""
+  inference-server-commit:
+    description: "tt-inference-server commit SHA for this run (shown in report header)"
+    required: false
+    default: ""
 
 outputs:
   report-file:
@@ -131,6 +143,9 @@ runs:
         CONFIG: ${{ inputs.config }}
         EXPECTED_JOBS: ${{ inputs.expected-jobs }}
         RUN_RESULT: ${{ inputs.run-result }}
+        TT_METAL_COMMIT: ${{ inputs.tt-metal-commit }}
+        VLLM_COMMIT: ${{ inputs.vllm-commit }}
+        INFERENCE_SERVER_COMMIT: ${{ inputs.inference-server-commit }}
       run: |
         TOOL_DIR="${{ steps.config.outputs.tool_dir }}"
 
@@ -147,8 +162,11 @@ runs:
         trap 'rm -f "$STDERR_FILE"' EXIT
 
         CMD_ARGS=(--config "$CONFIG")
-        [ -n "$EXPECTED_JOBS" ] && CMD_ARGS+=(--expected-jobs "$EXPECTED_JOBS")
-        [ -n "$RUN_RESULT" ]    && CMD_ARGS+=(--run-result "$RUN_RESULT")
+        [ -n "$EXPECTED_JOBS" ]           && CMD_ARGS+=(--expected-jobs "$EXPECTED_JOBS")
+        [ -n "$RUN_RESULT" ]              && CMD_ARGS+=(--run-result "$RUN_RESULT")
+        [ -n "$TT_METAL_COMMIT" ]         && CMD_ARGS+=(--tt-metal-commit "$TT_METAL_COMMIT")
+        [ -n "$VLLM_COMMIT" ]             && CMD_ARGS+=(--vllm-commit "$VLLM_COMMIT")
+        [ -n "$INFERENCE_SERVER_COMMIT" ] && CMD_ARGS+=(--inference-server-commit "$INFERENCE_SERVER_COMMIT")
 
         echo "::group::AI Run Summary"
         # `2> >(tee ...)` runs tee in a process substitution coprocess that

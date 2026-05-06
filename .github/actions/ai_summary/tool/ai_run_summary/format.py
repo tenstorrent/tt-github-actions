@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 import markdown
 
-from .models import ParsedJobSummary, RunNarrative, RunStats, STATUS_EMOJI
+from .models import NON_FAILURE_STATUSES, ParsedJobSummary, RunNarrative, RunStats, STATUS_EMOJI
 
 
 @dataclass
@@ -165,6 +165,51 @@ def _group_by_main_category(
 # ---------------------------------------------------------------------------
 
 
+def _job_expandable_block(
+    job: ParsedJobSummary,
+    run_url: str,
+    show_root_cause: bool = True,
+    compact: bool = False,
+) -> str:
+    """Render a single job as a <details> block containing the full .md summary.
+
+    compact=True shows only model, status and job link (no category / root cause).
+    """
+    emoji = STATUS_EMOJI.get(job.status, "")
+    model = _extract_run_label(job) or "\u2014"
+    url = _job_url(job, run_url)
+    label = job.job_id or job.source_file.stem.removeprefix("ai_job_summary_")
+    job_link = f'<a href="{url}">{label}</a>' if url else label
+
+    parts = [f"<strong>{model}</strong>", f"{emoji} {job.status}", job_link]
+
+    if not compact:
+        category = job.category or "UNKNOWN"
+        parts.append(f"<code>{category}</code>")
+
+        if show_root_cause:
+            root_cause = (job.root_cause or "")
+            if len(root_cause) > _ROOT_CAUSE_COL_MAX:
+                root_cause = root_cause[:_ROOT_CAUSE_COL_MAX] + "\u2026"
+            parts.append(root_cause)
+
+    summary_line = " &nbsp;|&nbsp; ".join(parts)
+
+    body = job.markdown.strip() if job.markdown else ""
+    if not body:
+        body = f"**Root Cause**: {job.root_cause}" if job.root_cause else f"Status: {job.status}"
+    elif compact:
+        # Strip the trailing "AI Summary Stats" <details> block (and its --- separator)
+        body = re.sub(
+            r"\s*-{3,}\s*<details>\s*<summary>AI Summary Stats</summary>.*$",
+            "",
+            body,
+            flags=re.DOTALL,
+        ).strip()
+
+    return f"<details>\n<summary>{summary_line}</summary>\n\n{body}\n\n</details>\n\n"
+
+
 def format_run_report(
     stats: RunStats,
     narrative: RunNarrative | None = None,
@@ -172,6 +217,10 @@ def format_run_report(
     run_id: str = "",
     run_date: str = "",
     pr: str = "",
+    tt_metal_commit: str = "",
+    vllm_commit: str = "",
+    inference_server_commit: str = "",
+    all_summaries: list | None = None,
 ) -> "RunReport":
     """Render a complete run-level report (markdown + HTML).
 
@@ -183,6 +232,11 @@ def format_run_report(
         run_date: Human-readable run date (e.g. "2026-03-13"). Omitted if empty.
         pr: PR number or branch name. When set, shows PR Impact section and
             "Your Code" column in job details.
+        tt_metal_commit: Optional TT-Metal commit SHA.
+        vllm_commit: Optional vLLM commit SHA.
+        inference_server_commit: Optional tt-inference-server commit SHA.
+        all_summaries: All parsed job summaries (success + failure). When provided,
+            a Model Details section is appended after the failed job details.
 
     Returns:
         RunReport with .md and .html attributes.
@@ -212,7 +266,26 @@ def format_run_report(
         md += " \u00b7 ".join(details_parts) + "\n\n"
 
     # -----------------------------------------------------------------------
-    # 3. Overall Health (LLM sentence)
+    # 3. Component versions (commit SHAs)
+    # -----------------------------------------------------------------------
+    versions = []
+    if tt_metal_commit:
+        short = tt_metal_commit[:7]
+        url = f"https://github.com/tenstorrent/tt-metal/commit/{tt_metal_commit}"
+        versions.append(f"**TT-Metal**: [`{short}`]({url})")
+    if inference_server_commit:
+        short = inference_server_commit[:7]
+        url = f"https://github.com/tenstorrent/tt-inference-server/commit/{inference_server_commit}"
+        versions.append(f"**tt-inference-server**: [`{short}`]({url})")
+    if vllm_commit:
+        short = vllm_commit[:7]
+        url = f"https://github.com/tenstorrent/vllm/commit/{vllm_commit}"
+        versions.append(f"**vLLM**: [`{short}`]({url})")
+    if versions:
+        md += " \u00b7 ".join(versions) + "\n\n"
+
+    # -----------------------------------------------------------------------
+    # 4. Overall Health (LLM sentence)
     # -----------------------------------------------------------------------
     if narrative and narrative.overall_health:
         md += f"> {narrative.overall_health}\n\n"
@@ -324,7 +397,20 @@ def format_run_report(
         md += "\n</details>\n\n"
 
     # -----------------------------------------------------------------------
-    # 9. Stats footer
+    # 10. Model Details -- all jobs alphabetically, each expandable
+    # -----------------------------------------------------------------------
+    if all_summaries is not None:
+        sorted_by_model = sorted(
+            all_summaries,
+            key=lambda j: (_extract_run_label(j) or "").lower(),
+        )
+        md += f"<details>\n<summary>Model Details ({len(sorted_by_model)} jobs)</summary>\n\n"
+        for job in sorted_by_model:
+            md += _job_expandable_block(job, run_url, compact=True)
+        md += "</details>\n\n"
+
+    # -----------------------------------------------------------------------
+    # 11. Stats footer
     # -----------------------------------------------------------------------
     footer_rows = [
         f"| Total jobs | {stats.total_jobs} |",
