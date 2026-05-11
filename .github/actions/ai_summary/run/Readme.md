@@ -10,6 +10,10 @@ posts it to Slack.
 ai-run-summary:
   needs: [generate-matrix, your-matrix-job]
   if: always()
+  # Best-effort job: never flip the workflow result red. Step-level
+  # continue-on-error only protects the action call — checkout failure,
+  # `Show report`, etc. would still bubble up without this.
+  continue-on-error: true
   runs-on: ubuntu-latest
   steps:
     - uses: actions/checkout@v4
