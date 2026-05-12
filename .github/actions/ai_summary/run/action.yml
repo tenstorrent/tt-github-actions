@@ -9,13 +9,11 @@ inputs:
       See README for the schema.
     required: true
   api-key:
-    description: "LLM API key (optional — set model: none in config to skip LLM)"
-    required: false
-    default: ""
+    description: "LLM API key. Pass empty when using `model: none` in config to skip the LLM."
+    required: true
   api-url:
-    description: "LLM API URL (optional)"
-    required: false
-    default: ""
+    description: "LLM API URL. Pass empty when using `model: none` in config to skip the LLM."
+    required: true
   slack-bot-token:
     description: "Slack bot token (skip Slack if empty)"
     required: false
