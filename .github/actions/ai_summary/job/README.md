@@ -3,11 +3,7 @@
 Analyzes CI job logs with an LLM and produces a structured per-job summary
 (`.md` + `.json`).
 
-> **Runtime:** the action installs into an active `$VIRTUAL_ENV` if one
-> exists (typical for Docker container jobs whose image pre-creates a
-> venv at `/opt/venv`). On bare self-hosted runners with no pre-set venv,
-> the action falls back to building one in `/tmp/ai-summary/venv` —
-> ephemeral, no action-cache footprint.
+> **Runtime:** uses `$VIRTUAL_ENV` if set, otherwise an ephemeral venv at `/tmp/ai-summary/venv`.
 
 ## Usage
 
@@ -18,7 +14,7 @@ Analyzes CI job logs with an LLM and produces a structured per-job summary
   with:
     config: |
       {
-        "model": "anthropic/claude-sonnet-4-5-20250929",
+        "model": "${{ vars.AI_SUMMARY_MODEL }}",
         "workspace": "$GITHUB_WORKSPACE",
         "input_dirs": ["generated/test_logs"],
         "output_dir": "generated/ai_summaries"
@@ -43,7 +39,7 @@ The action takes inline JSON — no separate config file. Required fields:
 
 ```json
 {
-  "model": "anthropic/claude-sonnet-4-5-20250929",
+  "model": "${{ vars.AI_SUMMARY_MODEL }}",
   "workspace": "$GITHUB_WORKSPACE",
   "input_dirs": ["generated/test_logs"],
   "output_dir": "generated/ai_summaries"

@@ -14,11 +14,12 @@ ai-run-summary:
   steps:
     - uses: actions/checkout@v4
     - id: summary
+      continue-on-error: true
       uses: tenstorrent/tt-github-actions/.github/actions/ai_summary/run@main
       with:
         config: |
           {
-            "model": "anthropic/claude-sonnet-4-5-20250929",
+            "model": "${{ vars.AI_SUMMARY_MODEL }}",
             "workspace": "$GITHUB_WORKSPACE",
             "input_dir": "ai_job_summaries",
             "output_dir": "ai_run_summaries"
@@ -34,17 +35,13 @@ ai-run-summary:
         slack-channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
 ```
 
-`expected-jobs` and `run-result` must be passed together (or both omitted);
-passing only one is a hard error. When `run-result` is `cancelled` or
-`skipped`, no synthesis is performed.
-
 ## Inputs
 
 | Name | Required | Default | Description |
 |------|---|---|-------------|
 | `config` | yes | — | JSON config string. See "Config schema" below. |
-| `api-key` | no | `""` | LLM API key. Set `"model": "none"` in config to skip the narrative LLM call. |
-| `api-url` | no | `""` | LLM API URL. |
+| `api-key` | yes | — | LLM API key. Pass empty when using `"model": "none"` in config to skip the LLM. |
+| `api-url` | yes | — | LLM API URL. Pass empty when using `"model": "none"` in config to skip the LLM. |
 | `expected-jobs` | no | `""` | JSON array of expected matrix legs (typically `needs.<matrix-job>.outputs.matrix`). When set with `run-result`, the action synthesizes INFRA_FAILURE rows for legs whose ai-job-summary artifact is missing. **Must be passed together with `run-result`.** |
 | `run-result` | no | `""` | Aggregate matrix-job result (`needs.<matrix-job>.result`). Accepts `success`, `failure`, `cancelled`, `skipped`. Suppresses synthesis on `cancelled`/`skipped`. **Must be passed together with `expected-jobs`.** |
 | `slack-bot-token` | no | `""` | Slack bot token. Both Slack inputs must be set to send. |
@@ -57,7 +54,7 @@ The action takes inline JSON — no separate config file.
 
 ```json
 {
-  "model": "anthropic/claude-sonnet-4-5-20250929",
+  "model": "${{ vars.AI_SUMMARY_MODEL }}",
   "workspace": "$GITHUB_WORKSPACE",
   "input_dir": "ai_job_summaries",
   "output_dir": "ai_run_summaries"
