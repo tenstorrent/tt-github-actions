@@ -766,3 +766,63 @@ def test_guidellm_skips_nan_inf(guidellm_mapper, guidellm_pipeline):
     assert "metrics_request_latency_successful_mean" not in by_name
     assert "metrics_request_latency_successful_max" not in by_name
     assert "metrics_request_latency_successful_min" not in by_name
+
+
+# --- acceptance_criteria tests ---
+
+
+def _acceptance_run(result):
+    runs = [r for r in result if r.run_type == "acceptance_criteria"]
+    assert len(runs) == 1
+    return runs[0]
+
+
+def test_process_acceptance_criteria_fail_functional(mapper, pipeline):
+    """FAIL + FUNCTIONAL tier mirrors a real failing release report."""
+    report_data = {
+        "metadata": {"model_name": "Llama-3.2-1B-Instruct", "device": "t3k"},
+        "acceptance_criteria": False,
+        "acceptance_criteria_metadata": {
+            "enforcement_result": "FAIL",
+            "model_status": "FUNCTIONAL",
+        },
+    }
+    run = _acceptance_run(mapper.map_benchmark_data(pipeline, 1, report_data))
+    assert run.ml_model_name == "Llama-3.2-1B-Instruct"
+    assert run.device_info == {"device_name": "t3k"}
+    by_name = {m.name: m.value for m in run.measurements}
+    assert by_name == {"passed": 3.0, "enforcement_result": 3.0, "model_status": 2.0}
+
+
+def test_process_acceptance_criteria_pass_complete(mapper, pipeline):
+    """PASS + COMPLETE tier — different encoding path."""
+    report_data = {
+        "metadata": {"model_name": "m", "device": "d"},
+        "acceptance_criteria": True,
+        "acceptance_criteria_metadata": {
+            "enforcement_result": "PASS",
+            "model_status": "COMPLETE",
+        },
+    }
+    run = _acceptance_run(mapper.map_benchmark_data(pipeline, 1, report_data))
+    by_name = {m.name: m.value for m in run.measurements}
+    assert by_name == {"passed": 2.0, "enforcement_result": 2.0, "model_status": 3.0}
+
+
+def test_process_acceptance_criteria_unknown_value_is_skipped(mapper, pipeline):
+    """An unrecognised enforcement string is dropped rather than emitting a sentinel."""
+    report_data = {
+        "metadata": {"model_name": "m", "device": "d"},
+        "acceptance_criteria": False,
+        "acceptance_criteria_metadata": {"enforcement_result": "SOMETHING_NEW"},
+    }
+    run = _acceptance_run(mapper.map_benchmark_data(pipeline, 1, report_data))
+    names = {m.name for m in run.measurements}
+    assert names == {"passed"}  # enforcement_result is absent
+
+
+def test_process_acceptance_criteria_absent_skips_run(mapper, pipeline):
+    """Old reports with no acceptance fields → no acceptance_criteria run emitted."""
+    report_data = {"metadata": {"model_name": "m", "device": "d"}, "benchmarks": []}
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    assert [r for r in result if r.run_type == "acceptance_criteria"] == []
