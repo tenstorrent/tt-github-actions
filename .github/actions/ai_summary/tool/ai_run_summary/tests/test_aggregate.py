@@ -40,6 +40,12 @@ class TestComputeStats:
         assert len(stats.failed_jobs) == 2
         assert all(j.status != "SUCCESS" for j in stats.failed_jobs)
 
+    def test_successful_jobs_only_success(self):
+        jobs = [_job(status="SUCCESS"), _job(status="CRASHED"), _job(status="SUCCESS")]
+        stats = compute_stats(jobs)
+        assert len(stats.successful_jobs) == 2
+        assert all(j.status == "SUCCESS" for j in stats.successful_jobs)
+
     def test_category_counts_sorted_desc(self):
         jobs = [
             _job(category="a"),

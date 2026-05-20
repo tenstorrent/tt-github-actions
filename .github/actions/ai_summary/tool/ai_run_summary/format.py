@@ -349,7 +349,24 @@ def format_run_report(
         md += "\n</details>\n\n"
 
     # -----------------------------------------------------------------------
-    # 9. Stats footer
+    # 9. Successful Models -- collapsed list sorted alphabetically
+    # -----------------------------------------------------------------------
+    if stats.successful_jobs:
+        sorted_success = sorted(
+            stats.successful_jobs,
+            key=lambda j: (_extract_run_label(j) or "").lower(),
+        )
+        md += f"<details>\n<summary>Successful Models ({len(sorted_success)})</summary>\n\n"
+        for job in sorted_success:
+            label = _extract_run_label(job) or "\u2014"
+            url = _job_url(job, run_url)
+            emoji = STATUS_EMOJI.get(job.status, "")
+            link = f"[{label}]({url})" if url else label
+            md += f"- {emoji} {link}\n"
+        md += "\n</details>\n\n"
+
+    # -----------------------------------------------------------------------
+    # 10. Stats footer
     # -----------------------------------------------------------------------
     footer_rows = [
         f"| Total jobs | {stats.total_jobs} |",

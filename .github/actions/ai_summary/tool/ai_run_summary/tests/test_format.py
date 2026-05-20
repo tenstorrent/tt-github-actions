@@ -328,6 +328,26 @@ class TestFormatRunReport:
         assert "Failed Job Details (2)" in report.md
 
 
+class TestSuccessfulModels:
+    def test_successful_models_section_present(self):
+        jobs = [
+            _job("SUCCESS", job_name="run-release-Llama-3.1-8B-Instruct-n150", source_stem="1"),
+            _job("SUCCESS", job_name="run-release-Qwen2.5-7B-Instruct-n150", source_stem="2"),
+            _job("CRASHED", source_stem="3"),
+        ]
+        stats = _stats(jobs=jobs)
+        stats.successful_jobs = [j for j in jobs if j.status == "SUCCESS"]
+        report = format_run_report(stats)
+        assert "Successful Models (2)" in report.md
+        assert "Llama-3.1-8B-Instruct-n150" in report.md
+        assert "Qwen2.5-7B-Instruct-n150" in report.md
+
+    def test_successful_models_absent_when_none(self):
+        stats = _stats(jobs=[_job("CRASHED")])
+        report = format_run_report(stats)
+        assert "Successful Models" not in report.md
+
+
 class TestCommitSHAHeader:
     def test_sha_links_rendered_in_header(self):
         report = format_run_report(

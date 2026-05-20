@@ -91,6 +91,7 @@ class RunStats:
     total_jobs: int = 0
     status_counts: dict[str, int] = field(default_factory=dict)
     failed_jobs: list[ParsedJobSummary] = field(default_factory=list)
+    successful_jobs: list[ParsedJobSummary] = field(default_factory=list)
     category_counts: list[CategoryStats] = field(default_factory=list)
     is_your_code_count: int = 0
     not_your_code_count: int = 0
