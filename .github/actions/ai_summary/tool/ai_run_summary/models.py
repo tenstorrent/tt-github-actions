@@ -71,7 +71,6 @@ class ParsedJobSummary:
     error_message: str = ""
     confidence: str = ""
     failed_tests: list[str] = field(default_factory=list)
-    markdown: str = ""
 
 
 @dataclass

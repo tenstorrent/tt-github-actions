@@ -337,7 +337,10 @@ class TestCommitSHAHeader:
             inference_server_commit="ccddee112233aabb",
         )
         assert "**TT-Metal**: [`aabbccd`](https://github.com/tenstorrent/tt-metal/commit/aabbccddee112233)" in report.md
-        assert "**tt-inference-server**: [`ccddee1`](https://github.com/tenstorrent/tt-inference-server/commit/ccddee112233aabb)" in report.md
+        assert (
+            "**tt-inference-server**: [`ccddee1`](https://github.com/tenstorrent/tt-inference-server/commit/ccddee112233aabb)"
+            in report.md
+        )
         assert "**vLLM**: [`112233a`](https://github.com/tenstorrent/vllm/commit/112233aabbccddee)" in report.md
 
     def test_sha_header_absent_when_no_commits_provided(self):
