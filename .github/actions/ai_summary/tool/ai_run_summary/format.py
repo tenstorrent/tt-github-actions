@@ -357,12 +357,13 @@ def format_run_report(
             key=lambda j: (_extract_run_label(j) or "").lower(),
         )
         md += f"<details>\n<summary>Successful Models ({len(sorted_success)})</summary>\n\n"
+        md += "| Job | Run | Status |\n"
+        md += "|-----|-----|--------|\n"
         for job in sorted_success:
-            label = _extract_run_label(job) or "\u2014"
-            url = _job_url(job, run_url)
+            job_cell = _job_id_cell(job, run_url)
+            model = _extract_run_label(job) or "\u2014"
             emoji = STATUS_EMOJI.get(job.status, "")
-            link = f"[{label}]({url})" if url else label
-            md += f"- {emoji} {link}\n"
+            md += f"| {job_cell} | {model} | {emoji} {job.status} |\n"
         md += "\n</details>\n\n"
 
     # -----------------------------------------------------------------------

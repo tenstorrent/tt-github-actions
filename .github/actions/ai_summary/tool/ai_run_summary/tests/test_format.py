@@ -341,6 +341,7 @@ class TestSuccessfulModels:
         assert "Successful Models (2)" in report.md
         assert "Llama-3.1-8B-Instruct-n150" in report.md
         assert "Qwen2.5-7B-Instruct-n150" in report.md
+        assert "| Job | Run | Status |" in report.md
 
     def test_successful_models_absent_when_none(self):
         stats = _stats(jobs=[_job("CRASHED")])
