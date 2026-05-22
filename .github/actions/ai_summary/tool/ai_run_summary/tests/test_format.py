@@ -369,3 +369,21 @@ class TestCommitSHAHeader:
         assert "TT-Metal" not in report.md
         assert "tt-inference-server" not in report.md
         assert "vLLM" not in report.md
+
+    def test_invalid_sha_not_rendered(self):
+        report = format_run_report(
+            RunStats(),
+            tt_metal_commit="not-a-sha!!",
+            vllm_commit="   ",
+            inference_server_commit="tooshort",
+        )
+        assert "TT-Metal" not in report.md
+        assert "vLLM" not in report.md
+        assert "tt-inference-server" not in report.md
+
+    def test_sha_with_whitespace_trimmed_and_rendered(self):
+        report = format_run_report(
+            RunStats(),
+            tt_metal_commit="  aabbccddee112233  ",
+        )
+        assert "**TT-Metal**: [`aabbccd`](https://github.com/tenstorrent/tt-metal/commit/aabbccddee112233)" in report.md

@@ -160,6 +160,16 @@ def _group_by_main_category(
     )
 
 
+def _normalized_commit_sha(value: str | None) -> str | None:
+    """Strip whitespace and validate SHA format (hex, 7–40 chars). Returns None if invalid."""
+    if not value:
+        return None
+    normalized = value.strip()
+    if re.fullmatch(r"[0-9a-fA-F]{7,40}", normalized):
+        return normalized
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -221,17 +231,20 @@ def format_run_report(
     # 3. Component versions (commit SHAs)
     # -----------------------------------------------------------------------
     versions = []
-    if tt_metal_commit:
-        short = tt_metal_commit[:7]
-        url = f"https://github.com/tenstorrent/tt-metal/commit/{tt_metal_commit}"
+    tt_metal_sha = _normalized_commit_sha(tt_metal_commit)
+    if tt_metal_sha:
+        short = tt_metal_sha[:7]
+        url = f"https://github.com/tenstorrent/tt-metal/commit/{tt_metal_sha}"
         versions.append(f"**TT-Metal**: [`{short}`]({url})")
-    if inference_server_commit:
-        short = inference_server_commit[:7]
-        url = f"https://github.com/tenstorrent/tt-inference-server/commit/{inference_server_commit}"
+    inference_server_sha = _normalized_commit_sha(inference_server_commit)
+    if inference_server_sha:
+        short = inference_server_sha[:7]
+        url = f"https://github.com/tenstorrent/tt-inference-server/commit/{inference_server_sha}"
         versions.append(f"**tt-inference-server**: [`{short}`]({url})")
-    if vllm_commit:
-        short = vllm_commit[:7]
-        url = f"https://github.com/tenstorrent/vllm/commit/{vllm_commit}"
+    vllm_sha = _normalized_commit_sha(vllm_commit)
+    if vllm_sha:
+        short = vllm_sha[:7]
+        url = f"https://github.com/tenstorrent/vllm/commit/{vllm_sha}"
         versions.append(f"**vLLM**: [`{short}`]({url})")
     if versions:
         md += " \u00b7 ".join(versions) + "\n\n"
@@ -352,19 +365,18 @@ def format_run_report(
     # 9. Successful Models -- collapsed list sorted alphabetically
     # -----------------------------------------------------------------------
     if stats.successful_jobs:
-        sorted_success = sorted(
-            stats.successful_jobs,
-            key=lambda j: (_extract_run_label(j) or "").lower(),
+        labeled_success = sorted(
+            ((_extract_run_label(j) or "\u2014"), j) for j in stats.successful_jobs if j.status == "SUCCESS"
         )
-        md += f"<details>\n<summary>Successful Models ({len(sorted_success)})</summary>\n\n"
-        md += "| Job | Run | Status |\n"
-        md += "|-----|-----|--------|\n"
-        for job in sorted_success:
-            job_cell = _job_id_cell(job, run_url)
-            model = _extract_run_label(job) or "\u2014"
-            emoji = STATUS_EMOJI.get(job.status, "")
-            md += f"| {job_cell} | {model} | {emoji} {job.status} |\n"
-        md += "\n</details>\n\n"
+        if labeled_success:
+            md += f"<details>\n<summary>Successful Models ({len(labeled_success)})</summary>\n\n"
+            md += "| Job | Run | Status |\n"
+            md += "|-----|-----|--------|\n"
+            for model, job in labeled_success:
+                job_cell = _job_id_cell(job, run_url)
+                emoji = STATUS_EMOJI.get(job.status, "")
+                md += f"| {job_cell} | {model} | {emoji} {job.status} |\n"
+            md += "\n</details>\n\n"
 
     # -----------------------------------------------------------------------
     # 10. Stats footer
