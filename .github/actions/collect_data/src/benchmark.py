@@ -287,7 +287,14 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 metadata,
                 model_spec_data,
             )
-            return benchmark_runs + benchmark_summary_runs + eval_runs
+            acceptance_runs = self._process_acceptance_criteria(
+                pipeline,
+                job,
+                report_data,
+                metadata,
+                model_spec_data,
+            )
+            return benchmark_runs + benchmark_summary_runs + eval_runs + acceptance_runs
         except ValidationError as e:
             failure_happened()
             logger.error(f"Validation error: {e}")
@@ -421,6 +428,55 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 )
             )
         return results
+
+    def _process_acceptance_criteria(self, pipeline, job, report_data, metadata=None, model_spec_data=None):
+        """
+        Processes acceptance criteria and creates CompleteBenchmarkRun object for it.
+        """
+        _ACCEPTANCE_CRITERIA_FIELDS = (
+            "acceptance_blockers",
+            "acceptance_criteria_metadata",
+            "acceptance_summary_markdown",
+        )
+
+        acceptance_pass = report_data.get("acceptance_criteria")
+        encoded_measurements: Dict[str, float] = {}
+
+        if isinstance(acceptance_pass, bool):
+            encoded_measurements["passed"] = 1.0 if acceptance_pass else 0.0
+
+        if not encoded_measurements:
+            return []
+
+        measurements = self._create_measurements(
+            job,
+            "acceptance_criteria",
+            encoded_measurements,
+            list(encoded_measurements.keys()),
+        )
+        if not measurements:
+            return []
+
+        config_params = dict(model_spec_data) if model_spec_data else {}
+        for field in _ACCEPTANCE_CRITERIA_FIELDS:
+            value = report_data.get(field)
+            if value is not None:
+                config_params[field] = value
+
+        return [
+            self._create_complete_benchmark_run(
+                pipeline=pipeline,
+                job=job,
+                data=report_data,
+                run_type="acceptance_criteria",
+                measurements=measurements,
+                device_info=metadata.get("device"),
+                model_name=metadata.get("model_name"),
+                model_type=(model_spec_data.get("model_type") if model_spec_data else None),
+                config_params=config_params or None,
+                docker_image=(model_spec_data or {}).get("docker_image") or job.docker_image,
+            )
+        ]
 
     def _process_evals(self, pipeline, job, evals, metadata=None, model_spec_data=None):
         """
