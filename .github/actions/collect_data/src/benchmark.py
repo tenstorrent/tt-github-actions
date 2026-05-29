@@ -433,7 +433,11 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         """
         Processes acceptance criteria and creates CompleteBenchmarkRun object for it.
         """
-        _ACCEPTANCE_CRITERIA_FIELDS = ("acceptance_blockers", "acceptance_criteria_metadata", "acceptance_summary_markdown")
+        _ACCEPTANCE_CRITERIA_FIELDS = (
+            "acceptance_blockers", 
+            "acceptance_criteria_metadata", 
+            "acceptance_summary_markdown",
+        )
 
         acceptance_pass = report_data.get("acceptance_criteria")
         encoded_measurements: Dict[str, float] = {}
