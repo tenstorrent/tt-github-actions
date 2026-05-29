@@ -255,18 +255,6 @@ class ForgeBenchmarkDataMapper(_BenchmarkDataMapper):
 
 
 class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
-    # Numeric encodings for acceptance_criteria fields. BenchmarkMeasurement.value
-    # is float-only, so PASS/FAIL strings and model-status tier names are mapped
-    # to floats. Pass/fail uses the same convention as accuracy_check (2=pass,
-    # 3=fail). Model status is an ordinal tier.
-    _ACCEPTANCE_PASS_FAIL = {"PASS": 2.0, "FAIL": 3.0}
-    _MODEL_STATUS_TIERS = {
-        "NON-FUNCTIONAL": 0.0,
-        "EXPERIMENTAL": 1.0,
-        "FUNCTIONAL": 2.0,
-        "COMPLETE": 3.0,
-    }
-
     def map_benchmark_data(self, pipeline, job_id, report_data, model_spec_data=None) -> CompleteBenchmarkRun | None:
         """
         Maps benchmark and evaluation data from the report to CompleteBenchmarkRun objects.
@@ -442,47 +430,35 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         return results
 
     def _process_acceptance_criteria(self, pipeline, job, report_data, metadata=None, model_spec_data=None):
-        """Emit a CompleteBenchmarkRun for the report's acceptance_criteria fields.
-
-        Three measurements (step_name='acceptance_criteria'):
-            passed              ← report.acceptance_criteria (bool, 2=pass, 3=fail)
-            enforcement_result  ← report.acceptance_criteria_metadata.enforcement_result
-            model_status        ← report.acceptance_criteria_metadata.model_status
-                                  as an ordinal tier (NON-FUNCTIONAL=0, EXPERIMENTAL=1,
-                                  FUNCTIONAL=2, COMPLETE=3)
-
-        Unparseable or missing fields are skipped (the consumer sees the absence,
-        no sentinel value). Returns [] for older reports that have none of these.
         """
-        ac_metadata = report_data.get("acceptance_criteria_metadata") or {}
-        acceptance_pass = report_data.get("acceptance_criteria")
+        Processes acceptance criteria and creates CompleteBenchmarkRun object for it.
+        """
+        _ACCEPTANCE_CRITERIA_FIELDS = ("acceptance_blockers", "acceptance_criteria_metadata", "acceptance_summary_markdown")
 
-        encoded: Dict[str, float] = {}
+        acceptance_pass = report_data.get("acceptance_criteria")
+        encoded_measurements: Dict[str, float] = {}
 
         if isinstance(acceptance_pass, bool):
-            encoded["passed"] = 2.0 if acceptance_pass else 3.0
+            encoded_measurements["passed"] = 1.0 if acceptance_pass else 0.0
 
-        enforcement = ac_metadata.get("enforcement_result")
-        if isinstance(enforcement, str) and enforcement.upper() in self._ACCEPTANCE_PASS_FAIL:
-            encoded["enforcement_result"] = self._ACCEPTANCE_PASS_FAIL[enforcement.upper()]
-
-        model_status = ac_metadata.get("model_status")
-        if isinstance(model_status, str) and model_status.upper() in self._MODEL_STATUS_TIERS:
-            encoded["model_status"] = self._MODEL_STATUS_TIERS[model_status.upper()]
-
-        if not encoded:
+        if not encoded_measurements:
             return []
 
         measurements = self._create_measurements(
             job,
             "acceptance_criteria",
-            encoded,
-            list(encoded.keys()),
+            encoded_measurements,
+            list(encoded_measurements.keys()),
         )
         if not measurements:
             return []
 
-        md = metadata or {}
+        config_params = dict(model_spec_data) if model_spec_data else {}
+        for field in _ACCEPTANCE_CRITERIA_FIELDS:
+            value = report_data.get(field)
+            if value is not None:
+                config_params[field] = value
+
         return [
             self._create_complete_benchmark_run(
                 pipeline=pipeline,
@@ -490,10 +466,10 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 data=report_data,
                 run_type="acceptance_criteria",
                 measurements=measurements,
-                device_info=md.get("device"),
-                model_name=md.get("model_name"),
+                device_info=metadata.get("device"),
+                model_name=metadata.get("model_name"),
                 model_type=(model_spec_data.get("model_type") if model_spec_data else None),
-                config_params=model_spec_data,
+                config_params=config_params or None,
                 docker_image=(model_spec_data or {}).get("docker_image") or job.docker_image,
             )
         ]

@@ -777,52 +777,140 @@ def _acceptance_run(result):
     return runs[0]
 
 
-def test_process_acceptance_criteria_fail_functional(mapper, pipeline):
-    """FAIL + FUNCTIONAL tier mirrors a real failing release report."""
+# A realistic acceptance_criteria block as emitted by a Shield release report.
+_AC_BLOCKERS = ["latency above threshold", "accuracy regression"]
+_AC_METADATA = {"enforcement_result": "FAIL", "model_status": "FUNCTIONAL"}
+_AC_SUMMARY_MD = "## Acceptance summary\n- latency: FAIL\n- accuracy: FAIL"
+
+
+def test_process_acceptance_criteria_pass(mapper, pipeline):
     report_data = {
         "metadata": {"model_name": "Llama-3.2-1B-Instruct", "device": "t3k"},
-        "acceptance_criteria": False,
-        "acceptance_criteria_metadata": {
-            "enforcement_result": "FAIL",
-            "model_status": "FUNCTIONAL",
-        },
+        "acceptance_criteria": True,
     }
     run = _acceptance_run(mapper.map_benchmark_data(pipeline, 1, report_data))
     assert run.ml_model_name == "Llama-3.2-1B-Instruct"
     assert run.device_info == {"device_name": "t3k"}
     by_name = {m.name: m.value for m in run.measurements}
-    assert by_name == {"passed": 3.0, "enforcement_result": 3.0, "model_status": 2.0}
+    assert by_name == {"passed": 1.0}
 
 
-def test_process_acceptance_criteria_pass_complete(mapper, pipeline):
-    """PASS + COMPLETE tier — different encoding path."""
-    report_data = {
-        "metadata": {"model_name": "m", "device": "d"},
-        "acceptance_criteria": True,
-        "acceptance_criteria_metadata": {
-            "enforcement_result": "PASS",
-            "model_status": "COMPLETE",
-        },
-    }
-    run = _acceptance_run(mapper.map_benchmark_data(pipeline, 1, report_data))
-    by_name = {m.name: m.value for m in run.measurements}
-    assert by_name == {"passed": 2.0, "enforcement_result": 2.0, "model_status": 3.0}
-
-
-def test_process_acceptance_criteria_unknown_value_is_skipped(mapper, pipeline):
-    """An unrecognised enforcement string is dropped rather than emitting a sentinel."""
+def test_process_acceptance_criteria_fail(mapper, pipeline):
     report_data = {
         "metadata": {"model_name": "m", "device": "d"},
         "acceptance_criteria": False,
-        "acceptance_criteria_metadata": {"enforcement_result": "SOMETHING_NEW"},
     }
     run = _acceptance_run(mapper.map_benchmark_data(pipeline, 1, report_data))
-    names = {m.name for m in run.measurements}
-    assert names == {"passed"}  # enforcement_result is absent
+    by_name = {m.name: m.value for m in run.measurements}
+    assert by_name == {"passed": 0.0}
+
+
+def test_process_acceptance_criteria_non_bool_skips_run(mapper, pipeline):
+    report_data = {
+        "metadata": {"model_name": "m", "device": "d"},
+        "acceptance_criteria": "PASS",
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    assert [r for r in result if r.run_type == "acceptance_criteria"] == []
 
 
 def test_process_acceptance_criteria_absent_skips_run(mapper, pipeline):
-    """Old reports with no acceptance fields → no acceptance_criteria run emitted."""
     report_data = {"metadata": {"model_name": "m", "device": "d"}, "benchmarks": []}
     result = mapper.map_benchmark_data(pipeline, 1, report_data)
     assert [r for r in result if r.run_type == "acceptance_criteria"] == []
+
+
+def test_acceptance_config_fields_alone_do_not_emit_run(mapper, pipeline):
+    report_data = {
+        "metadata": {"model_name": "m", "device": "d"},
+        "acceptance_blockers": _AC_BLOCKERS,
+        "acceptance_criteria_metadata": _AC_METADATA,
+        "acceptance_summary_markdown": _AC_SUMMARY_MD,
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    assert [r for r in result if r.run_type == "acceptance_criteria"] == []
+
+
+def test_acceptance_config_params_includes_report_fields(mapper, pipeline):
+    report_data = {
+        "metadata": {"model_name": "m", "device": "d"},
+        "acceptance_criteria": False,
+        "acceptance_blockers": _AC_BLOCKERS,
+        "acceptance_criteria_metadata": _AC_METADATA,
+        "acceptance_summary_markdown": _AC_SUMMARY_MD,
+    }
+    run = _acceptance_run(mapper.map_benchmark_data(pipeline, 1, report_data))
+    assert run.config_params == {
+        "acceptance_blockers": _AC_BLOCKERS,
+        "acceptance_criteria_metadata": _AC_METADATA,
+        "acceptance_summary_markdown": _AC_SUMMARY_MD,
+    }
+
+
+def test_acceptance_config_params_merges_model_spec_and_report_fields(mapper, pipeline):
+    model_spec_data = {
+        "model_id": "test_model",
+        "model_type": "llm",
+        "docker_image": "spec_image",
+    }
+    report_data = {
+        "metadata": {"model_name": "m", "device": "d"},
+        "acceptance_criteria": True,
+        "acceptance_blockers": _AC_BLOCKERS,
+        "acceptance_criteria_metadata": _AC_METADATA,
+        "acceptance_summary_markdown": _AC_SUMMARY_MD,
+    }
+    run = _acceptance_run(mapper.map_benchmark_data(pipeline, 1, report_data, model_spec_data))
+    assert run.ml_model_type == "llm"
+    assert run.config_params == {
+        "model_id": "test_model",
+        "model_type": "llm",
+        "docker_image": "spec_image",
+        "acceptance_blockers": _AC_BLOCKERS,
+        "acceptance_criteria_metadata": _AC_METADATA,
+        "acceptance_summary_markdown": _AC_SUMMARY_MD,
+    }
+
+
+def test_acceptance_config_params_none_when_nothing_to_record(mapper, pipeline):
+    """With no model_spec_data and none of the acceptance_* fields, config_params is None."""
+    report_data = {
+        "metadata": {"model_name": "m", "device": "d"},
+        "acceptance_criteria": True,
+    }
+    run = _acceptance_run(mapper.map_benchmark_data(pipeline, 1, report_data))
+    assert run.config_params is None
+
+
+def test_acceptance_config_params_omits_absent_and_none_fields(mapper, pipeline):
+    """Only present, non-None acceptance_* fields land in config_params."""
+    report_data = {
+        "metadata": {"model_name": "m", "device": "d"},
+        "acceptance_criteria": True,
+        "acceptance_blockers": _AC_BLOCKERS,
+        "acceptance_criteria_metadata": None,  # explicit None is dropped
+        # acceptance_summary_markdown absent entirely
+    }
+    run = _acceptance_run(mapper.map_benchmark_data(pipeline, 1, report_data))
+    assert run.config_params == {"acceptance_blockers": _AC_BLOCKERS}
+
+
+def test_acceptance_config_params_preserves_empty_collections(mapper, pipeline):
+    report_data = {
+        "metadata": {"model_name": "m", "device": "d"},
+        "acceptance_criteria": True,
+        "acceptance_blockers": [],
+    }
+    run = _acceptance_run(mapper.map_benchmark_data(pipeline, 1, report_data))
+    assert run.config_params == {"acceptance_blockers": []}
+
+
+def test_acceptance_config_params_does_not_mutate_model_spec(mapper, pipeline):
+    model_spec_data = {"model_id": "test_model"}
+    report_data = {
+        "metadata": {"model_name": "m", "device": "d"},
+        "acceptance_criteria": True,
+        "acceptance_blockers": _AC_BLOCKERS,
+    }
+    mapper.map_benchmark_data(pipeline, 1, report_data, model_spec_data)
+    assert model_spec_data == {"model_id": "test_model"}
