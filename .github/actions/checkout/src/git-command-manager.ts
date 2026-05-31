@@ -691,8 +691,13 @@ class GitCommandManager {
         timedOut = true
         child.kill('SIGTERM')
         killTimer = setTimeout(() => {
-          if (!child.killed) {
+          try {
+            // process.kill(pid, 0) throws if the process no longer exists
+            process.kill(child.pid!, 0)
+            // Still alive after SIGTERM — escalate
             child.kill('SIGKILL')
+          } catch {
+            // Already dead, nothing to do
           }
         }, 5000)
       }, this.timeoutMs)
@@ -726,6 +731,9 @@ class GitCommandManager {
           customListeners['stderr'](data)
         }
         if (customListeners['errline']) {
+          // NOTE: Unlike @actions/exec, this does not buffer partial lines.
+          // stdline/errline callbacks may receive partial lines if a data
+          // chunk boundary falls mid-line.
           const lines = data.toString().split(/\r?\n/)
           for (const line of lines) {
             if (line) {
