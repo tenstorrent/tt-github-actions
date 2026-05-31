@@ -164,7 +164,7 @@ export async function getInputs(): Promise<IGitSourceSettings> {
   // Timeout
   const timeoutMinutesInput = core.getInput('timeout-minutes') || '20'
   const timeoutMinutes = parseFloat(timeoutMinutesInput)
-  if (isNaN(timeoutMinutes) || timeoutMinutes <= 0) {
+  if (isNaN(timeoutMinutes) || timeoutMinutes <= 0 || !isFinite(timeoutMinutes)) {
     throw new Error(
       `Invalid timeout-minutes value '${timeoutMinutesInput}'. Must be a positive number.`
     )

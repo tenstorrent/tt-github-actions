@@ -686,10 +686,11 @@ class GitCommandManager {
       })
 
       let timedOut = false
+      let killTimer: ReturnType<typeof setTimeout> | undefined
       const timer = setTimeout(() => {
         timedOut = true
         child.kill('SIGTERM')
-        setTimeout(() => {
+        killTimer = setTimeout(() => {
           if (!child.killed) {
             child.kill('SIGKILL')
           }
@@ -705,6 +706,9 @@ class GitCommandManager {
           customListeners['stdout'](data)
         }
         if (customListeners['stdline']) {
+          // NOTE: Unlike @actions/exec, this does not buffer partial lines.
+          // stdline/errline callbacks may receive partial lines if a data
+          // chunk boundary falls mid-line.
           const lines = data.toString().split(/\r?\n/)
           for (const line of lines) {
             if (line) {
@@ -733,10 +737,11 @@ class GitCommandManager {
 
       child.on('close', (code: number | null) => {
         clearTimeout(timer)
+        if (killTimer) clearTimeout(killTimer)
         if (timedOut) {
           reject(
             new Error(
-              `git ${args[0]} timed out after ${this.timeoutMs / 1000}s`
+              `git ${args[0]} timed out after ${this.timeoutMs / 1000}s (timeout-minutes: ${this.timeoutMs / 60000})`
             )
           )
           return
@@ -758,6 +763,7 @@ class GitCommandManager {
 
       child.on('error', (err: Error) => {
         clearTimeout(timer)
+        if (killTimer) clearTimeout(killTimer)
         reject(err)
       })
     })

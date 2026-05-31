@@ -1160,10 +1160,11 @@ class GitCommandManager {
                 env: env
             });
             let timedOut = false;
+            let killTimer;
             const timer = setTimeout(() => {
                 timedOut = true;
                 child.kill('SIGTERM');
-                setTimeout(() => {
+                killTimer = setTimeout(() => {
                     if (!child.killed) {
                         child.kill('SIGKILL');
                     }
@@ -1178,6 +1179,9 @@ class GitCommandManager {
                     customListeners['stdout'](data);
                 }
                 if (customListeners['stdline']) {
+                    // NOTE: Unlike @actions/exec, this does not buffer partial lines.
+                    // stdline/errline callbacks may receive partial lines if a data
+                    // chunk boundary falls mid-line.
                     const lines = data.toString().split(/\r?\n/);
                     for (const line of lines) {
                         if (line) {
@@ -1204,8 +1208,10 @@ class GitCommandManager {
             });
             child.on('close', (code) => {
                 clearTimeout(timer);
+                if (killTimer)
+                    clearTimeout(killTimer);
                 if (timedOut) {
-                    reject(new Error(`git ${args[0]} timed out after ${this.timeoutMs / 1000}s`));
+                    reject(new Error(`git ${args[0]} timed out after ${this.timeoutMs / 1000}s (timeout-minutes: ${this.timeoutMs / 60000})`));
                     return;
                 }
                 result.exitCode = code !== null && code !== void 0 ? code : 1;
@@ -1220,6 +1226,8 @@ class GitCommandManager {
             });
             child.on('error', (err) => {
                 clearTimeout(timer);
+                if (killTimer)
+                    clearTimeout(killTimer);
                 reject(err);
             });
         });
@@ -2177,7 +2185,7 @@ function getInputs() {
         // Timeout
         const timeoutMinutesInput = core.getInput('timeout-minutes') || '20';
         const timeoutMinutes = parseFloat(timeoutMinutesInput);
-        if (isNaN(timeoutMinutes) || timeoutMinutes <= 0) {
+        if (isNaN(timeoutMinutes) || timeoutMinutes <= 0 || !isFinite(timeoutMinutes)) {
             throw new Error(`Invalid timeout-minutes value '${timeoutMinutesInput}'. Must be a positive number.`);
         }
         result.timeoutMs = Math.round(timeoutMinutes * 60 * 1000);
