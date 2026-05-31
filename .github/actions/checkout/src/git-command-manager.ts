@@ -1,4 +1,5 @@
 import * as core from '@actions/core'
+import * as cp from 'child_process'
 import * as exec from '@actions/exec'
 import * as fs from 'fs'
 import * as fshelper from './fs-helper'
@@ -85,12 +86,14 @@ export interface IGitCommandManager {
 export async function createCommandManager(
   workingDirectory: string,
   lfs: boolean,
-  doSparseCheckout: boolean
+  doSparseCheckout: boolean,
+  timeoutMs = 0
 ): Promise<IGitCommandManager> {
   return await GitCommandManager.createCommandManager(
     workingDirectory,
     lfs,
-    doSparseCheckout
+    doSparseCheckout,
+    timeoutMs
   )
 }
 
@@ -104,6 +107,7 @@ class GitCommandManager {
   private doSparseCheckout = false
   private workingDirectory = ''
   private gitVersion: GitVersion = new GitVersion()
+  private timeoutMs = 0
 
   // Private constructor; use createCommandManager()
   private constructor() {}
@@ -598,13 +602,15 @@ class GitCommandManager {
   static async createCommandManager(
     workingDirectory: string,
     lfs: boolean,
-    doSparseCheckout: boolean
+    doSparseCheckout: boolean,
+    timeoutMs = 0
   ): Promise<GitCommandManager> {
     const result = new GitCommandManager()
     await result.initializeCommandManager(
       workingDirectory,
       lfs,
-      doSparseCheckout
+      doSparseCheckout,
+      timeoutMs
     )
     return result
   }
@@ -617,8 +623,6 @@ class GitCommandManager {
   ): Promise<GitOutput> {
     fshelper.directoryExistsSync(this.workingDirectory, true)
 
-    const result = new GitOutput()
-
     const env = {}
     for (const key of Object.keys(process.env)) {
       env[key] = process.env[key]
@@ -626,6 +630,18 @@ class GitCommandManager {
     for (const key of Object.keys(this.gitEnv)) {
       env[key] = this.gitEnv[key]
     }
+
+    if (this.timeoutMs > 0) {
+      return this.execGitWithTimeout(
+        args,
+        allowAllExitCodes,
+        silent,
+        customListeners,
+        env
+      )
+    }
+
+    const result = new GitOutput()
 
     const defaultListener = {
       stdout: (data: Buffer) => {
@@ -653,12 +669,108 @@ class GitCommandManager {
     return result
   }
 
+  private execGitWithTimeout(
+    args: string[],
+    allowAllExitCodes: boolean,
+    silent: boolean,
+    customListeners: {[key: string]: (data: Buffer) => void},
+    env: {[key: string]: string | undefined}
+  ): Promise<GitOutput> {
+    return new Promise((resolve, reject) => {
+      const stdout: string[] = []
+      const result = new GitOutput()
+
+      const child = cp.spawn(this.gitPath, args, {
+        cwd: this.workingDirectory,
+        env: env as NodeJS.ProcessEnv
+      })
+
+      let timedOut = false
+      const timer = setTimeout(() => {
+        timedOut = true
+        child.kill('SIGTERM')
+        setTimeout(() => {
+          if (!child.killed) {
+            child.kill('SIGKILL')
+          }
+        }, 5000)
+      }, this.timeoutMs)
+
+      child.stdout.on('data', (data: Buffer) => {
+        stdout.push(data.toString())
+        if (!silent) {
+          process.stdout.write(data)
+        }
+        if (customListeners['stdout']) {
+          customListeners['stdout'](data)
+        }
+        if (customListeners['stdline']) {
+          const lines = data.toString().split(/\r?\n/)
+          for (const line of lines) {
+            if (line) {
+              customListeners['stdline'](Buffer.from(line))
+            }
+          }
+        }
+      })
+
+      child.stderr.on('data', (data: Buffer) => {
+        if (!silent) {
+          process.stderr.write(data)
+        }
+        if (customListeners['stderr']) {
+          customListeners['stderr'](data)
+        }
+        if (customListeners['errline']) {
+          const lines = data.toString().split(/\r?\n/)
+          for (const line of lines) {
+            if (line) {
+              customListeners['errline'](Buffer.from(line))
+            }
+          }
+        }
+      })
+
+      child.on('close', (code: number | null) => {
+        clearTimeout(timer)
+        if (timedOut) {
+          reject(
+            new Error(
+              `git ${args[0]} timed out after ${this.timeoutMs / 1000}s`
+            )
+          )
+          return
+        }
+        result.exitCode = code ?? 1
+        result.stdout = stdout.join('')
+        core.debug(result.exitCode.toString())
+        core.debug(result.stdout)
+        if (!allowAllExitCodes && result.exitCode !== 0) {
+          reject(
+            new Error(
+              `The process '${this.gitPath}' failed with exit code ${result.exitCode}`
+            )
+          )
+          return
+        }
+        resolve(result)
+      })
+
+      child.on('error', (err: Error) => {
+        clearTimeout(timer)
+        reject(err)
+      })
+    })
+  }
+
   private async initializeCommandManager(
     workingDirectory: string,
     lfs: boolean,
-    doSparseCheckout: boolean
+    doSparseCheckout: boolean,
+    timeoutMs = 0
   ): Promise<void> {
     this.workingDirectory = workingDirectory
+    this.timeoutMs = timeoutMs
 
     // Git-lfs will try to pull down assets if any of the local/user/system setting exist.
     // If the user didn't enable `LFS` in their pipeline definition, disable LFS fetch/checkout.

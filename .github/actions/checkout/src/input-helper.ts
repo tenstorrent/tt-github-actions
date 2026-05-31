@@ -161,5 +161,16 @@ export async function getInputs(): Promise<IGitSourceSettings> {
   result.githubServerUrl = core.getInput('github-server-url')
   core.debug(`GitHub Host URL = ${result.githubServerUrl}`)
 
+  // Timeout
+  const timeoutMinutesInput = core.getInput('timeout-minutes') || '20'
+  const timeoutMinutes = parseFloat(timeoutMinutesInput)
+  if (isNaN(timeoutMinutes) || timeoutMinutes <= 0) {
+    throw new Error(
+      `Invalid timeout-minutes value '${timeoutMinutesInput}'. Must be a positive number.`
+    )
+  }
+  result.timeoutMs = Math.round(timeoutMinutes * 60 * 1000)
+  core.debug(`timeout = ${timeoutMinutes} minutes (${result.timeoutMs} ms)`)
+
   return result
 }

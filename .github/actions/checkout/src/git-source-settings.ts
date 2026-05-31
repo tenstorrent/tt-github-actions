@@ -118,4 +118,10 @@ export interface IGitSourceSettings {
    * User override on the GitHub Server/Host URL that hosts the repository to be cloned
    */
   githubServerUrl: string | undefined
+
+  /**
+   * Maximum time in milliseconds to allow each git subprocess to run before it is killed.
+   * Applies to git fetch, git clone, and submodule update calls.
+   */
+  timeoutMs: number
 }

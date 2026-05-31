@@ -648,6 +648,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MinimumGitSparseCheckoutVersion = exports.MinimumGitVersion = void 0;
 exports.createCommandManager = createCommandManager;
 const core = __importStar(__nccwpck_require__(2186));
+const cp = __importStar(__nccwpck_require__(2081));
 const exec = __importStar(__nccwpck_require__(1514));
 const fs = __importStar(__nccwpck_require__(7147));
 const fshelper = __importStar(__nccwpck_require__(7219));
@@ -661,9 +662,9 @@ const git_version_1 = __nccwpck_require__(3142);
 // sparse-checkout not [well-]supported before 2.28 (see https://github.com/actions/checkout/issues/1386)
 exports.MinimumGitVersion = new git_version_1.GitVersion('2.18');
 exports.MinimumGitSparseCheckoutVersion = new git_version_1.GitVersion('2.28');
-function createCommandManager(workingDirectory, lfs, doSparseCheckout) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return yield GitCommandManager.createCommandManager(workingDirectory, lfs, doSparseCheckout);
+function createCommandManager(workingDirectory_1, lfs_1, doSparseCheckout_1) {
+    return __awaiter(this, arguments, void 0, function* (workingDirectory, lfs, doSparseCheckout, timeoutMs = 0) {
+        return yield GitCommandManager.createCommandManager(workingDirectory, lfs, doSparseCheckout, timeoutMs);
     });
 }
 class GitCommandManager {
@@ -678,6 +679,7 @@ class GitCommandManager {
         this.doSparseCheckout = false;
         this.workingDirectory = '';
         this.gitVersion = new git_version_1.GitVersion();
+        this.timeoutMs = 0;
     }
     branchDelete(remote, branch) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -1107,17 +1109,16 @@ class GitCommandManager {
             return this.gitVersion;
         });
     }
-    static createCommandManager(workingDirectory, lfs, doSparseCheckout) {
-        return __awaiter(this, void 0, void 0, function* () {
+    static createCommandManager(workingDirectory_1, lfs_1, doSparseCheckout_1) {
+        return __awaiter(this, arguments, void 0, function* (workingDirectory, lfs, doSparseCheckout, timeoutMs = 0) {
             const result = new GitCommandManager();
-            yield result.initializeCommandManager(workingDirectory, lfs, doSparseCheckout);
+            yield result.initializeCommandManager(workingDirectory, lfs, doSparseCheckout, timeoutMs);
             return result;
         });
     }
     execGit(args_1) {
         return __awaiter(this, arguments, void 0, function* (args, allowAllExitCodes = false, silent = false, customListeners = {}) {
             fshelper.directoryExistsSync(this.workingDirectory, true);
-            const result = new GitOutput();
             const env = {};
             for (const key of Object.keys(process.env)) {
                 env[key] = process.env[key];
@@ -1125,6 +1126,10 @@ class GitCommandManager {
             for (const key of Object.keys(this.gitEnv)) {
                 env[key] = this.gitEnv[key];
             }
+            if (this.timeoutMs > 0) {
+                return this.execGitWithTimeout(args, allowAllExitCodes, silent, customListeners, env);
+            }
+            const result = new GitOutput();
             const defaultListener = {
                 stdout: (data) => {
                     stdout.push(data.toString());
@@ -1146,9 +1151,83 @@ class GitCommandManager {
             return result;
         });
     }
-    initializeCommandManager(workingDirectory, lfs, doSparseCheckout) {
-        return __awaiter(this, void 0, void 0, function* () {
+    execGitWithTimeout(args, allowAllExitCodes, silent, customListeners, env) {
+        return new Promise((resolve, reject) => {
+            const stdout = [];
+            const result = new GitOutput();
+            const child = cp.spawn(this.gitPath, args, {
+                cwd: this.workingDirectory,
+                env: env
+            });
+            let timedOut = false;
+            const timer = setTimeout(() => {
+                timedOut = true;
+                child.kill('SIGTERM');
+                setTimeout(() => {
+                    if (!child.killed) {
+                        child.kill('SIGKILL');
+                    }
+                }, 5000);
+            }, this.timeoutMs);
+            child.stdout.on('data', (data) => {
+                stdout.push(data.toString());
+                if (!silent) {
+                    process.stdout.write(data);
+                }
+                if (customListeners['stdout']) {
+                    customListeners['stdout'](data);
+                }
+                if (customListeners['stdline']) {
+                    const lines = data.toString().split(/\r?\n/);
+                    for (const line of lines) {
+                        if (line) {
+                            customListeners['stdline'](Buffer.from(line));
+                        }
+                    }
+                }
+            });
+            child.stderr.on('data', (data) => {
+                if (!silent) {
+                    process.stderr.write(data);
+                }
+                if (customListeners['stderr']) {
+                    customListeners['stderr'](data);
+                }
+                if (customListeners['errline']) {
+                    const lines = data.toString().split(/\r?\n/);
+                    for (const line of lines) {
+                        if (line) {
+                            customListeners['errline'](Buffer.from(line));
+                        }
+                    }
+                }
+            });
+            child.on('close', (code) => {
+                clearTimeout(timer);
+                if (timedOut) {
+                    reject(new Error(`git ${args[0]} timed out after ${this.timeoutMs / 1000}s`));
+                    return;
+                }
+                result.exitCode = code !== null && code !== void 0 ? code : 1;
+                result.stdout = stdout.join('');
+                core.debug(result.exitCode.toString());
+                core.debug(result.stdout);
+                if (!allowAllExitCodes && result.exitCode !== 0) {
+                    reject(new Error(`The process '${this.gitPath}' failed with exit code ${result.exitCode}`));
+                    return;
+                }
+                resolve(result);
+            });
+            child.on('error', (err) => {
+                clearTimeout(timer);
+                reject(err);
+            });
+        });
+    }
+    initializeCommandManager(workingDirectory_1, lfs_1, doSparseCheckout_1) {
+        return __awaiter(this, arguments, void 0, function* (workingDirectory, lfs, doSparseCheckout, timeoutMs = 0) {
             this.workingDirectory = workingDirectory;
+            this.timeoutMs = timeoutMs;
             // Git-lfs will try to pull down assets if any of the local/user/system setting exist.
             // If the user didn't enable `LFS` in their pipeline definition, disable LFS fetch/checkout.
             this.lfs = lfs;
@@ -1674,7 +1753,7 @@ function getGitCommandManager(settings) {
     return __awaiter(this, void 0, void 0, function* () {
         core.info(`Working directory is '${settings.repositoryPath}'`);
         try {
-            return yield gitCommandManager.createCommandManager(settings.repositoryPath, settings.lfs, settings.sparseCheckout != null);
+            return yield gitCommandManager.createCommandManager(settings.repositoryPath, settings.lfs, settings.sparseCheckout != null, settings.timeoutMs);
         }
         catch (err) {
             // Git is required for LFS
@@ -2095,6 +2174,14 @@ function getInputs() {
         // Determine the GitHub URL that the repository is being hosted from
         result.githubServerUrl = core.getInput('github-server-url');
         core.debug(`GitHub Host URL = ${result.githubServerUrl}`);
+        // Timeout
+        const timeoutMinutesInput = core.getInput('timeout-minutes') || '20';
+        const timeoutMinutes = parseFloat(timeoutMinutesInput);
+        if (isNaN(timeoutMinutes) || timeoutMinutes <= 0) {
+            throw new Error(`Invalid timeout-minutes value '${timeoutMinutesInput}'. Must be a positive number.`);
+        }
+        result.timeoutMs = Math.round(timeoutMinutes * 60 * 1000);
+        core.debug(`timeout = ${timeoutMinutes} minutes (${result.timeoutMs} ms)`);
         return result;
     });
 }

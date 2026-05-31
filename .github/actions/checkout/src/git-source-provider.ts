@@ -361,7 +361,8 @@ async function getGitCommandManager(
     return await gitCommandManager.createCommandManager(
       settings.repositoryPath,
       settings.lfs,
-      settings.sparseCheckout != null
+      settings.sparseCheckout != null,
+      settings.timeoutMs
     )
   } catch (err) {
     // Git is required for LFS
