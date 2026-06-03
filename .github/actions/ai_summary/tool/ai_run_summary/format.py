@@ -170,6 +170,27 @@ def _normalized_commit_sha(value: str | None) -> str | None:
     return None
 
 
+def _commit_version_line(commits: list[dict]) -> str:
+    """Render a ' · '-joined line of repo commit links from a list of {repo, commit} dicts.
+
+    Each entry must have 'repo' (e.g. 'tenstorrent/tt-metal') and 'commit' (SHA).
+    The display label is the part of the repo name after '/'.
+    Invalid or missing SHAs are silently skipped.
+    Returns empty string when nothing is renderable.
+    """
+    parts = []
+    for entry in commits:
+        repo = (entry.get("repo") or "").strip()
+        sha = _normalized_commit_sha(entry.get("commit"))
+        if not repo or not sha:
+            continue
+        label = repo.split("/")[-1] if "/" in repo else repo
+        short = sha[:7]
+        url = f"https://github.com/{repo}/commit/{sha}"
+        parts.append(f"**{label}**: [`{short}`]({url})")
+    return " \u00b7 ".join(parts)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -182,9 +203,7 @@ def format_run_report(
     run_id: str = "",
     run_date: str = "",
     pr: str = "",
-    tt_metal_commit: str = "",
-    vllm_commit: str = "",
-    inference_server_commit: str = "",
+    commits: list[dict] | None = None,
 ) -> "RunReport":
     """Render a complete run-level report (markdown + HTML).
 
@@ -196,9 +215,8 @@ def format_run_report(
         run_date: Human-readable run date (e.g. "2026-03-13"). Omitted if empty.
         pr: PR number or branch name. When set, shows PR Impact section and
             "Your Code" column in job details.
-        tt_metal_commit: Optional TT-Metal commit SHA.
-        vllm_commit: Optional vLLM commit SHA.
-        inference_server_commit: Optional tt-inference-server commit SHA.
+        commits: Optional list of {"repo": "owner/name", "commit": "sha"} dicts.
+            Each entry renders as a linked short SHA in the report header.
 
     Returns:
         RunReport with .md and .html attributes.
@@ -230,24 +248,10 @@ def format_run_report(
     # -----------------------------------------------------------------------
     # 3. Component versions (commit SHAs)
     # -----------------------------------------------------------------------
-    versions = []
-    tt_metal_sha = _normalized_commit_sha(tt_metal_commit)
-    if tt_metal_sha:
-        short = tt_metal_sha[:7]
-        url = f"https://github.com/tenstorrent/tt-metal/commit/{tt_metal_sha}"
-        versions.append(f"**TT-Metal**: [`{short}`]({url})")
-    inference_server_sha = _normalized_commit_sha(inference_server_commit)
-    if inference_server_sha:
-        short = inference_server_sha[:7]
-        url = f"https://github.com/tenstorrent/tt-inference-server/commit/{inference_server_sha}"
-        versions.append(f"**tt-inference-server**: [`{short}`]({url})")
-    vllm_sha = _normalized_commit_sha(vllm_commit)
-    if vllm_sha:
-        short = vllm_sha[:7]
-        url = f"https://github.com/tenstorrent/vllm/commit/{vllm_sha}"
-        versions.append(f"**vLLM**: [`{short}`]({url})")
-    if versions:
-        md += " \u00b7 ".join(versions) + "\n\n"
+    if commits:
+        version_line = _commit_version_line(commits)
+        if version_line:
+            md += version_line + "\n\n"
 
     # -----------------------------------------------------------------------
     # 4. Overall Health (LLM sentence)

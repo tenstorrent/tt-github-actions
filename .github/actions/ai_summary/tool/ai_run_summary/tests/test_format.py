@@ -353,37 +353,48 @@ class TestCommitSHAHeader:
     def test_sha_links_rendered_in_header(self):
         report = format_run_report(
             RunStats(),
-            tt_metal_commit="aabbccddee112233",
-            vllm_commit="112233aabbccddee",
-            inference_server_commit="ccddee112233aabb",
+            commits=[
+                {"repo": "tenstorrent/tt-metal", "commit": "aabbccddee112233"},
+                {"repo": "tenstorrent/tt-inference-server", "commit": "ccddee112233aabb"},
+                {"repo": "tenstorrent/vllm", "commit": "112233aabbccddee"},
+            ],
         )
-        assert "**TT-Metal**: [`aabbccd`](https://github.com/tenstorrent/tt-metal/commit/aabbccddee112233)" in report.md
+        assert "**tt-metal**: [`aabbccd`](https://github.com/tenstorrent/tt-metal/commit/aabbccddee112233)" in report.md
         assert (
             "**tt-inference-server**: [`ccddee1`](https://github.com/tenstorrent/tt-inference-server/commit/ccddee112233aabb)"
             in report.md
         )
-        assert "**vLLM**: [`112233a`](https://github.com/tenstorrent/vllm/commit/112233aabbccddee)" in report.md
+        assert "**vllm**: [`112233a`](https://github.com/tenstorrent/vllm/commit/112233aabbccddee)" in report.md
 
     def test_sha_header_absent_when_no_commits_provided(self):
         report = format_run_report(RunStats())
-        assert "TT-Metal" not in report.md
+        assert "tt-metal" not in report.md
         assert "tt-inference-server" not in report.md
-        assert "vLLM" not in report.md
+        assert "vllm" not in report.md
+
+    def test_only_provided_repos_rendered(self):
+        report = format_run_report(
+            RunStats(),
+            commits=[{"repo": "tenstorrent/tt-metal", "commit": "aabbccddee112233"}],
+        )
+        assert "tt-metal" in report.md
+        assert "tt-inference-server" not in report.md
+        assert "vllm" not in report.md
 
     def test_invalid_sha_not_rendered(self):
         report = format_run_report(
             RunStats(),
-            tt_metal_commit="not-a-sha!!",
-            vllm_commit="   ",
-            inference_server_commit="tooshort",
+            commits=[
+                {"repo": "tenstorrent/tt-metal", "commit": "not-a-sha!!"},
+                {"repo": "tenstorrent/vllm", "commit": "   "},
+            ],
         )
-        assert "TT-Metal" not in report.md
-        assert "vLLM" not in report.md
-        assert "tt-inference-server" not in report.md
+        assert "tt-metal" not in report.md
+        assert "vllm" not in report.md
 
     def test_sha_with_whitespace_trimmed_and_rendered(self):
         report = format_run_report(
             RunStats(),
-            tt_metal_commit="  aabbccddee112233  ",
+            commits=[{"repo": "tenstorrent/tt-metal", "commit": "  aabbccddee112233  "}],
         )
-        assert "**TT-Metal**: [`aabbccd`](https://github.com/tenstorrent/tt-metal/commit/aabbccddee112233)" in report.md
+        assert "**tt-metal**: [`aabbccd`](https://github.com/tenstorrent/tt-metal/commit/aabbccddee112233)" in report.md

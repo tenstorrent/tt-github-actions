@@ -213,9 +213,11 @@ def main():
         "when 'cancelled' or 'skipped'. Has no effect "
         "unless --expected-jobs is also supplied.",
     )
-    parser.add_argument("--tt-metal-commit", default="", help="TT-Metal commit SHA")
-    parser.add_argument("--vllm-commit", default="", help="vLLM commit SHA")
-    parser.add_argument("--inference-server-commit", default="", help="tt-inference-server commit SHA")
+    parser.add_argument(
+        "--commits",
+        default="",
+        help='JSON array of {"repo": "owner/name", "commit": "sha"} objects shown in report header',
+    )
 
     args = parser.parse_args()
 
@@ -312,6 +314,17 @@ def main():
     # Resolve run metadata from environment
     meta = _resolve_run_metadata()
 
+    # Parse commits JSON
+    commits: list[dict] = []
+    if args.commits.strip():
+        try:
+            commits = json.loads(args.commits)
+            if not isinstance(commits, list):
+                print("::warning::--commits must be a JSON array; skipping commit SHA header", file=sys.stderr)
+                commits = []
+        except json.JSONDecodeError as e:
+            print(f"::warning::--commits is not valid JSON ({e}); skipping commit SHA header", file=sys.stderr)
+
     # Format report
     report = format_run_report(
         stats,
@@ -320,9 +333,7 @@ def main():
         run_id=meta["run_id"],
         run_date=meta["run_date"],
         pr=meta["pr"],
-        tt_metal_commit=args.tt_metal_commit,
-        vllm_commit=args.vllm_commit,
-        inference_server_commit=args.inference_server_commit,
+        commits=commits or None,
     )
 
     # Write report to output_dir
