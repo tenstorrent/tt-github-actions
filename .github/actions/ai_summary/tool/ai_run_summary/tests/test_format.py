@@ -46,6 +46,7 @@ def _job(
 def _stats(jobs=None, categories=None, is_your_code=0, not_your_code=0, unknown=0):
     jobs = jobs or []
     failures = [j for j in jobs if j.status != "SUCCESS"]
+    successes = [j for j in jobs if j.status == "SUCCESS"]
     status_counts: dict[str, int] = {}
     for j in jobs:
         status_counts[j.status] = status_counts.get(j.status, 0) + 1
@@ -53,6 +54,7 @@ def _stats(jobs=None, categories=None, is_your_code=0, not_your_code=0, unknown=
         total_jobs=len(jobs),
         status_counts=status_counts,
         failed_jobs=failures,
+        successful_jobs=successes,
         category_counts=categories or [],
         is_your_code_count=is_your_code,
         not_your_code_count=not_your_code,
@@ -336,7 +338,6 @@ class TestSuccessfulModels:
             _job("CRASHED", source_stem="3"),
         ]
         stats = _stats(jobs=jobs)
-        stats.successful_jobs = [j for j in jobs if j.status == "SUCCESS"]
         report = format_run_report(stats)
         assert "Successful Models (2)" in report.md
         assert "Llama-3.1-8B-Instruct-n150" in report.md

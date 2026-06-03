@@ -180,8 +180,10 @@ def _commit_version_line(commits: list[dict]) -> str:
     """
     parts = []
     for entry in commits:
-        repo = (entry.get("repo") or "").strip()
-        sha = _normalized_commit_sha(entry.get("commit"))
+        if not isinstance(entry, dict):
+            continue
+        repo = str(entry.get("repo") or "").strip()
+        sha = _normalized_commit_sha(str(entry.get("commit") or ""))
         if not repo or not sha:
             continue
         label = repo.split("/")[-1] if "/" in repo else repo
@@ -281,7 +283,7 @@ def format_run_report(
     md += "\n"
 
     # -----------------------------------------------------------------------
-    # 5. Failure Category Distribution
+    # 6. Failure Category Distribution
     #    Main categories: bar showing % of total failures
     #    Subcategories (indented): bar showing % of their parent
     # -----------------------------------------------------------------------
@@ -304,7 +306,7 @@ def format_run_report(
         md += "\n"
 
     # -----------------------------------------------------------------------
-    # 6. PR Impact -- only for PR / branch runs
+    # 7. PR Impact -- only for PR / branch runs
     # -----------------------------------------------------------------------
     if pr and stats.failed_jobs:
         md += "### PR Impact\n\n"
@@ -316,14 +318,14 @@ def format_run_report(
         md += "\n"
 
     # -----------------------------------------------------------------------
-    # 7. Dominant Failure Pattern (LLM)
+    # 8. Dominant Failure Pattern (LLM)
     # -----------------------------------------------------------------------
     if narrative and narrative.dominant_cause:
         md += "### Dominant Failure Pattern\n\n"
         md += f"{narrative.dominant_cause}\n\n"
 
     # -----------------------------------------------------------------------
-    # 8. Failed Job Details -- sorted by status severity then category
+    # 9. Failed Job Details -- sorted by status severity then category
     #    Job column: always the numeric job ID linked to the job URL
     #    Model column: extracted model name, or "--" when not identifiable
     # -----------------------------------------------------------------------
@@ -366,7 +368,7 @@ def format_run_report(
         md += "\n</details>\n\n"
 
     # -----------------------------------------------------------------------
-    # 9. Successful Models -- collapsed list sorted alphabetically
+    # 10. Successful Models -- collapsed list sorted alphabetically
     # -----------------------------------------------------------------------
     if stats.successful_jobs:
         labeled_success = sorted(
@@ -379,11 +381,12 @@ def format_run_report(
             for model, job in labeled_success:
                 job_cell = _job_id_cell(job, run_url)
                 emoji = STATUS_EMOJI.get(job.status, "")
-                md += f"| {job_cell} | {model} | {emoji} {job.status} |\n"
+                model_cell = model.replace("|", "\\|")
+                md += f"| {job_cell} | {model_cell} | {emoji} {job.status} |\n"
             md += "\n</details>\n\n"
 
     # -----------------------------------------------------------------------
-    # 10. Stats footer
+    # 11. Stats footer
     # -----------------------------------------------------------------------
     footer_rows = [
         f"| Total jobs | {stats.total_jobs} |",
