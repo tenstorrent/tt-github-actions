@@ -42,6 +42,14 @@ detection_patterns:
     - 'exceeded\s+time\s+limit'
     - 'cancelled\s+due\s+to\s+timeout'
 
+# Markers emitted by the expect_error fixture (tt-metal conftest.py). They bracket
+# a block of deliberately-provoked errors; any in-block line matching the message
+# declared on the BEGIN marker is masked before crash detection. `begin` MUST
+# capture the message pattern as its last group.
+expected_error_markers:
+  begin: '\[EXPECTED_ERROR BEGIN\].*?message=([''"])(.*?)\1'
+  end: '\[EXPECTED_ERROR END\]'
+
 repos:
   default_branches:
     - main
