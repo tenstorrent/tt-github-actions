@@ -323,6 +323,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 "benchmark",
                 benchmark,
                 [
+                    # LLM
                     "mean_ttft_ms",
                     "std_ttft_ms",
                     "mean_tpot_ms",
@@ -336,7 +337,22 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "num_requests",
                     "total_input_tokens",
                     "total_output_tokens",
+                    "total_token_throughput",
                     "num_prompts",
+                    # Image / video / diffusion
+                    "mean_latency_ms",
+                    "p50_latency_ms",
+                    "p90_latency_ms",
+                    "p95_latency_ms",
+                    "throughput_rps",
+                    "inference_steps_per_second",
+                    "num_inference_steps",
+                    "performance_check",
+                    # Audio (Whisper / speecht5)
+                    "rtr",
+                    "wer",
+                    # Embedding
+                    "embedding_dimension",
                 ],
             )
 
@@ -376,10 +392,23 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 "benchmark_summary",
                 benchmark,
                 [
+                    # LLM
                     "ttft",
                     "tput_user",
                     "tput",
                     "avg_gen_time",
+                    "num_requests",
+                    # Image / video
+                    "latency",
+                    "inference_steps_per_second",
+                    "num_inference_steps",
+                    # Embedding
+                    "e2el_ms",
+                    "tput_prefill",
+                    # Audio
+                    "latency_p90",
+                    "latency_p95",
+                    "rtr",
                 ],
             )
 
@@ -390,16 +419,32 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     f"benchmark_summary_{target_name}",
                     target_data,
                     [
+                        # LLM
                         "ttft",
                         "ttft_ratio",
                         "ttft_check",
                         "tput_user",
                         "tput_user_ratio",
                         "tput_user_check",
+                        "tput",
+                        "tput_ratio",
                         "tput_check",
                         "avg_gen_time",
                         "avg_gen_time_ratio",
                         "avg_gen_time_check",
+                        # Media / image / video / whisper
+                        "latency",
+                        "latency_ratio",
+                        "latency_check",
+                        # Embedding
+                        "e2el_ms",
+                        "e2el_ms_ratio",
+                        "e2el_ms_check",
+                        "tput_prefill",
+                        "tput_prefill_ratio",
+                        "tput_prefill_check",
+                        # Audio (speecht5_tts)
+                        "rtr_check",
                     ],
                 )
                 measurements.extend(target_measurements)
@@ -495,14 +540,21 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 "eval",
                 eval_entry,
                 [
+                    # General eval scores
                     "score",
                     "published_score",
                     "gpu_reference_score",
                     "accuracy_check",
                     "ratio_to_reference",
                     "ratio_to_published",
+                    "performance_check",
+                    "tolerance",
+                    "num_inference_steps",
+                    "num_prompts",
+                    # Image quality (existing)
                     "average_clip",
                     "deviation_clip",
+                    "deviation_clip_score",
                     "fid_score",
                     "clip_accuracy_check_valid",
                     "fid_accuracy_check_valid",
@@ -510,6 +562,33 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "fid_accuracy_check_approx",
                     "delta_clip",
                     "delta_fid",
+                    # Image / video quality (new)
+                    "max_clip",
+                    "min_clip",
+                    "clip_standard_deviation",
+                    "fvd",
+                    "fvmd",
+                    # Audio
+                    "latency_p50",
+                    "latency_p90",
+                    "latency_p95",
+                    "rtr",
+                    "throughput_rps",
+                    "tput_user",
+                    # Classification
+                    "correct",
+                    "total",
+                    "mismatches_count",
+                    # Embedding (sentence similarity)
+                    "cosine_pearson",
+                    "cosine_spearman",
+                    "euclidean_pearson",
+                    "euclidean_spearman",
+                    "manhattan_pearson",
+                    "manhattan_spearman",
+                    "pearson",
+                    "spearman",
+                    "main_score",
                 ],
             )
             results.append(
