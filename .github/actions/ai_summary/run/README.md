@@ -33,6 +33,12 @@ ai-run-summary:
         # Optional Slack delivery — omit both to skip.
         slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
         slack-channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+        # Optional: show linked commit SHAs in the report header.
+        commits: |
+          [
+            {"repo": "tenstorrent/tt-metal", "commit": "${{ needs.resolve-shas.outputs.tt-metal-sha }}"},
+            {"repo": "tenstorrent/tt-inference-server", "commit": "${{ needs.resolve-shas.outputs.inference-server-sha }}"}
+          ]
 ```
 
 ## Inputs
@@ -47,6 +53,7 @@ ai-run-summary:
 | `slack-bot-token` | no | `""` | Slack bot token. Both Slack inputs must be set to send. |
 | `slack-channel-id` | no | `""` | Slack channel ID. |
 | `slack-on-branches` | no | `main` | Comma-separated branches; Slack only sends when `github.ref` matches `refs/heads/<one of these>`. Set empty to always send. |
+| `commits` | no | `""` | JSON array of `{"repo": "owner/name", "commit": "sha"}` objects. Each entry renders as a linked short SHA in the report header. Omit to skip. |
 
 ## Config schema
 
