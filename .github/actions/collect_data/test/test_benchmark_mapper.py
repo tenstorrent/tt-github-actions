@@ -247,6 +247,211 @@ def test_benchmark_summary_model_type_without_model_spec(mapper, pipeline):
     assert result[0].ml_model_type is None
 
 
+# --- Whitelist coverage tests ---
+#
+# These tests pin down which scalar keys we ingest from each location in the
+# Shield report JSON. Drift is caught by the metric-drift script in tt-shield
+# (which AST-parses these whitelists); these tests make sure each whitelist
+# actually covers what the producer emits for every model family we ship.
+#
+# Locations:
+#   - benchmarks[*]                          → step_name='benchmark'
+#   - benchmarks_summary[*]                  → step_name='benchmark_summary'
+#   - benchmarks_summary[*].target_checks.*  → step_name='benchmark_summary_{tier}'
+#   - evals[*]                               → step_name='eval'
+
+# Keys observed in production across LLM, image/video, audio, embedding models
+# (sourced from a 109-job nightly run analysis — see PR description).
+_BENCHMARK_KEYS_ALL_FAMILIES = {
+    # LLM
+    "mean_ttft_ms",
+    "std_ttft_ms",
+    "mean_tpot_ms",
+    "std_tpot_ms",
+    "mean_tps",
+    "std_tps",
+    "tps_decode_throughput",
+    "tps_prefill_throughput",
+    "mean_e2el_ms",
+    "request_throughput",
+    "num_requests",
+    "num_prompts",
+    "total_input_tokens",
+    "total_output_tokens",
+    "total_token_throughput",
+    # Image / video / diffusion
+    "mean_latency_ms",
+    "p50_latency_ms",
+    "p90_latency_ms",
+    "p95_latency_ms",
+    "throughput_rps",
+    "inference_steps_per_second",
+    "num_inference_steps",
+    "performance_check",
+    # Audio (Whisper / speecht5)
+    "rtr",
+    "wer",
+    # Embedding
+    "embedding_dimension",
+}
+
+_BENCHMARK_SUMMARY_OUTER_KEYS = {
+    # LLM
+    "ttft",
+    "tput_user",
+    "tput",
+    "avg_gen_time",
+    "num_requests",
+    # Image / video
+    "latency",
+    "inference_steps_per_second",
+    "num_inference_steps",
+    # Embedding
+    "e2el_ms",
+    "tput_prefill",
+    # Audio
+    "latency_p90",
+    "latency_p95",
+    "rtr",
+}
+
+_TARGET_CHECKS_KEYS = {
+    # LLM
+    "ttft",
+    "ttft_ratio",
+    "ttft_check",
+    "tput_user",
+    "tput_user_ratio",
+    "tput_user_check",
+    "tput",
+    "tput_ratio",
+    "tput_check",
+    "avg_gen_time",
+    "avg_gen_time_ratio",
+    "avg_gen_time_check",
+    # Media / image / video / whisper
+    "latency",
+    "latency_ratio",
+    "latency_check",
+    # Embedding
+    "e2el_ms",
+    "e2el_ms_ratio",
+    "e2el_ms_check",
+    "tput_prefill",
+    "tput_prefill_ratio",
+    "tput_prefill_check",
+    # Audio (speecht5_tts)
+    "rtr_check",
+}
+
+_EVAL_KEYS = {
+    # Existing eval scores
+    "score",
+    "published_score",
+    "gpu_reference_score",
+    "ratio_to_reference",
+    "ratio_to_published",
+    "accuracy_check",
+    # Image quality
+    "average_clip",
+    "deviation_clip",
+    "deviation_clip_score",
+    "fid_score",
+    "clip_accuracy_check_valid",
+    "fid_accuracy_check_valid",
+    "clip_accuracy_check_approx",
+    "fid_accuracy_check_approx",
+    "delta_clip",
+    "delta_fid",
+    "max_clip",
+    "min_clip",
+    "clip_standard_deviation",
+    "fvd",
+    "fvmd",
+    "performance_check",
+    "tolerance",
+    "num_inference_steps",
+    "num_prompts",
+    # Audio
+    "latency_p50",
+    "latency_p90",
+    "latency_p95",
+    "rtr",
+    "throughput_rps",
+    "tput_user",
+    # Classification
+    "correct",
+    "total",
+    "mismatches_count",
+    # Embedding (sentence similarity)
+    "cosine_pearson",
+    "cosine_spearman",
+    "euclidean_pearson",
+    "euclidean_spearman",
+    "manhattan_pearson",
+    "manhattan_spearman",
+    "pearson",
+    "spearman",
+    "main_score",
+}
+
+
+def _measurement_names(result, step_name):
+    return {m.name for r in result for m in r.measurements if m.step_name == step_name}
+
+
+def test_benchmarks_whitelist_covers_all_model_families(mapper, pipeline):
+    """benchmarks[*] must ingest every scalar metric observed across LLM, image,
+    audio, and embedding models. Producer drift would be caught by the
+    tt-shield drift script; this test pins down current coverage."""
+    benchmark = {k: 1.0 for k in _BENCHMARK_KEYS_ALL_FAMILIES}
+    benchmark.update({"model_name": "test", "device": "test"})
+    result = mapper.map_benchmark_data(pipeline, 1, {"benchmarks": [benchmark]})
+    got = _measurement_names(result, "benchmark")
+    missing = _BENCHMARK_KEYS_ALL_FAMILIES - got
+    assert not missing, f"benchmarks[*] whitelist missing keys: {sorted(missing)}"
+
+
+def test_benchmarks_summary_outer_whitelist_covers_all_model_families(mapper, pipeline):
+    """benchmarks_summary[*] (outer, sibling of target_checks) must ingest the
+    scalar throughput / latency metrics each model family emits there."""
+    bs = {k: 1.0 for k in _BENCHMARK_SUMMARY_OUTER_KEYS}
+    bs.update({"model_name": "test", "device": "test"})
+    result = mapper.map_benchmark_data(pipeline, 1, {"benchmarks_summary": [bs]})
+    got = _measurement_names(result, "benchmark_summary")
+    missing = _BENCHMARK_SUMMARY_OUTER_KEYS - got
+    assert not missing, f"benchmarks_summary[*] whitelist missing keys: {sorted(missing)}"
+
+
+def test_target_checks_whitelist_covers_all_check_families(mapper, pipeline):
+    """benchmarks_summary[*].target_checks.<tier> must ingest every <base>,
+    <base>_ratio and <base>_check the producer emits across all model
+    families. This is the whitelist that previously dropped whisper's
+    latency_check — regression target for the original bug."""
+    target_data = {k: 1.0 for k in _TARGET_CHECKS_KEYS}
+    result = mapper.map_benchmark_data(
+        pipeline,
+        1,
+        {"benchmarks_summary": [{"model_name": "test", "target_checks": {"functional": target_data}}]},
+    )
+    got = _measurement_names(result, "benchmark_summary_functional")
+    missing = _TARGET_CHECKS_KEYS - got
+    assert not missing, f"target_checks whitelist missing keys: {sorted(missing)}"
+
+
+def test_evals_whitelist_covers_all_eval_metrics(mapper, pipeline):
+    """evals[*] must ingest the scalar eval metrics each model family emits —
+    LLM accuracy, image quality (FID/CLIP/FVD/FVMD), classification
+    (correct/total), embedding similarity (cosine/euclidean/manhattan), and
+    audio (rtr / latency_p*)."""
+    eval_entry = {k: 1.0 for k in _EVAL_KEYS}
+    eval_entry.update({"model": "test", "device": "test"})
+    result = mapper.map_benchmark_data(pipeline, 1, {"evals": [eval_entry]})
+    got = _measurement_names(result, "eval")
+    missing = _EVAL_KEYS - got
+    assert not missing, f"evals[*] whitelist missing keys: {sorted(missing)}"
+
+
 def test_evals_model_type_with_model_spec(mapper, pipeline):
     report_data = {"evals": [{"model": "test_model"}]}
     model_spec_data = {"model_type": "LLM"}
