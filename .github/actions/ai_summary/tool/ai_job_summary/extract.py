@@ -89,6 +89,8 @@ class ExtractedLog:
     exit_code: int | None = None
     has_crash: bool = False  # TT_FATAL, panic, etc.
     has_timeout: bool = False
+    # None = marker not configured; False = marker absent (shell hard-killed)
+    log_complete: bool | None = None
     failed_tests: list[str] = field(default_factory=list)  # Test failures (features missing)
     failed_evals: list[str] = field(default_factory=list)  # Eval failures (accuracy below target)
 
@@ -183,6 +185,11 @@ def get_job_status(extracted_log: ExtractedLog) -> JobStatus:
         return JobStatus(False, "ORANGE", f"TESTS FAILED ({len(extracted_log.failed_tests)} failed)")
     if extracted_log.failed_evals:
         return JobStatus(False, "YELLOW", f"EVALS BELOW TARGET ({len(extracted_log.failed_evals)} failed)")
+    # Marker absent on an otherwise clean log = GitHub timeout-minutes kill.
+    # Crash/failure branches above win: truncation is then reported as a
+    # possibly separate issue, not as the status.
+    if extracted_log.log_complete is False:
+        return JobStatus(False, "RED", "TIMEOUT")
     return JobStatus(True, "GREEN", "SUCCESS")
 
 
@@ -413,6 +420,19 @@ def extract_log(
     # Avoid matching random "exit code" mentions in logs (e.g., hugepages service)
     if match := re.search(r"Process completed with exit code (\d+)", full_text):
         result.exit_code = int(match.group(1))
+
+    # Completion marker: the caller's wrapper appends it as the log's final
+    # line; absence means the shell was hard-killed (GitHub timeout-minutes),
+    # which leaves no trace in the tee'd log itself.
+    marker_pattern = (test_patterns or {}).get("log_complete_marker")
+    if marker_pattern:
+        if match := re.search(marker_pattern, full_text, re.MULTILINE):
+            result.log_complete = True
+            # group 1 (optional) = wrapped command's exit code
+            if match.groups() and match.group(1) is not None and match.group(1).isdigit():
+                result.exit_code = int(match.group(1))
+        else:
+            result.log_complete = False
 
     # Use provided test patterns or default to empty
     if test_patterns is None:
@@ -919,6 +939,17 @@ def format_extracted_log(extracted: ExtractedLog) -> str:
                 parts.append("\n[Framework Layer]")
                 for name, cfg in list(lc.framework.items())[:5]:
                     parts.append(f"  {name}: {cfg.value}")
+
+    if extracted.log_complete is False:
+        parts.append("\n" + "=" * 60)
+        parts.append("INCOMPLETE LOG")
+        parts.append("=" * 60)
+        parts.append(
+            "The log ended without its completion marker: the step was killed "
+            "by the GitHub timeout-minutes limit (test ran too long or hung). "
+            "Any errors below may be a separate, independent issue — do not "
+            "assume they caused the timeout."
+        )
 
     parts.append("\n" + "=" * 60)
     parts.append(f"ERROR SECTIONS ({len(extracted.error_sections)} found)")

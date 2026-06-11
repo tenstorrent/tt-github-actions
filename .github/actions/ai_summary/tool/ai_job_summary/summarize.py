@@ -386,6 +386,12 @@ def format_summary_markdown(
     else:
         md = f"### {_emoji(job_status.status_code)} {job_status.status_text}\n"
 
+    if extracted_log and extracted_log.log_complete is False:
+        if job_status.status_text == "TIMEOUT":
+            md += "⚠️ Log ended without its completion marker — step killed by GitHub `timeout-minutes` (test ran too long or hung).\n"
+        else:
+            md += "⚠️ Log is incomplete — step killed by GitHub `timeout-minutes` after the failure below; possibly an independent hang in a later test.\n"
+
     # Show problematic layer if different from error layer
     layer_info = f"| **Error Layer** | `{summary.layer}` |"
     if summary.problematic_layer and summary.problematic_layer != summary.layer:

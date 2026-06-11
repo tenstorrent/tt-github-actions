@@ -3,6 +3,14 @@
 # Consumers extend via analysis_config: in their workflow YAML, and pick
 # the LLM model via the per-project config file's `model:` field.
 
+# Regex for the completion marker the caller's wrapper appends as the final
+# log line, e.g. '[==log-finish-line==] exit_code=0'. Token presence is the
+# contract; the exit_code payload (group 1) is optional. Marker absent =>
+# shell was hard-killed (GitHub timeout-minutes) => TIMEOUT instead of false
+# SUCCESS. Callers whose wrapper does not write the marker must override
+# with null in their per-project config.
+log_complete_marker: '^\[==log-finish-line==\]\s*(?:exit_code=(\d+))?'
+
 # Regexes scanned over the full log to set has_crash / has_timeout. Project
 # configs extend each group additively. Case-sensitivity is per group (see
 # the tool): crash/timeout match case-insensitively; python/killed do not.

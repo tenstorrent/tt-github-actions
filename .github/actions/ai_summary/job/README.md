@@ -55,6 +55,17 @@ The action takes inline JSON — no separate config file. Required fields:
   `input_dirs`/`output_dir` pass through unchanged.
 - `input_dirs` — directories with `.log` files to analyze.
 - `output_dir` — where to write the per-job summary.
+- `log_complete_marker` (optional override) — regex for the completion
+  marker the caller's test wrapper appends as the final log line. Bundled
+  default matches `[==log-finish-line==]`, with an optional
+  `exit_code=N` payload (group 1). Marker absent means the step's shell was
+  hard-killed — the GitHub `timeout-minutes` kill, invisible in the log
+  itself — so a clean-looking log classifies as TIMEOUT instead of a false
+  SUCCESS. When the log already shows a crash/failure, that status wins and
+  the truncation is reported as a possibly independent issue
+  (`_job.log_complete: false` in the JSON). Callers whose wrapper does not
+  write the marker must pass `"log_complete_marker": null`, otherwise every
+  passing job misclassifies as TIMEOUT.
 
 Categories, layers, and analysis patterns come from the bundled
 `analysis.yaml` shipped with the tool.

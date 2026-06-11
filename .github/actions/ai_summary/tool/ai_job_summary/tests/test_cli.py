@@ -120,14 +120,14 @@ class TestJobIdFromUrl:
 
 class TestResolveLogDirs:
     def test_all_present(self, tmp_path):
-        _write_log(tmp_path / "run_logs", "run.log", "some log content\n")
+        _write_log(tmp_path / "run_logs", "run.log", "some log content\n[==log-finish-line==] exit_code=0\n")
         _write_log(tmp_path / "docker_server", "server.log", "server log\n")
         present, missing = _resolve_log_dirs(["run_logs", "docker_server"], tmp_path)
         assert len(present) == 2
         assert missing == []
 
     def test_one_missing(self, tmp_path):
-        _write_log(tmp_path / "run_logs", "run.log", "some log content\n")
+        _write_log(tmp_path / "run_logs", "run.log", "some log content\n[==log-finish-line==] exit_code=0\n")
         present, missing = _resolve_log_dirs(["run_logs", "docker_server"], tmp_path)
         assert len(present) == 1
         assert missing == ["docker_server"]
@@ -145,7 +145,7 @@ class TestResolveLogDirs:
 
     def test_absolute_log_dirs_ignore_base(self, tmp_path):
         # Pathlib: Path(base) / Path(absolute) returns the absolute.
-        _write_log(tmp_path / "logs", "run.log", "ok\n")
+        _write_log(tmp_path / "logs", "run.log", "ok\n[==log-finish-line==] exit_code=0\n")
         present, missing = _resolve_log_dirs([str(tmp_path / "logs")], Path("/nonexistent"))
         assert len(present) == 1
         assert missing == []
@@ -215,7 +215,7 @@ class TestWorkspace:
     """workspace field anchors relative input_dirs and output_dir."""
 
     def test_relative_input_dirs_resolve_against_workspace(self, tmp_path):
-        _write_log(tmp_path / "logs", "run.log", "INFO: ok\n")
+        _write_log(tmp_path / "logs", "run.log", "INFO: ok\n[==log-finish-line==] exit_code=0\n")
         config = json.dumps(
             {
                 "model": "test",
@@ -228,7 +228,7 @@ class TestWorkspace:
         assert any(tmp_path.glob("ai_job_summary*.md"))
 
     def test_relative_output_dir_resolves_against_workspace(self, tmp_path):
-        _write_log(tmp_path / "logs", "run.log", "INFO: ok\n")
+        _write_log(tmp_path / "logs", "run.log", "INFO: ok\n[==log-finish-line==] exit_code=0\n")
         config = json.dumps(
             {
                 "model": "test",
@@ -245,7 +245,7 @@ class TestWorkspace:
         # This is the only way to express the in-container workspace path
         # for container jobs (the ${{ github.workspace }} expression
         # always resolves to the host path).
-        _write_log(tmp_path / "logs", "run.log", "INFO: ok\n")
+        _write_log(tmp_path / "logs", "run.log", "INFO: ok\n[==log-finish-line==] exit_code=0\n")
         monkeypatch.setenv("GITHUB_WORKSPACE", str(tmp_path))
         config = json.dumps(
             {
@@ -266,7 +266,7 @@ class TestDualOutput:
     """Tool always writes both .md and .json."""
 
     def test_writes_both_files(self, tmp_path):
-        _write_log(tmp_path / "run_logs", "run.log", "INFO: all good\n")
+        _write_log(tmp_path / "run_logs", "run.log", "INFO: all good\n[==log-finish-line==] exit_code=0\n")
         _write_log(tmp_path / "docker_server", "server.log", "INFO: server ready\n")
         config = _config_json(tmp_path, ["run_logs", "docker_server"])
         _run_cli(["--config", config])
@@ -274,7 +274,7 @@ class TestDualOutput:
         assert any(tmp_path.glob("*.json"))
 
     def test_json_has_job_block(self, tmp_path):
-        _write_log(tmp_path / "run_logs", "run.log", "INFO: all good\n")
+        _write_log(tmp_path / "run_logs", "run.log", "INFO: all good\n[==log-finish-line==] exit_code=0\n")
         _write_log(tmp_path / "docker_server", "server.log", "INFO: server ready\n")
         config = _config_json(tmp_path, ["run_logs", "docker_server"])
         _run_cli(["--config", config])
@@ -283,7 +283,7 @@ class TestDualOutput:
         assert "status" in data["_job"]
 
     def test_filename_uses_job_id_from_url(self, tmp_path):
-        _write_log(tmp_path / "run_logs", "run.log", "INFO: all good\n")
+        _write_log(tmp_path / "run_logs", "run.log", "INFO: all good\n[==log-finish-line==] exit_code=0\n")
         _write_log(tmp_path / "docker_server", "server.log", "INFO: server ready\n")
         config = _config_json(tmp_path, ["run_logs", "docker_server"])
         _run_cli(["--config", config, "--job-url", "https://github.com/org/repo/actions/runs/1/job/99999"])
@@ -292,7 +292,7 @@ class TestDualOutput:
 
     def test_fallback_filename_without_job_url(self, tmp_path):
         """When no --job-url, files named ai_job_summary.md/.json (no ID suffix)."""
-        _write_log(tmp_path / "run_logs", "run.log", "INFO: all good\n")
+        _write_log(tmp_path / "run_logs", "run.log", "INFO: all good\n[==log-finish-line==] exit_code=0\n")
         _write_log(tmp_path / "docker_server", "server.log", "INFO: server ready\n")
         config = _config_json(tmp_path, ["run_logs", "docker_server"])
         _run_cli(["--config", config])
@@ -517,6 +517,7 @@ class TestSuccess:
             2026-03-15 09:00:01,000 - server.py:50 - INFO: Server started on port 8000
             2026-03-15 09:01:30,500 - run_workflows.py:101 - INFO: workflow: benchmarks completed with return code: 0
             2026-03-15 09:02:46,000 - run.py:550 - INFO: All workflows completed successfully
+            [==log-finish-line==] exit_code=0
         """
             ),
         )
@@ -540,6 +541,49 @@ class TestSuccess:
         _run_cli(["--config", config, "--job-name", "Llama-3.1-8B (n150)"])
         data = json.loads(_read_summary(success_dir, ".json"))
         assert data["_job"]["name"] == "Llama-3.1-8B (n150)"
+
+
+class TestTimeoutMarkerAbsent:
+    """Clean log without the completion marker → GitHub timeout-minutes kill."""
+
+    def test_clean_truncated_log_is_timeout_without_llm(self, tmp_path):
+        _write_log(tmp_path / "logs", "run.log", "INFO: running test_a\nINFO: running test_b\n")
+        config = _config_json(tmp_path, ["logs"])
+        with patch("ai_job_summary.cli.get_llm_client") as mock_llm:
+            _run_cli(["--config", config])
+            mock_llm.assert_not_called()
+        data = json.loads(_read_summary(tmp_path, ".json"))
+        assert data["_job"]["status"] == "TIMEOUT"
+        assert data["_job"]["log_complete"] is False
+
+    def test_marker_present_clean_log_is_success(self, tmp_path):
+        _write_log(tmp_path / "logs", "run.log", "INFO: ok\n[==log-finish-line==] exit_code=0\n")
+        config = _config_json(tmp_path, ["logs"])
+        with patch("ai_job_summary.cli.get_llm_client") as mock_llm:
+            _run_cli(["--config", config])
+            mock_llm.assert_not_called()
+        data = json.loads(_read_summary(tmp_path, ".json"))
+        assert data["_job"]["status"] == "SUCCESS"
+
+    def test_missing_dir_wins_over_absent_marker(self, tmp_path):
+        # present log markerless + a dir missing → INFRA partial_logs, not TIMEOUT
+        _write_log(tmp_path / "run_logs", "run.log", "INFO: some log content\n")
+        config = _config_json(tmp_path, ["run_logs", "docker_server"])
+        with patch("ai_job_summary.cli.get_llm_client") as mock_llm:
+            _run_cli(["--config", config])
+            mock_llm.assert_not_called()
+        data = json.loads(_read_summary(tmp_path, ".json"))
+        assert data["_job"]["status"] == "INFRA FAILURE"
+        assert data["category"] == "infra:partial_logs"
+
+    def test_marker_disabled_keeps_clean_log_success(self, tmp_path):
+        _write_log(tmp_path / "logs", "run.log", "INFO: ok\n")
+        config = _config_json(tmp_path, ["logs"], log_complete_marker=None)
+        with patch("ai_job_summary.cli.get_llm_client") as mock_llm:
+            _run_cli(["--config", config])
+            mock_llm.assert_not_called()
+        data = json.loads(_read_summary(tmp_path, ".json"))
+        assert data["_job"]["status"] == "SUCCESS"
 
 
 # ── Crash: LLM overrides extraction (using real fixture + mock response) ──────
