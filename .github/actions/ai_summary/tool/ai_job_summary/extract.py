@@ -18,6 +18,7 @@ import sys
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
 
 from .extract_configs import (
@@ -35,6 +36,14 @@ MAX_LINE_LENGTH = 1000
 # - ISO format: 2026-02-10T13:51:41 (GitHub Actions)
 # - Python logging: 2026-02-10 13:51:41,305
 TIMESTAMP_PATTERN = re.compile(r"(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2})")
+
+
+@lru_cache(maxsize=1)
+def _default_detection_patterns() -> dict:
+    """Bundled detection_patterns, for direct extract_log() calls without config."""
+    from .config import load_config
+
+    return load_config().get("detection_patterns", {})
 
 
 def parse_timestamp(line: str) -> datetime | None:
@@ -345,6 +354,7 @@ def extract_log(
     max_chars: int = 200_000,  # ~50k tokens, well under 64k limit
     test_patterns: dict | None = None,
     config_patterns: dict | None = None,
+    detection_patterns: dict | None = None,
 ) -> ExtractedLog:
     """
     Extract important parts from a CI log.
@@ -388,43 +398,16 @@ def extract_log(
     # Scan full log for metadata
     full_text = "".join(lines)
 
-    # Detect infrastructure crashes - these are ALWAYS the root cause, not test failures.
-    # TT_THROW/TT_FATAL means tt-metal crashed, which cascades to vLLM timeout and test failures.
-    # Python exceptions anchored to line start are also crashes (process died on uncaught exception).
-    tt_crash = re.search(
-        r"TT_FATAL|TT_THROW|\bpanic\b|Segmentation fault|SIGSEGV",
-        full_text,
-        re.IGNORECASE,
-    )
-    # The (?<![\w.]) lookbehind allows real log prefixes ("(APIServer pid=N) ",
-    # "[core.py:1104] ") while excluding module-qualified or concatenated
-    # names (vllm.RuntimeError:, MyAttributeError:). AssertionError /
-    # ValueError / TypeError / IndexError are intentionally absent — they
-    # appear routinely in pytest E-lines from healthy test failures.
-    # Also catches pytest collection failures (`ERROR collecting <file>`) —
-    # module-level import-time exceptions that don't surface as one of the
-    # named Python errors above (e.g. C++ bindings raising IndexError before
-    # parametrize evaluates).
-    py_crash = re.search(
-        r"(?<![\w.])(?:AttributeError|KeyError|RuntimeError|ModuleNotFoundError|ImportError):"
-        r"|\bERROR\s+collecting\b",
-        full_text,
-    )
-    # Anchor on the bash signal-death format (`<PID> Killed`) to avoid matching
-    # the English word "killed" in unrelated log text.
-    killed = re.search(r"\b\d+\s+Killed\b|\bSIGKILL\b|\bSIGTERM\b", full_text)
-    result.has_crash = bool(tt_crash or py_crash or killed)
+    # Detection patterns (analysis.yaml detection_patterns). crash/timeout
+    # match case-insensitively; python/killed are case-sensitive (see yaml).
+    det = detection_patterns if detection_patterns is not None else _default_detection_patterns()
 
-    # Detect timeout - be specific to avoid false positives from config values
-    # Only match actual timeout EVENTS (past tense "timed out"), not config values ("timeout: 60s")
-    timeout_patterns = [
-        r"##\[error\].*timed\s*out",  # GitHub Actions error with timeout
-        r"(?:job|test|request|process|operation)\s+timed\s*out",  # "X timed out"
-        r"timed\s*out\s+(?:after|waiting)",  # "timed out after/waiting"
-        r"exceeded\s+time\s+limit",  # Time limit exceeded
-        r"cancelled\s+due\s+to\s+timeout",  # Cancelled due to timeout
-    ]
-    result.has_timeout = bool(re.search("|".join(timeout_patterns), full_text, re.IGNORECASE))
+    def _any(groups: list[str], flags=0) -> bool:
+        pats = [p for g in groups for p in det.get(g, [])]
+        return bool(pats and re.search("|".join(pats), full_text, flags))
+
+    result.has_crash = _any(["crash"], re.IGNORECASE) or _any(["crash_python", "crash_killed"])
+    result.has_timeout = _any(["timeout"], re.IGNORECASE)
 
     # Extract exit code - ONLY from the final GitHub Actions status line
     # Avoid matching random "exit code" mentions in logs (e.g., hugepages service)

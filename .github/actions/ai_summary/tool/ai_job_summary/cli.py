@@ -232,7 +232,11 @@ def main():
         # Extract
         t0 = time.time()
         print(f"Extracting from {[str(d) for d in present_dirs]}...", file=sys.stderr)
-        extracted = extract_log(present_dirs, test_patterns=test_patterns)
+        extracted = extract_log(
+            present_dirs,
+            test_patterns=test_patterns,
+            detection_patterns=config.get("detection_patterns"),
+        )
         print(
             f"Extracted {extracted.extracted_lines}/{extracted.total_lines} lines "
             f"({len(extracted.error_sections)} error sections) in {(time.time()-t0)*1000:.0f}ms",
