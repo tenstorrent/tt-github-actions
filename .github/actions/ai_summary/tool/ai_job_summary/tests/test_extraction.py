@@ -470,11 +470,13 @@ class TestMergeLogFilesMultiDir:
         assert "logs/" not in text
 
 
-# ── has_crash — Python exception detection ────────────────────────────────────
+# ── has_crash — crash-signal detection ────────────────────────────────────────
 
 
-class TestHasCrashPythonExceptions:
-    """has_crash should fire on anchored Python exception lines."""
+class TestHasCrash:
+    """has_crash should fire on anchored crash signals (Python exceptions,
+    pytest collection errors, and signal-killed processes) but not on prose
+    or log-level mentions of the same words."""
 
     def _run(self, content: str, tmp_path) -> bool:
         log = tmp_path / "server.log"
@@ -529,6 +531,34 @@ class TestHasCrashPythonExceptions:
     def test_does_not_match_type_error(self, tmp_path):
         # TypeError is intentionally excluded — same rationale as ValueError.
         assert not self._run("TypeError: expected str, got None\n", tmp_path)
+
+    # ── pytest collection failure ──
+    def test_pytest_collection_error(self, tmp_path):
+        # Module-level import-time failure (e.g. a C++ binding raising before
+        # parametrize evaluates) surfaces only as "ERROR collecting <file>".
+        assert self._run("ERROR collecting models/foo/test_bar.py\n", tmp_path)
+
+    # ── process killed by signal (OOM / step timeout) ──
+    def test_killed_bash_signal_line(self, tmp_path):
+        # bash reaper format: "<PID> Killed <cmd>" — no traceback, no "timed
+        # out", no in-log exit code.
+        assert self._run("/__w/_temp/x.sh: line 12:  822 Killed   pytest models/foo_test.py\n", tmp_path)
+
+    def test_sigkill_keyword(self, tmp_path):
+        assert self._run("Worker terminated by signal SIGKILL\n", tmp_path)
+
+    def test_sigterm_keyword(self, tmp_path):
+        assert self._run("Process received SIGTERM, shutting down\n", tmp_path)
+
+    def test_does_not_match_prose_killed(self, tmp_path):
+        # The kill match is anchored to the bash "<PID> Killed" shape, so the
+        # English word "killed" in prose must not flip has_crash.
+        assert not self._run("INFO the stale connection was killed and reopened\n", tmp_path)
+
+    def test_does_not_match_killed_with_trailing_count(self, tmp_path):
+        # Digits must PRECEDE "Killed" (the PID); "killed 3 ..." is prose, not
+        # the reaper line — proves the shape anchor, not mere digit-absence.
+        assert not self._run("INFO killed 3 stale connections\n", tmp_path)
 
     def test_does_not_match_index_error(self, tmp_path):
         # IndexError is intentionally excluded — it's routine in iteration
@@ -743,3 +773,21 @@ class TestCalculateTimeAfterError:
         )
         calculate_time_after_error("RuntimeError: dispatch hung", e)
         assert e.time_after_crash_seconds == 240  # 4 minutes
+
+
+# ── killed process — kill line must reach the LLM's error sections ────────────
+
+
+class TestKilledProcessErrorSection:
+    """Beyond setting has_crash, the kill line itself must be extracted into
+    error_sections (via HIGH_PRIORITY_PATTERNS) so the LLM sees *why* the job
+    crashed, not just that it did."""
+
+    def test_killed_line_in_error_sections(self, tmp_path):
+        log = tmp_path / "killed.log"
+        log.write_text(
+            "2026-04-01 10:00:00 INFO running pytest\n"
+            "/__w/_temp/abc.sh: line 12:   822 Killed   pytest models/foo_test.py\n",
+            encoding="utf-8",
+        )
+        assert "killed" in _errors_text(extract_log(log))  # _errors_text lowercases

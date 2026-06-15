@@ -287,7 +287,14 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 metadata,
                 model_spec_data,
             )
-            return benchmark_runs + benchmark_summary_runs + eval_runs
+            acceptance_runs = self._process_acceptance_criteria(
+                pipeline,
+                job,
+                report_data,
+                metadata,
+                model_spec_data,
+            )
+            return benchmark_runs + benchmark_summary_runs + eval_runs + acceptance_runs
         except ValidationError as e:
             failure_happened()
             logger.error(f"Validation error: {e}")
@@ -316,6 +323,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 "benchmark",
                 benchmark,
                 [
+                    # LLM
                     "mean_ttft_ms",
                     "std_ttft_ms",
                     "mean_tpot_ms",
@@ -329,7 +337,22 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "num_requests",
                     "total_input_tokens",
                     "total_output_tokens",
+                    "total_token_throughput",
                     "num_prompts",
+                    # Image / video / diffusion
+                    "mean_latency_ms",
+                    "p50_latency_ms",
+                    "p90_latency_ms",
+                    "p95_latency_ms",
+                    "throughput_rps",
+                    "inference_steps_per_second",
+                    "num_inference_steps",
+                    "performance_check",
+                    # Audio (Whisper / speecht5)
+                    "rtr",
+                    "wer",
+                    # Embedding
+                    "embedding_dimension",
                 ],
             )
 
@@ -369,10 +392,23 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 "benchmark_summary",
                 benchmark,
                 [
+                    # LLM
                     "ttft",
                     "tput_user",
                     "tput",
                     "avg_gen_time",
+                    "num_requests",
+                    # Image / video
+                    "latency",
+                    "inference_steps_per_second",
+                    "num_inference_steps",
+                    # Embedding
+                    "e2el_ms",
+                    "tput_prefill",
+                    # Audio
+                    "latency_p90",
+                    "latency_p95",
+                    "rtr",
                 ],
             )
 
@@ -383,16 +419,32 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     f"benchmark_summary_{target_name}",
                     target_data,
                     [
+                        # LLM
                         "ttft",
                         "ttft_ratio",
                         "ttft_check",
                         "tput_user",
                         "tput_user_ratio",
                         "tput_user_check",
+                        "tput",
+                        "tput_ratio",
                         "tput_check",
                         "avg_gen_time",
                         "avg_gen_time_ratio",
                         "avg_gen_time_check",
+                        # Media / image / video / whisper
+                        "latency",
+                        "latency_ratio",
+                        "latency_check",
+                        # Embedding
+                        "e2el_ms",
+                        "e2el_ms_ratio",
+                        "e2el_ms_check",
+                        "tput_prefill",
+                        "tput_prefill_ratio",
+                        "tput_prefill_check",
+                        # Audio (speecht5_tts)
+                        "rtr_check",
                     ],
                 )
                 measurements.extend(target_measurements)
@@ -422,6 +474,55 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             )
         return results
 
+    def _process_acceptance_criteria(self, pipeline, job, report_data, metadata=None, model_spec_data=None):
+        """
+        Processes acceptance criteria and creates CompleteBenchmarkRun object for it.
+        """
+        _ACCEPTANCE_CRITERIA_FIELDS = (
+            "acceptance_blockers",
+            "acceptance_criteria_metadata",
+            "acceptance_summary_markdown",
+        )
+
+        acceptance_pass = report_data.get("acceptance_criteria")
+        encoded_measurements: Dict[str, float] = {}
+
+        if isinstance(acceptance_pass, bool):
+            encoded_measurements["passed"] = 1.0 if acceptance_pass else 0.0
+
+        if not encoded_measurements:
+            return []
+
+        measurements = self._create_measurements(
+            job,
+            "acceptance_criteria",
+            encoded_measurements,
+            list(encoded_measurements.keys()),
+        )
+        if not measurements:
+            return []
+
+        config_params = dict(model_spec_data) if model_spec_data else {}
+        for field in _ACCEPTANCE_CRITERIA_FIELDS:
+            value = report_data.get(field)
+            if value is not None:
+                config_params[field] = value
+
+        return [
+            self._create_complete_benchmark_run(
+                pipeline=pipeline,
+                job=job,
+                data=report_data,
+                run_type="acceptance_criteria",
+                measurements=measurements,
+                device_info=metadata.get("device"),
+                model_name=metadata.get("model_name"),
+                model_type=(model_spec_data.get("model_type") if model_spec_data else None),
+                config_params=config_params or None,
+                docker_image=(model_spec_data or {}).get("docker_image") or job.docker_image,
+            )
+        ]
+
     def _process_evals(self, pipeline, job, evals, metadata=None, model_spec_data=None):
         """
         Processes evaluation entries and creates CompleteBenchmarkRun objects for each entry.
@@ -439,14 +540,21 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 "eval",
                 eval_entry,
                 [
+                    # General eval scores
                     "score",
                     "published_score",
                     "gpu_reference_score",
                     "accuracy_check",
                     "ratio_to_reference",
                     "ratio_to_published",
+                    "performance_check",
+                    "tolerance",
+                    "num_inference_steps",
+                    "num_prompts",
+                    # Image quality (existing)
                     "average_clip",
                     "deviation_clip",
+                    "deviation_clip_score",
                     "fid_score",
                     "clip_accuracy_check_valid",
                     "fid_accuracy_check_valid",
@@ -454,6 +562,33 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "fid_accuracy_check_approx",
                     "delta_clip",
                     "delta_fid",
+                    # Image / video quality (new)
+                    "max_clip",
+                    "min_clip",
+                    "clip_standard_deviation",
+                    "fvd",
+                    "fvmd",
+                    # Audio
+                    "latency_p50",
+                    "latency_p90",
+                    "latency_p95",
+                    "rtr",
+                    "throughput_rps",
+                    "tput_user",
+                    # Classification
+                    "correct",
+                    "total",
+                    "mismatches_count",
+                    # Embedding (sentence similarity)
+                    "cosine_pearson",
+                    "cosine_spearman",
+                    "euclidean_pearson",
+                    "euclidean_spearman",
+                    "manhattan_pearson",
+                    "manhattan_spearman",
+                    "pearson",
+                    "spearman",
+                    "main_score",
                 ],
             )
             results.append(

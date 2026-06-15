@@ -201,6 +201,9 @@ HIGH_PRIORITY_PATTERNS = [
     r"Segmentation fault",
     r"SIGSEGV",
     r"SIGABRT",
+    r"SIGKILL",
+    r"SIGTERM",
+    r"\b\d+\s+Killed\b",  # bash signal-death: "<PID> Killed <cmd>" (OOM/timeout)
 ]
 
 # Error patterns - be specific to avoid false positives
@@ -398,11 +401,19 @@ def extract_log(
     # names (vllm.RuntimeError:, MyAttributeError:). AssertionError /
     # ValueError / TypeError / IndexError are intentionally absent — they
     # appear routinely in pytest E-lines from healthy test failures.
+    # Also catches pytest collection failures (`ERROR collecting <file>`) —
+    # module-level import-time exceptions that don't surface as one of the
+    # named Python errors above (e.g. C++ bindings raising IndexError before
+    # parametrize evaluates).
     py_crash = re.search(
-        r"(?<![\w.])(?:AttributeError|KeyError|RuntimeError|ModuleNotFoundError|ImportError):",
+        r"(?<![\w.])(?:AttributeError|KeyError|RuntimeError|ModuleNotFoundError|ImportError):"
+        r"|\bERROR\s+collecting\b",
         full_text,
     )
-    result.has_crash = bool(tt_crash or py_crash)
+    # Anchor on the bash signal-death format (`<PID> Killed`) to avoid matching
+    # the English word "killed" in unrelated log text.
+    killed = re.search(r"\b\d+\s+Killed\b|\bSIGKILL\b|\bSIGTERM\b", full_text)
+    result.has_crash = bool(tt_crash or py_crash or killed)
 
     # Detect timeout - be specific to avoid false positives from config values
     # Only match actual timeout EVENTS (past tense "timed out"), not config values ("timeout: 60s")
