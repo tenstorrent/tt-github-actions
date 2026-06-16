@@ -10,6 +10,7 @@ asserts the most meaningful extraction signals for each failure category.
 
 import pytest
 
+from ai_job_summary.config import load_config
 from ai_job_summary.extract import ExtractedLog, extract_log, merge_log_files
 
 from .conftest import FIXTURE_LOG_DIR as FIXTURE_DIR
@@ -791,3 +792,33 @@ class TestKilledProcessErrorSection:
             encoding="utf-8",
         )
         assert "killed" in _errors_text(extract_log(log))  # _errors_text lowercases
+
+
+# ── failed-test capture must not jump newlines onto an adjacent test ──────────
+
+
+class TestFailedTestAdjacentSkip:
+    """A bare ``FAILED`` status word (pytest -vvv) sits on its own line, with the
+    next test's result line right after it. The failed-test pattern must not bind
+    ``FAILED`` across the newline to that neighbour — here a SKIPPED test that
+    would otherwise be reported (and counted) as a failure.
+
+    Runs against the real bundled failed_test_patterns (load_config), since the
+    extractor only populates failed_tests when given the project's patterns."""
+
+    @pytest.fixture(scope="class")
+    def extracted(self):
+        config = load_config()
+        test_patterns = {
+            "test_result_patterns": config.get("test_patterns", []),
+            "failed_test_patterns": config.get("failed_test_patterns", []),
+        }
+        return extract_log(FIXTURE_DIR / "pytest_failed_adjacent_skip.txt", test_patterns=test_patterns)
+
+    def test_only_the_real_failure_captured(self, extracted):
+        assert extracted.failed_tests == [
+            "models/demos/deepseek_v3_d_p/tests/perf/test_mla_perf.py::test_deepseek_v3_mla_perf_loudbox"
+        ]
+
+    def test_skipped_neighbour_not_captured(self, extracted):
+        assert not any("galaxy" in t for t in extracted.failed_tests)

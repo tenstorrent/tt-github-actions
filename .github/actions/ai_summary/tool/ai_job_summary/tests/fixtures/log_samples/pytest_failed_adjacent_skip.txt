@@ -1,0 +1,22 @@
+============================= test session starts ==============================
+models/demos/deepseek_v3_d_p/tests/perf/test_mla_perf.py::test_deepseek_v3_mla_perf_loudbox
+ERROR    | models.perf.device_perf_utils:check_device_perf:262 - AVG DEVICE KERNEL DURATION [ns] 8257406.25 is outside of expected range (8684162.65, 9221327.35)
+##[error]test_deepseek_v3_mla_perf_loudbox
+
+AssertionError: Some performance metrics are outside of expected range, see above for details.
+FAILED
+models/demos/deepseek_v3_d_p/tests/perf/test_mla_perf.py::test_deepseek_v3_mla_perf_galaxy SKIPPED
+
+=================================== FAILURES ===================================
+______________________ test_deepseek_v3_mla_perf_loudbox _______________________
+models/demos/deepseek_v3_d_p/tests/perf/test_mla_perf.py:25: in test_deepseek_v3_mla_perf_loudbox
+    run_mla_perf_with_approximation(
+E   AssertionError: Some performance metrics are outside of expected range, see above for details.
+============================== slowest durations ===============================
+50.77s call     models/demos/deepseek_v3_d_p/tests/perf/test_mla_perf.py::test_deepseek_v3_mla_perf_loudbox
+0.19s setup    models/demos/deepseek_v3_d_p/tests/perf/test_mla_perf.py::test_deepseek_v3_mla_perf_galaxy
+0.00s call     models/demos/deepseek_v3_d_p/tests/perf/test_mla_perf.py::test_deepseek_v3_mla_perf_galaxy
+=========================== short test summary info ============================
+SKIPPED [1] models/demos/deepseek_v3_d_p/tests/perf/test_mla_perf.py:38: This test requires 8x4 mesh - galaxy. (set MESH_DEVICE=TG)
+FAILED models/demos/deepseek_v3_d_p/tests/perf/test_mla_perf.py::test_deepseek_v3_mla_perf_loudbox - AssertionError: Some performance metrics are outside of expected range, see above for details.
+================== 1 failed, 1 skipped, 4 warnings in 51.30s ===================

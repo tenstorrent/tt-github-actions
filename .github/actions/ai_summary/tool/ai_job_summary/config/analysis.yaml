@@ -309,7 +309,7 @@ test_patterns:
     type: passed_failed
 
 failed_test_patterns:
-  - pattern: 'FAILED\s+(\S+::\S+)'
+  - pattern: 'FAILED[ \t]+(\S+::\S+)'
   - pattern: 'workflow:\s*(\w+),?\s*failed'
     prefix: "workflow:"
   - pattern: 'test_(\w+)\[.*\].*ConnectionError'
