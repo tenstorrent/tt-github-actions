@@ -43,5 +43,5 @@ runs:
         rc=${PIPESTATUS[0]}
         rm -f "$script"
 
-        printf '[==log-finish-line==] exit_code=%s\n' "$rc" >> "$RUN_WITH_LOG_FILE"
+        printf '[==tt-log-finish-line==] exit_code=%s\n' "$rc" >> "$RUN_WITH_LOG_FILE"
         exit $rc

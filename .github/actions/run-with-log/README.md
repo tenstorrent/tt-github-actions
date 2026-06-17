@@ -4,7 +4,7 @@ Run a bash script like a normal `run:` step, but capture its combined output to
 a `.log` file and append a completion marker as the final line:
 
 ```
-[==log-finish-line==] exit_code=<N>
+[==tt-log-finish-line==] exit_code=<N>
 ```
 
 The marker is a generic end-of-run sentinel. Its **absence** means the shell was
