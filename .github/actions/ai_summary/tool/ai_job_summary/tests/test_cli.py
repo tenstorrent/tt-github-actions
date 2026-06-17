@@ -547,7 +547,11 @@ class TestTimeoutMarkerAbsent:
     """Clean log without the completion marker → GitHub timeout-minutes kill."""
 
     def test_clean_truncated_log_is_timeout_without_llm(self, tmp_path):
-        _write_log(tmp_path / "logs", "run.log", "INFO: running test_a\nINFO: running test_b\n")
+        # run-with-log wrote its start sentinel, then the step was killed before
+        # the finish sentinel → tracked but truncated → TIMEOUT.
+        _write_log(
+            tmp_path / "logs", "run.log", "[==tt-log-start-line==]\nINFO: running test_a\nINFO: running test_b\n"
+        )
         config = _config_json(tmp_path, ["logs"])
         with patch("ai_job_summary.cli.get_llm_client") as mock_llm:
             _run_cli(["--config", config])
@@ -557,7 +561,9 @@ class TestTimeoutMarkerAbsent:
         assert data["_job"]["log_complete"] is False
 
     def test_marker_present_clean_log_is_success(self, tmp_path):
-        _write_log(tmp_path / "logs", "run.log", "INFO: ok\n[==tt-log-finish-line==] exit_code=0\n")
+        _write_log(
+            tmp_path / "logs", "run.log", "[==tt-log-start-line==]\nINFO: ok\n[==tt-log-finish-line==] exit_code=0\n"
+        )
         config = _config_json(tmp_path, ["logs"])
         with patch("ai_job_summary.cli.get_llm_client") as mock_llm:
             _run_cli(["--config", config])

@@ -89,8 +89,10 @@ class ExtractedLog:
     exit_code: int | None = None
     has_crash: bool = False  # TT_FATAL, panic, etc.
     has_timeout: bool = False
-    # None = marker not configured; False = marker absent (shell hard-killed)
+    # None = not run-with-log tracked; True = all tracked logs finished;
+    # False = a tracked log started but never finished (shell hard-killed)
     log_complete: bool | None = None
+    incomplete_logs: list[str] = field(default_factory=list)  # tracked logs missing their finish marker
     failed_tests: list[str] = field(default_factory=list)  # Test failures (features missing)
     failed_evals: list[str] = field(default_factory=list)  # Eval failures (accuracy below target)
 
@@ -354,6 +356,52 @@ def merge_log_files(log_dirs: Path | list[Path]) -> list[str]:
     return merged
 
 
+def _iter_log_texts(log_source: Path | list[Path]) -> list[tuple[str, str]]:
+    """(source_label, text) for each .log file in log_source (file, dir, or dirs)."""
+    out: list[tuple[str, str]] = []
+    entries = log_source if isinstance(log_source, list) else [log_source]
+    for entry in entries:
+        if entry.is_dir():
+            for f in sorted(entry.rglob("*.log")):
+                out.append((f.relative_to(entry).as_posix(), f.read_text(errors="replace")))
+        else:
+            out.append((entry.name, entry.read_text(errors="replace")))
+    return out
+
+
+def _evaluate_completion(
+    log_source: Path | list[Path], start_pattern: str, finish_pattern: str
+) -> tuple[bool | None, list[str], int | None]:
+    """Per-file completion verdict from run-with-log's start/finish sentinels.
+
+    A log carrying the start marker is run-with-log tracked and must also carry
+    the finish marker; missing it means the shell was hard-killed mid-run. Logs
+    without the start marker (e.g. a backgrounded server's tail) are not tracked.
+
+    Returns (complete, incomplete_sources, exit_code); complete is None when no
+    tracked log is present. exit_code surfaces a non-zero finish over a clean one.
+    """
+    start_re = re.compile(start_pattern, re.MULTILINE)
+    finish_re = re.compile(finish_pattern, re.MULTILINE)
+    tracked = 0
+    incomplete: list[str] = []
+    exit_code: int | None = None
+    for source, text in _iter_log_texts(log_source):
+        if not start_re.search(text):
+            continue
+        tracked += 1
+        if m := finish_re.search(text):
+            if m.groups() and m.group(1) is not None and m.group(1).isdigit():
+                ec = int(m.group(1))
+                if exit_code is None or (exit_code == 0 and ec != 0):
+                    exit_code = ec
+        else:
+            incomplete.append(source)
+    if tracked == 0:
+        return None, [], exit_code
+    return len(incomplete) == 0, incomplete, exit_code
+
+
 def extract_log(
     log_source: Path | list[Path],
     context_lines: int = 5,
@@ -421,18 +469,19 @@ def extract_log(
     if match := re.search(r"Process completed with exit code (\d+)", full_text):
         result.exit_code = int(match.group(1))
 
-    # Completion marker: the caller's wrapper appends it as the log's final
-    # line; absence means the shell was hard-killed (GitHub timeout-minutes),
-    # which leaves no trace in the tee'd log itself.
-    marker_pattern = (test_patterns or {}).get("log_complete_marker")
-    if marker_pattern:
-        if match := re.search(marker_pattern, full_text, re.MULTILINE):
-            result.log_complete = True
-            # group 1 (optional) = wrapped command's exit code
-            if match.groups() and match.group(1) is not None and match.group(1).isdigit():
-                result.exit_code = int(match.group(1))
-        else:
-            result.log_complete = False
+    # Completion markers: run-with-log writes a start sentinel as a log's first
+    # line and a finish sentinel (carrying the exit code) as its last. Evaluated
+    # per file — a log that started but never finished was hard-killed (GitHub
+    # timeout-minutes). Logs without the start sentinel are not run-with-log
+    # tracked (e.g. a backgrounded server's continuous tail) and are ignored.
+    start_pattern = (test_patterns or {}).get("log_start_marker")
+    finish_pattern = (test_patterns or {}).get("log_complete_marker")
+    if start_pattern and finish_pattern:
+        complete, incomplete, marker_exit = _evaluate_completion(log_source, start_pattern, finish_pattern)
+        result.log_complete = complete
+        result.incomplete_logs = incomplete
+        if marker_exit is not None:
+            result.exit_code = marker_exit
 
     # Use provided test patterns or default to empty
     if test_patterns is None:

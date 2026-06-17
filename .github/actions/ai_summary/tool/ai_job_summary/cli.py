@@ -177,6 +177,7 @@ def main():
     test_patterns = {
         "test_result_patterns": config.get("test_patterns", []),
         "failed_test_patterns": config.get("failed_test_patterns", []),
+        "log_start_marker": config.get("log_start_marker"),
         "log_complete_marker": config.get("log_complete_marker"),
     }
 

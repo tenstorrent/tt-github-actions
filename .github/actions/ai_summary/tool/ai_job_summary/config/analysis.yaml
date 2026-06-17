@@ -3,12 +3,13 @@
 # Consumers extend via analysis_config: in their workflow YAML, and pick
 # the LLM model via the per-project config file's `model:` field.
 
-# Regex for the completion marker the caller's wrapper appends as the final
-# log line, e.g. '[==tt-log-finish-line==] exit_code=0'. Token presence is the
-# contract; the exit_code payload (group 1) is optional. Marker absent =>
-# shell was hard-killed (GitHub timeout-minutes) => TIMEOUT instead of false
-# SUCCESS. Callers whose wrapper does not write the marker must override
-# with null in their per-project config.
+# Completion markers the run-with-log action writes around a wrapped step: a
+# start sentinel as the log's first line and a finish sentinel (optional
+# exit_code payload, group 1) as its last. Evaluated per file — a log with the
+# start but not the finish was hard-killed (GitHub timeout-minutes) => TIMEOUT
+# instead of false SUCCESS. Logs without the start sentinel are not tracked, so
+# workflows that don't use run-with-log are simply ignored, never false-flagged.
+log_start_marker: '^\[==tt-log-start-line==\]'
 log_complete_marker: '^\[==tt-log-finish-line==\]\s*(?:exit_code=(\d+))?'
 
 # Regexes scanned over the full log to set has_crash / has_timeout. Project

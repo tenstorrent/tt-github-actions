@@ -79,6 +79,7 @@ def load_config(project: dict | None = None) -> dict:
     config.setdefault("categories", {})
     config.setdefault("test_patterns", [])
     config.setdefault("failed_test_patterns", [])
+    config.setdefault("log_start_marker", None)
     config.setdefault("log_complete_marker", None)
     config.setdefault("detection_patterns", {})
     config.setdefault("repos", {"default_branches": ["main", "master", "dev"]})
