@@ -4,7 +4,7 @@
 """
 Tests for the log-completion marker (log_complete_marker config).
 
-The caller's test wrapper appends '[==log-finish-line==] exit_code=N' as the
+The caller's test wrapper appends '[==tt-log-finish-line==] exit_code=N' as the
 final log line. Marker absent => shell was hard-killed (GitHub timeout-minutes)
 => TIMEOUT instead of a false SUCCESS. A crash/failure already in the log wins
 over the marker verdict.
@@ -15,7 +15,7 @@ from ai_job_summary.extract import ExtractedLog, JobStatus, extract_log, get_job
 from ai_job_summary.summarize import FailureSummary, format_summary_markdown
 from ai_job_summary.context import CIContext
 
-MARKER_REGEX = r"^\[==log-finish-line==\]\s*(?:exit_code=(\d+))?"
+MARKER_REGEX = r"^\[==tt-log-finish-line==\]\s*(?:exit_code=(\d+))?"
 PATTERNS = {"log_complete_marker": MARKER_REGEX}
 
 CLEAN_LINES = [
@@ -28,8 +28,8 @@ CRASH_LINES = [
     "test_a PASSED",
     "TT_FATAL: device hung on op dispatch",
 ]
-FINISH_OK = "[==log-finish-line==] exit_code=0"
-FINISH_FAIL = "[==log-finish-line==] exit_code=2"
+FINISH_OK = "[==tt-log-finish-line==] exit_code=0"
+FINISH_FAIL = "[==tt-log-finish-line==] exit_code=2"
 
 
 def _extract(tmp_path, lines, test_patterns=PATTERNS):
@@ -60,7 +60,7 @@ class TestMarkerExtraction:
         assert e.log_complete is None
 
     def test_bare_token_without_payload_counts(self, tmp_path):
-        e = _extract(tmp_path, CLEAN_LINES + ["[==log-finish-line==]"])
+        e = _extract(tmp_path, CLEAN_LINES + ["[==tt-log-finish-line==]"])
         assert e.log_complete is True
         assert e.exit_code is None
 
@@ -72,7 +72,7 @@ class TestMarkerExtraction:
 
     def test_marker_must_anchor_line_start(self, tmp_path):
         # embedded in other output (e.g. echoed cmd) must not count
-        lines = CLEAN_LINES + ["echo [==log-finish-line==] exit_code=0"]
+        lines = CLEAN_LINES + ["echo [==tt-log-finish-line==] exit_code=0"]
         e = _extract(tmp_path, lines)
         assert e.log_complete is False
 
@@ -130,7 +130,7 @@ class TestReportNote:
 
 class TestConfig:
     def test_bundled_default_is_set(self):
-        assert "log-finish-line" in load_config()["log_complete_marker"]
+        assert "tt-log-finish-line" in load_config()["log_complete_marker"]
 
     def test_project_overlay_can_disable(self):
         cfg = load_config({"log_complete_marker": None})

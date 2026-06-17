@@ -57,7 +57,7 @@ The action takes inline JSON — no separate config file. Required fields:
 - `output_dir` — where to write the per-job summary.
 - `log_complete_marker` (optional override) — regex for the completion
   marker the caller's test wrapper appends as the final log line. Bundled
-  default matches `[==log-finish-line==]`, with an optional
+  default matches `[==tt-log-finish-line==]`, with an optional
   `exit_code=N` payload (group 1). Marker absent means the step's shell was
   hard-killed — the GitHub `timeout-minutes` kill, invisible in the log
   itself — so a clean-looking log classifies as TIMEOUT instead of a false
