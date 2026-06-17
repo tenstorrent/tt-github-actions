@@ -21,6 +21,17 @@ jobs:
         run: |
           tail -3 out/ok.log
           tail -1 out/ok.log | grep -qx '\[==log-finish-line==\] exit_code=0'
+      - name: Summarize (no LLM — clean log short-circuits)
+        uses: ./.github/actions/ai_summary/job
+        with:
+          config: '{"model":"none","workspace":"${{ github.workspace }}","input_dirs":["out"],"output_dir":"out/summaries"}'
+          api-key: ""
+          api-url: ""
+          job-name: smoke-success
+      - name: Assert classified SUCCESS
+        run: |
+          f=$(ls out/summaries/*.json); cat "${f%.json}.md"
+          python3 -c "import json; s=json.load(open('$f'))['_job']['status']; assert s=='SUCCESS', s"
 
   failure-case:
     runs-on: ubuntu-latest
@@ -62,3 +73,14 @@ jobs:
             echo "::error::marker present after timeout kill — bug"; exit 1
           fi
           echo "marker correctly absent (outcome=${{ steps.run.outcome }})"
+      - name: Summarize (no LLM — marker-absent short-circuits to TIMEOUT)
+        uses: ./.github/actions/ai_summary/job
+        with:
+          config: '{"model":"none","workspace":"${{ github.workspace }}","input_dirs":["out"],"output_dir":"out/summaries"}'
+          api-key: ""
+          api-url: ""
+          job-name: smoke-timeout
+      - name: Assert classified TIMEOUT
+        run: |
+          f=$(ls out/summaries/*.json); cat "${f%.json}.md"
+          python3 -c "import json; s=json.load(open('$f'))['_job']['status']; assert s=='TIMEOUT', s"
