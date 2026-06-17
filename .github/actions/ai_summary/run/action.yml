@@ -46,6 +46,13 @@ inputs:
       synthesized (nothing to reconcile).
     required: false
     default: ""
+  commits:
+    description: >-
+      JSON array of {"repo": "owner/name", "commit": "sha"} objects shown in
+      the report header as linked short SHAs. Omit to skip. Example:
+      [{"repo": "tenstorrent/tt-metal", "commit": "abc1234"}]
+    required: false
+    default: ""
 
 outputs:
   report-file:
@@ -129,6 +136,7 @@ runs:
         CONFIG: ${{ inputs.config }}
         EXPECTED_JOBS: ${{ inputs.expected-jobs }}
         RUN_RESULT: ${{ inputs.run-result }}
+        COMMITS: ${{ inputs.commits }}
       run: |
         TOOL_DIR="${{ steps.config.outputs.tool_dir }}"
 
@@ -145,8 +153,9 @@ runs:
         trap 'rm -f "$STDERR_FILE"' EXIT
 
         CMD_ARGS=(--config "$CONFIG")
-        [ -n "$EXPECTED_JOBS" ] && CMD_ARGS+=(--expected-jobs "$EXPECTED_JOBS")
-        [ -n "$RUN_RESULT" ]    && CMD_ARGS+=(--run-result "$RUN_RESULT")
+        [ -n "$EXPECTED_JOBS" ]           && CMD_ARGS+=(--expected-jobs "$EXPECTED_JOBS")
+        [ -n "$RUN_RESULT" ]              && CMD_ARGS+=(--run-result "$RUN_RESULT")
+        [ -n "$COMMITS" ] && CMD_ARGS+=(--commits "$COMMITS")
 
         echo "::group::AI Run Summary"
         # `2> >(tee ...)` runs tee in a process substitution coprocess that

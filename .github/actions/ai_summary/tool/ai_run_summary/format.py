@@ -160,6 +160,39 @@ def _group_by_main_category(
     )
 
 
+def _normalized_commit_sha(value: str | None) -> str | None:
+    """Strip whitespace and validate SHA format (hex, 7–40 chars). Returns None if invalid."""
+    if not value:
+        return None
+    normalized = value.strip()
+    if re.fullmatch(r"[0-9a-fA-F]{7,40}", normalized):
+        return normalized
+    return None
+
+
+def _commit_version_line(commits: list[dict]) -> str:
+    """Render a ' · '-joined line of repo commit links from a list of {repo, commit} dicts.
+
+    Each entry must have 'repo' (e.g. 'tenstorrent/tt-metal') and 'commit' (SHA).
+    The display label is the part of the repo name after '/'.
+    Invalid or missing SHAs are silently skipped.
+    Returns empty string when nothing is renderable.
+    """
+    parts = []
+    for entry in commits:
+        if not isinstance(entry, dict):
+            continue
+        repo = str(entry.get("repo") or "").strip()
+        sha = _normalized_commit_sha(str(entry.get("commit") or ""))
+        if not repo or not sha:
+            continue
+        label = repo.split("/")[-1] if "/" in repo else repo
+        short = sha[:7]
+        url = f"https://github.com/{repo}/commit/{sha}"
+        parts.append(f"**{label}**: [`{short}`]({url})")
+    return " \u00b7 ".join(parts)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -172,6 +205,7 @@ def format_run_report(
     run_id: str = "",
     run_date: str = "",
     pr: str = "",
+    commits: list[dict] | None = None,
 ) -> "RunReport":
     """Render a complete run-level report (markdown + HTML).
 
@@ -183,6 +217,8 @@ def format_run_report(
         run_date: Human-readable run date (e.g. "2026-03-13"). Omitted if empty.
         pr: PR number or branch name. When set, shows PR Impact section and
             "Your Code" column in job details.
+        commits: Optional list of {"repo": "owner/name", "commit": "sha"} dicts.
+            Each entry renders as a linked short SHA in the report header.
 
     Returns:
         RunReport with .md and .html attributes.
@@ -212,13 +248,21 @@ def format_run_report(
         md += " \u00b7 ".join(details_parts) + "\n\n"
 
     # -----------------------------------------------------------------------
-    # 3. Overall Health (LLM sentence)
+    # 3. Component versions (commit SHAs)
+    # -----------------------------------------------------------------------
+    if commits:
+        version_line = _commit_version_line(commits)
+        if version_line:
+            md += version_line + "\n\n"
+
+    # -----------------------------------------------------------------------
+    # 4. Overall Health (LLM sentence)
     # -----------------------------------------------------------------------
     if narrative and narrative.overall_health:
         md += f"> {narrative.overall_health}\n\n"
 
     # -----------------------------------------------------------------------
-    # 4. Job Status Overview -- sorted by severity, with visual bar
+    # 5. Job Status Overview -- sorted by severity, with visual bar
     # -----------------------------------------------------------------------
     md += "### Job Status Overview\n\n"
     md += "| Status | Count | Distribution |\n"
@@ -239,7 +283,7 @@ def format_run_report(
     md += "\n"
 
     # -----------------------------------------------------------------------
-    # 5. Failure Category Distribution
+    # 6. Failure Category Distribution
     #    Main categories: bar showing % of total failures
     #    Subcategories (indented): bar showing % of their parent
     # -----------------------------------------------------------------------
@@ -262,7 +306,7 @@ def format_run_report(
         md += "\n"
 
     # -----------------------------------------------------------------------
-    # 6. PR Impact -- only for PR / branch runs
+    # 7. PR Impact -- only for PR / branch runs
     # -----------------------------------------------------------------------
     if pr and stats.failed_jobs:
         md += "### PR Impact\n\n"
@@ -274,14 +318,14 @@ def format_run_report(
         md += "\n"
 
     # -----------------------------------------------------------------------
-    # 7. Dominant Failure Pattern (LLM)
+    # 8. Dominant Failure Pattern (LLM)
     # -----------------------------------------------------------------------
     if narrative and narrative.dominant_cause:
         md += "### Dominant Failure Pattern\n\n"
         md += f"{narrative.dominant_cause}\n\n"
 
     # -----------------------------------------------------------------------
-    # 8. Failed Job Details -- sorted by status severity then category
+    # 9. Failed Job Details -- sorted by status severity then category
     #    Job column: always the numeric job ID linked to the job URL
     #    Model column: extracted model name, or "--" when not identifiable
     # -----------------------------------------------------------------------
@@ -324,7 +368,25 @@ def format_run_report(
         md += "\n</details>\n\n"
 
     # -----------------------------------------------------------------------
-    # 9. Stats footer
+    # 10. Successful Models -- collapsed list sorted alphabetically
+    # -----------------------------------------------------------------------
+    if stats.successful_jobs:
+        labeled_success = sorted(
+            ((_extract_run_label(j) or "\u2014"), j) for j in stats.successful_jobs if j.status == "SUCCESS"
+        )
+        if labeled_success:
+            md += f"<details>\n<summary>Successful Models ({len(labeled_success)})</summary>\n\n"
+            md += "| Job | Run | Status |\n"
+            md += "|-----|-----|--------|\n"
+            for model, job in labeled_success:
+                job_cell = _job_id_cell(job, run_url)
+                emoji = STATUS_EMOJI.get(job.status, "")
+                model_cell = model.replace("|", "\\|")
+                md += f"| {job_cell} | {model_cell} | {emoji} {job.status} |\n"
+            md += "\n</details>\n\n"
+
+    # -----------------------------------------------------------------------
+    # 11. Stats footer
     # -----------------------------------------------------------------------
     footer_rows = [
         f"| Total jobs | {stats.total_jobs} |",

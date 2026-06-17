@@ -21,6 +21,7 @@ def compute_stats(summaries: list[ParsedJobSummary]) -> RunStats:
         stats.status_counts[job.status] = stats.status_counts.get(job.status, 0) + 1
 
     stats.failed_jobs = [j for j in summaries if j.status not in NON_FAILURE_STATUSES]
+    stats.successful_jobs = [j for j in summaries if j.status == "SUCCESS"]
 
     category_map: dict[str, list[ParsedJobSummary]] = {}
     for job in stats.failed_jobs:

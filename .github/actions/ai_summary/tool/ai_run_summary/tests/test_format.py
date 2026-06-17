@@ -46,6 +46,7 @@ def _job(
 def _stats(jobs=None, categories=None, is_your_code=0, not_your_code=0, unknown=0):
     jobs = jobs or []
     failures = [j for j in jobs if j.status != "SUCCESS"]
+    successes = [j for j in jobs if j.status == "SUCCESS"]
     status_counts: dict[str, int] = {}
     for j in jobs:
         status_counts[j.status] = status_counts.get(j.status, 0) + 1
@@ -53,6 +54,7 @@ def _stats(jobs=None, categories=None, is_your_code=0, not_your_code=0, unknown=
         total_jobs=len(jobs),
         status_counts=status_counts,
         failed_jobs=failures,
+        successful_jobs=successes,
         category_counts=categories or [],
         is_your_code_count=is_your_code,
         not_your_code_count=not_your_code,
@@ -326,3 +328,74 @@ class TestFormatRunReport:
         stats = _stats(jobs=jobs)
         report = format_run_report(stats)
         assert "Failed Job Details (2)" in report.md
+
+
+class TestSuccessfulModels:
+    def test_successful_models_section_present(self):
+        jobs = [
+            _job("SUCCESS", job_name="run-release-Llama-3.1-8B-Instruct-n150", source_stem="1"),
+            _job("SUCCESS", job_name="run-release-Qwen2.5-7B-Instruct-n150", source_stem="2"),
+            _job("CRASHED", source_stem="3"),
+        ]
+        stats = _stats(jobs=jobs)
+        report = format_run_report(stats)
+        assert "Successful Models (2)" in report.md
+        assert "Llama-3.1-8B-Instruct-n150" in report.md
+        assert "Qwen2.5-7B-Instruct-n150" in report.md
+        assert "| Job | Run | Status |" in report.md
+
+    def test_successful_models_absent_when_none(self):
+        stats = _stats(jobs=[_job("CRASHED")])
+        report = format_run_report(stats)
+        assert "Successful Models" not in report.md
+
+
+class TestCommitSHAHeader:
+    def test_sha_links_rendered_in_header(self):
+        report = format_run_report(
+            RunStats(),
+            commits=[
+                {"repo": "tenstorrent/tt-metal", "commit": "aabbccddee112233"},
+                {"repo": "tenstorrent/tt-inference-server", "commit": "ccddee112233aabb"},
+                {"repo": "tenstorrent/vllm", "commit": "112233aabbccddee"},
+            ],
+        )
+        assert "**tt-metal**: [`aabbccd`](https://github.com/tenstorrent/tt-metal/commit/aabbccddee112233)" in report.md
+        assert (
+            "**tt-inference-server**: [`ccddee1`](https://github.com/tenstorrent/tt-inference-server/commit/ccddee112233aabb)"
+            in report.md
+        )
+        assert "**vllm**: [`112233a`](https://github.com/tenstorrent/vllm/commit/112233aabbccddee)" in report.md
+
+    def test_sha_header_absent_when_no_commits_provided(self):
+        report = format_run_report(RunStats())
+        assert "tt-metal" not in report.md
+        assert "tt-inference-server" not in report.md
+        assert "vllm" not in report.md
+
+    def test_only_provided_repos_rendered(self):
+        report = format_run_report(
+            RunStats(),
+            commits=[{"repo": "tenstorrent/tt-metal", "commit": "aabbccddee112233"}],
+        )
+        assert "tt-metal" in report.md
+        assert "tt-inference-server" not in report.md
+        assert "vllm" not in report.md
+
+    def test_invalid_sha_not_rendered(self):
+        report = format_run_report(
+            RunStats(),
+            commits=[
+                {"repo": "tenstorrent/tt-metal", "commit": "not-a-sha!!"},
+                {"repo": "tenstorrent/vllm", "commit": "   "},
+            ],
+        )
+        assert "tt-metal" not in report.md
+        assert "vllm" not in report.md
+
+    def test_sha_with_whitespace_trimmed_and_rendered(self):
+        report = format_run_report(
+            RunStats(),
+            commits=[{"repo": "tenstorrent/tt-metal", "commit": "  aabbccddee112233  "}],
+        )
+        assert "**tt-metal**: [`aabbccd`](https://github.com/tenstorrent/tt-metal/commit/aabbccddee112233)" in report.md
