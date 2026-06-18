@@ -14,8 +14,8 @@ server's tail) and is ignored entirely.
 """
 
 from ai_job_summary.config import load_config
-from ai_job_summary.extract import ExtractedLog, JobStatus, extract_log, get_job_status
-from ai_job_summary.summarize import FailureSummary, format_summary_markdown
+from ai_job_summary.extract import ExtractedLog, JobStatus, apply_llm_status, extract_log, get_job_status
+from ai_job_summary.summarize import FailureSummary, build_prompt, format_summary_markdown
 from ai_job_summary.context import CIContext
 
 START_REGEX = r"^\[==tt-log-start-line==\]"
@@ -112,6 +112,19 @@ class TestMarkerExtraction:
         e = _extract(tmp_path, lines)
         assert e.exit_code == 1
 
+    def test_finish_before_trailing_output_is_incomplete(self, tmp_path):
+        # finish token echoed mid-run, then output continues past the tail
+        # window before truncation → not complete (guards against false green)
+        lines = [START, FINISH_OK] + [f"more output {i}" for i in range(15)]
+        e = _extract(tmp_path, lines)
+        assert e.log_complete is False
+
+    def test_start_below_head_window_is_untracked(self, tmp_path):
+        # start sentinel buried below the head window → not run-with-log tracked
+        lines = [f"preamble {i}" for i in range(12)] + [START] + CLEAN_LINES + [FINISH_OK]
+        e = _extract(tmp_path, lines)
+        assert e.log_complete is None
+
 
 class TestMultipleLogs:
     def test_all_tracked_logs_finished(self, tmp_path):
@@ -183,31 +196,78 @@ class TestStatusWithMarker:
 
 
 class TestReportNote:
-    def _md(self, log_complete, status, incomplete_logs=None):
+    def _md(self, log_complete, status, incomplete_logs=None, error_message=""):
         e = ExtractedLog()
         e.log_complete = log_complete
         if incomplete_logs:
             e.incomplete_logs = incomplete_logs
-        return format_summary_markdown(FailureSummary(), CIContext(), status, extracted_log=e)
+        s = FailureSummary()
+        if error_message:
+            s.error_message = error_message
+        return format_summary_markdown(s, CIContext(), status, extracted_log=e)
 
-    def test_timeout_note(self):
+    def test_pure_timeout_shown_in_header(self):
         md = self._md(False, JobStatus(False, "RED", "TIMEOUT"))
-        assert "completion marker" in md
-        assert "timeout-minutes" in md
+        assert "TIMEOUT" in md
 
-    def test_independent_issue_note_on_crash(self):
+    def test_truncation_tags_header_on_other_failure(self):
+        # crash + truncation, no error block → header carries the ⚠️ timeout tag
         md = self._md(False, JobStatus(False, "RED", "CRASHED"))
-        assert "incomplete" in md
-        assert "independent" in md
+        assert "⚠️ timeout" in md
 
-    def test_note_names_truncated_log(self):
-        md = self._md(False, JobStatus(False, "RED", "TIMEOUT"), incomplete_logs=["benchmark.log"])
+    def test_truncation_warns_under_error_message(self):
+        md = self._md(False, JobStatus(False, "ORANGE", "TESTS FAILED (3 failed)"), error_message="boom")
+        assert "truncated due to GitHub timeout" in md
+        assert "boom" in md
+
+    def test_warning_names_incomplete_log(self):
+        md = self._md(
+            False,
+            JobStatus(False, "ORANGE", "TESTS FAILED (1 failed)"),
+            incomplete_logs=["benchmark.log"],
+            error_message="boom",
+        )
         assert "benchmark.log" in md
 
-    def test_no_note_when_complete(self):
+    def test_no_warning_when_complete(self):
         md = self._md(True, JobStatus(True, "GREEN", "SUCCESS"))
-        assert "incomplete" not in md
-        assert "completion marker" not in md
+        assert "truncated" not in md
+        assert "⚠️ timeout" not in md
+
+
+class TestLLMOverrideOnTruncation:
+    """A truncated log (marker absent) hands the verdict to the LLM, but the
+    LLM can never call a truncated run green."""
+
+    def _truncated(self, has_timeout):
+        e = ExtractedLog()
+        e.log_complete = False
+        e.has_timeout = has_timeout
+        return e
+
+    def test_llm_failure_overrides_marker_timeout(self):
+        s = apply_llm_status(JobStatus(False, "RED", "TIMEOUT"), "CRASH", self._truncated(False))
+        assert s.status_text == "CRASHED"
+
+    def test_llm_success_cannot_upgrade_marker_timeout(self):
+        s = apply_llm_status(JobStatus(False, "RED", "TIMEOUT"), "SUCCESS", self._truncated(False))
+        assert s.status_text == "TIMEOUT"
+
+    def test_pattern_timeout_stays_authoritative(self):
+        s = apply_llm_status(JobStatus(False, "RED", "TIMEOUT"), "CRASH", self._truncated(True))
+        assert s.status_text == "TIMEOUT"
+
+    def test_prompt_flags_truncation_to_llm(self):
+        e = ExtractedLog()
+        e.log_complete = False
+        p = build_prompt(e, CIContext(), {}, {})
+        assert "TRUNCATED LOG" in p
+
+    def test_prompt_no_truncation_note_when_complete(self):
+        e = ExtractedLog()
+        e.log_complete = True
+        p = build_prompt(e, CIContext(), {}, {})
+        assert "TRUNCATED LOG" not in p
 
 
 class TestConfig:

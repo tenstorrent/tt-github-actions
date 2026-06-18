@@ -181,6 +181,17 @@ def build_prompt(
     if config_context:
         config_context_section = format_config_context_for_prompt(config_context) + "\n\n"
 
+    # Tell the LLM when the log was cut off by a GitHub timeout-minutes kill, so
+    # it weighs the visible error knowing failures may be missing.
+    truncation_note = ""
+    if extracted_log.log_complete is False:
+        truncation_note = (
+            "## ⚠️ TRUNCATED LOG\n"
+            "This log was cut off by a GitHub `timeout-minutes` kill — the step ran out of time. "
+            "The output below is incomplete: later failures may be missing, and the visible error "
+            "may not be the root cause.\n\n"
+        )
+
     prompt = f"""You are a CI failure analyst. Analyze the following CI log and provide a structured summary.
 
 ## KNOWN FAILURE CATEGORIES
@@ -194,7 +205,7 @@ If the failure doesn't match any known category, output category as "UNKNOWN" an
 {config_section}## CONTEXT
 {format_context_for_prompt(context)}
 
-{config_context_section}{attribution_hint}## EXTRACTED LOG
+{config_context_section}{attribution_hint}{truncation_note}## EXTRACTED LOG
 {format_extracted_log(extracted_log)}
 
 ## YOUR TASK
@@ -381,18 +392,15 @@ def format_summary_markdown(
     # Build header with outcome and optional job link
     link_url = job_url or (extracted_log.job_url if extracted_log else "")
     link_label = job_name or (extracted_log.job_name if extracted_log else "") or "View Job"
+    status_label = job_status.status_text
+    # Flag a truncation that a higher-priority failure outranks in the status;
+    # the detail lands under the error block below.
+    if extracted_log and extracted_log.log_complete is False and job_status.status_text != "TIMEOUT":
+        status_label += " ⚠️ timeout"
     if link_url:
-        md = f"### {_emoji(job_status.status_code)} {job_status.status_text} ([{link_label}]({link_url}))\n"
+        md = f"### {_emoji(job_status.status_code)} {status_label} ([{link_label}]({link_url}))\n"
     else:
-        md = f"### {_emoji(job_status.status_code)} {job_status.status_text}\n"
-
-    if extracted_log and extracted_log.log_complete is False:
-        which = ", ".join(getattr(extracted_log, "incomplete_logs", []) or [])
-        suffix = f" (incomplete: {which})" if which else ""
-        if job_status.status_text == "TIMEOUT":
-            md += f"⚠️ Log ended without its completion marker — `timeout-minutes` kill.{suffix}\n"
-        else:
-            md += f"⚠️ Log incomplete — `timeout-minutes` kill after the failure below; possibly an independent hang.{suffix}\n"
+        md = f"### {_emoji(job_status.status_code)} {status_label}\n"
 
     # Show problematic layer if different from error layer
     layer_info = f"| **Error Layer** | `{summary.layer}` |"
@@ -447,9 +455,14 @@ The error manifested in **{summary.layer}** layer but was caused by configuratio
                     md += f"**Why:** {attr.get('explanation')}\n"
 
         if summary.error_message:
+            warn = ""
+            if extracted_log and extracted_log.log_complete is False:
+                which = ", ".join(extracted_log.incomplete_logs or [])
+                suffix = f" (incomplete: {which})" if which else ""
+                warn = f"⚠️ Log truncated due to GitHub timeout, other issues might be hidden.{suffix}\n"
             md += f"""
 #### Error Message
-```
+{warn}```
 {summary.error_message}
 ```
 """

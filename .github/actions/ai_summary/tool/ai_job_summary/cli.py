@@ -408,7 +408,7 @@ def main():
     if is_infra_failure:
         job_status = INFRA_FAILURE_STATUS
     else:
-        job_status = apply_llm_status(job_status, result.summary.status)
+        job_status = apply_llm_status(job_status, result.summary.status, extracted)
 
     if result.summary.error_message:
         calculate_time_after_error(result.summary.error_message, extracted)

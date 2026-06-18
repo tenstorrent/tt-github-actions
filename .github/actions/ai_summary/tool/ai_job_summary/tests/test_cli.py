@@ -572,8 +572,9 @@ class TestTimeoutMarkerAbsent:
         assert data["_job"]["status"] == "SUCCESS"
 
     def test_missing_dir_wins_over_absent_marker(self, tmp_path):
-        # present log markerless + a dir missing → INFRA partial_logs, not TIMEOUT
-        _write_log(tmp_path / "run_logs", "run.log", "INFO: some log content\n")
+        # tracked-but-truncated log (start, no finish) + a dir missing → INFRA
+        # partial_logs must win over the marker-absence TIMEOUT
+        _write_log(tmp_path / "run_logs", "run.log", "[==tt-log-start-line==]\nINFO: some log content\n")
         config = _config_json(tmp_path, ["run_logs", "docker_server"])
         with patch("ai_job_summary.cli.get_llm_client") as mock_llm:
             _run_cli(["--config", config])
