@@ -45,6 +45,12 @@ def _apply_analysis_fields(base: dict, override: dict) -> dict:
     if "failed_test_patterns" in override:
         result["failed_test_patterns"] = result["failed_test_patterns"] + override["failed_test_patterns"]
 
+    if "detection_patterns" in override:
+        merged = dict(result.get("detection_patterns", {}))
+        for group, pats in override["detection_patterns"].items():
+            merged[group] = merged.get(group, []) + pats
+        result["detection_patterns"] = merged
+
     if "repos" in override:
         result["repos"] = _deep_merge(result["repos"], override["repos"])
 
@@ -73,6 +79,7 @@ def load_config(project: dict | None = None) -> dict:
     config.setdefault("categories", {})
     config.setdefault("test_patterns", [])
     config.setdefault("failed_test_patterns", [])
+    config.setdefault("detection_patterns", {})
     config.setdefault("repos", {"default_branches": ["main", "master", "dev"]})
 
     if project:
@@ -85,7 +92,15 @@ def load_config(project: dict | None = None) -> dict:
         config = _apply_analysis_fields(config, project)
 
         for key, value in project.items():
-            if key not in ("layers", "layers_mode", "categories", "test_patterns", "failed_test_patterns", "repos"):
+            if key not in (
+                "layers",
+                "layers_mode",
+                "categories",
+                "test_patterns",
+                "failed_test_patterns",
+                "detection_patterns",
+                "repos",
+            ):
                 config[key] = value
 
     return config
