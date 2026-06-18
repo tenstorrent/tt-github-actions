@@ -469,18 +469,18 @@ def extract_log(
     if match := re.search(r"Process completed with exit code (\d+)", full_text):
         result.exit_code = int(match.group(1))
 
-    # Completion markers: run-with-log writes a start sentinel as a log's first
-    # line and a finish sentinel (carrying the exit code) as its last. Evaluated
-    # per file — a log that started but never finished was hard-killed (GitHub
-    # timeout-minutes). Logs without the start sentinel are not run-with-log
-    # tracked (e.g. a backgrounded server's continuous tail) and are ignored.
+    # Per-file completion from run-with-log's start/finish sentinels: start but
+    # no finish == hard-killed (timeout-minutes); no start sentinel == not tracked
+    # (e.g. a backgrounded server tail), ignored.
     start_pattern = (test_patterns or {}).get("log_start_marker")
     finish_pattern = (test_patterns or {}).get("log_complete_marker")
     if start_pattern and finish_pattern:
         complete, incomplete, marker_exit = _evaluate_completion(log_source, start_pattern, finish_pattern)
         result.log_complete = complete
         result.incomplete_logs = incomplete
-        if marker_exit is not None:
+        # Marker is only the wrapped command's exit; never let it override the
+        # step's own exit code set above.
+        if marker_exit is not None and result.exit_code is None:
             result.exit_code = marker_exit
 
     # Use provided test patterns or default to empty

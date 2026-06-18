@@ -98,6 +98,20 @@ class TestMarkerExtraction:
         e = _extract(tmp_path, lines)
         assert e.log_complete is False
 
+    def test_finish_marker_without_trailing_newline_counts(self, tmp_path):
+        # finish sentinel as the final bytes, no trailing newline — must match
+        log = tmp_path / "test.log"
+        log.write_text("\n".join([START] + CLEAN_LINES + [FINISH_FAIL]))
+        e = extract_log(log, test_patterns=PATTERNS)
+        assert e.log_complete is True
+        assert e.exit_code == 2
+
+    def test_github_exit_line_not_overridden_by_marker(self, tmp_path):
+        # GHA step exit wins over a wrapped phase's clean finish marker
+        lines = [START] + CLEAN_LINES + [FINISH_OK, "Process completed with exit code 1."]
+        e = _extract(tmp_path, lines)
+        assert e.exit_code == 1
+
 
 class TestMultipleLogs:
     def test_all_tracked_logs_finished(self, tmp_path):
