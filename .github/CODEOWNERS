@@ -1,2 +1,4 @@
 # Maintainers for this repository are required to approve a PR
 * @tenstorrent/shared-common-maintainer
+
+.github/actions/ai_summary/ @ppetrovicTT @tenstorrent/shared-common-maintainer
