@@ -443,7 +443,7 @@ class TestMergeLogFilesMultiDir:
         d2.mkdir()
         (d1 / "run.log").write_text("2026-01-01 00:00:01 - run started\n")
         (d2 / "server.log").write_text("2026-01-01 00:00:02 - server started\n")
-        lines = merge_log_files([d1, d2])
+        lines, _ = merge_log_files([d1, d2])
         text = "".join(lines)
         assert "run started" in text
         assert "server started" in text
@@ -455,7 +455,7 @@ class TestMergeLogFilesMultiDir:
         d2.mkdir()
         (d1 / "run.log").write_text("2026-01-01 00:00:01 - line1\n")
         (d2 / "server.log").write_text("2026-01-01 00:00:02 - line2\n")
-        lines = merge_log_files([d1, d2])
+        lines, _ = merge_log_files([d1, d2])
         text = "".join(lines)
         # Multi-dir merge prefixes source labels with dir name
         assert "run_logs/" in text
@@ -465,7 +465,7 @@ class TestMergeLogFilesMultiDir:
         d = tmp_path / "logs"
         d.mkdir()
         (d / "app.log").write_text("2026-01-01 00:00:01 - line1\n")
-        lines = merge_log_files([d])
+        lines, _ = merge_log_files([d])
         text = "".join(lines)
         # Single dir — no dir name prefix in source label
         assert "logs/" not in text

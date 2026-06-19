@@ -105,6 +105,7 @@ def _build_json(
                 "exit_code": extracted_log.exit_code,
                 "has_crash": extracted_log.has_crash,
                 "has_timeout": extracted_log.has_timeout,
+                "log_complete": extracted_log.log_complete,
                 "failed_tests": extracted_log.failed_tests,
             }
         )
@@ -176,6 +177,8 @@ def main():
     test_patterns = {
         "test_result_patterns": config.get("test_patterns", []),
         "failed_test_patterns": config.get("failed_test_patterns", []),
+        "log_start_marker": config.get("log_start_marker"),
+        "log_complete_marker": config.get("log_complete_marker"),
     }
 
     # workspace anchors relative paths in input_dirs/output_dir; absolute
@@ -246,6 +249,12 @@ def main():
         job_status = get_job_status(extracted)
         print(f"Status: {job_status.status_text}", file=sys.stderr)
 
+        # "Would be SUCCESS if not for the absent completion marker." Lets the
+        # missing-dir infra paths below win over a marker-absence TIMEOUT.
+        clean_apart_from_marker = job_status.is_success or (
+            job_status.status_text == "TIMEOUT" and extracted.log_complete is False
+        )
+
         # Success + no missing dirs → done
         if job_status.is_success and not is_infra_failure:
             summary = FailureSummary()
@@ -272,8 +281,41 @@ def main():
             )
             return
 
+        # Clean log, marker absent, all dirs present → GitHub timeout-minutes
+        # kill. Authoritative; no LLM needed.
+        if (
+            job_status.status_text == "TIMEOUT"
+            and extracted.log_complete is False
+            and not is_infra_failure
+            and not extracted.error_sections
+        ):
+            summary = FailureSummary()
+            summary.category = "infra:timeout"
+            context = CIContext()
+            md = format_summary_markdown(
+                summary,
+                context,
+                job_status,
+                extracted_log=extracted,
+                job_name=job_name,
+                job_url=job_url,
+            )
+            _write_outputs(
+                output_dir,
+                job_id,
+                md,
+                _build_json(
+                    summary,
+                    job_status,
+                    extracted,
+                    job_name=job_name,
+                    job_url=job_url,
+                ),
+            )
+            return
+
         # Partial dirs + no errors → INFRA_FAILURE without LLM
-        if job_status.is_success and is_infra_failure and not extracted.error_sections:
+        if clean_apart_from_marker and is_infra_failure and not extracted.error_sections:
             summary = FailureSummary()
             summary.category = "infra:partial_logs"
             summary.root_cause = f"Missing log dirs: {missing_dirs}"
@@ -366,7 +408,7 @@ def main():
     if is_infra_failure:
         job_status = INFRA_FAILURE_STATUS
     else:
-        job_status = apply_llm_status(job_status, result.summary.status)
+        job_status = apply_llm_status(job_status, result.summary.status, extracted)
 
     if result.summary.error_message:
         calculate_time_after_error(result.summary.error_message, extracted)

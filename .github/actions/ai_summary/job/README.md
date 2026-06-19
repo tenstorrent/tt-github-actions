@@ -55,6 +55,16 @@ The action takes inline JSON — no separate config file. Required fields:
   `input_dirs`/`output_dir` pass through unchanged.
 - `input_dirs` — directories with `.log` files to analyze.
 - `output_dir` — where to write the per-job summary.
+- `log_start_marker` / `log_complete_marker` (optional overrides) — regexes
+  for run-with-log's start/finish sentinels (defaults match
+  `[==tt-log-start-line==]` / `[==tt-log-finish-line==]`, the latter with an
+  optional `exit_code=N` in group 1). A log carrying the start sentinel but
+  not the finish one was hard-killed mid-run — the GitHub `timeout-minutes`
+  kill, invisible in the log itself — so it classifies as TIMEOUT instead of a
+  false SUCCESS. Logs without the start sentinel (e.g. a backgrounded server's
+  tail) are untracked, so non-adopters need no opt-out. A crash/failure
+  already in the log wins, with the truncation flagged as
+  `log_complete: false`.
 
 Categories, layers, and analysis patterns come from the bundled
 `analysis.yaml` shipped with the tool.

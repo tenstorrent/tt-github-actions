@@ -15,7 +15,7 @@ Strategy:
 import json
 import re
 import sys
-from collections import Counter
+from collections import Counter, deque
 from dataclasses import dataclass, field
 from datetime import datetime
 from functools import lru_cache
@@ -89,6 +89,10 @@ class ExtractedLog:
     exit_code: int | None = None
     has_crash: bool = False  # TT_FATAL, panic, etc.
     has_timeout: bool = False
+    # None = not run-with-log tracked; True = all tracked logs finished;
+    # False = a tracked log started but never finished (shell hard-killed)
+    log_complete: bool | None = None
+    incomplete_logs: list[str] = field(default_factory=list)  # tracked logs missing their finish marker
     failed_tests: list[str] = field(default_factory=list)  # Test failures (features missing)
     failed_evals: list[str] = field(default_factory=list)  # Eval failures (accuracy below target)
 
@@ -131,7 +135,7 @@ _LLM_STATUS_MAP: dict[str, JobStatus] = {
 }
 
 
-def apply_llm_status(job_status: JobStatus, llm_status: str) -> JobStatus:
+def apply_llm_status(job_status: JobStatus, llm_status: str, extracted_log: "ExtractedLog | None" = None) -> JobStatus:
     """
     Apply the LLM's status determination, taking precedence over extraction.
 
@@ -139,8 +143,9 @@ def apply_llm_status(job_status: JobStatus, llm_status: str) -> JobStatus:
     disagree, the LLM wins. When they agree on TESTS_FAILED or EVALS_BELOW_TARGET,
     keep the extraction version because it includes the count in the label.
 
-    TIMEOUT from extraction is always preserved — timeouts are authoritative
-    infrastructure signals the LLM may not see in truncated logs.
+    A pattern-detected timeout (``has_timeout``) is always preserved. A
+    marker-absence timeout (log truncated, no in-log timeout text) defers to a
+    real LLM failure but never to LLM SUCCESS — a truncated run can't be green.
     """
     if not llm_status:
         return job_status
@@ -149,11 +154,17 @@ def apply_llm_status(job_status: JobStatus, llm_status: str) -> JobStatus:
         print(f"Warning: unknown LLM status {llm_status!r}, ignoring", file=sys.stderr)
         return job_status
 
-    # Timeouts are authoritative — never let LLM SUCCESS upgrade them.
-    if job_status.status_text == "TIMEOUT":
-        return job_status
-
     new_status = _LLM_STATUS_MAP[llm_status]
+
+    if job_status.status_text == "TIMEOUT":
+        # A marker-absence timeout (log truncated, no in-log timeout text) yields
+        # to a real LLM failure. A pattern timeout — or a TIMEOUT we can't
+        # attribute (no extracted_log) — stays authoritative, and a truncated run
+        # is never upgraded to SUCCESS.
+        marker_absence = extracted_log is not None and not extracted_log.has_timeout
+        if marker_absence and not new_status.is_success:
+            return new_status
+        return job_status
 
     # If extraction already agrees, keep its version (it may include counts
     # in the label, e.g. "TESTS FAILED (3/10)").
@@ -183,6 +194,11 @@ def get_job_status(extracted_log: ExtractedLog) -> JobStatus:
         return JobStatus(False, "ORANGE", f"TESTS FAILED ({len(extracted_log.failed_tests)} failed)")
     if extracted_log.failed_evals:
         return JobStatus(False, "YELLOW", f"EVALS BELOW TARGET ({len(extracted_log.failed_evals)} failed)")
+    # Marker absent on an otherwise clean log = GitHub timeout-minutes kill.
+    # Crash/failure branches above win: truncation is then reported as a
+    # possibly separate issue, not as the status.
+    if extracted_log.log_complete is False:
+        return JobStatus(False, "RED", "TIMEOUT")
     return JobStatus(True, "GREEN", "SUCCESS")
 
 
@@ -275,18 +291,24 @@ FINAL_STATUS_PATTERNS = [
 ]
 
 
-def merge_log_files(log_dirs: Path | list[Path]) -> list[str]:
+# run-with-log puts the start sentinel at the top and the finish sentinel at the
+# bottom; we look only at the first/last few non-empty lines so a token echoed
+# mid-run can't be mistaken for completion.
+_MARKER_WINDOW = 10
+
+
+def merge_log_files(
+    log_dirs: Path | list[Path],
+) -> tuple[list[str], list[tuple[str, list[str], list[str]]]]:
     """
     Merge all .log files from one or more directories by timestamp.
 
     Lines without recognized timestamps are kept with their preceding timestamped
     line from the same file (context preservation).
 
-    Args:
-        log_dirs: Single directory or list of directories containing log files
-
-    Returns:
-        List of lines merged and sorted by timestamp, with source markers
+    Returns (merged_lines, completion_chunks). completion_chunks carries each
+    file's first and last _MARKER_WINDOW non-empty lines, captured during this
+    read so the completion check needs no second pass over the files.
     """
     if isinstance(log_dirs, Path):
         log_dirs = [log_dirs]
@@ -302,15 +324,18 @@ def merge_log_files(log_dirs: Path | list[Path]) -> list[str]:
             file_pairs.append((log_file, source))
 
     if not file_pairs:
-        return []
+        return [], []
 
     # Read each file, tracking timestamps
     # Each entry: (sort_key, line_index, line, source)
     # sort_key is (timestamp, file_index, line_index) for stable sorting
     all_entries: list[tuple[tuple, int, str, str]] = []
+    chunks: list[tuple[str, list[str], list[str]]] = []
 
     for file_idx, (log_file, source) in enumerate(file_pairs):
         last_ts: datetime | None = None
+        head: list[str] = []
+        tail: "deque[str]" = deque(maxlen=_MARKER_WINDOW)
 
         try:
             with open(log_file, "r", encoding="utf-8", errors="replace") as f:
@@ -325,11 +350,18 @@ def merge_log_files(log_dirs: Path | list[Path]) -> list[str]:
                     # Sort key: (timestamp, file_index, line_index) for stable ordering
                     sort_key = (sort_ts, file_idx, line_idx)
                     all_entries.append((sort_key, line_idx, line, source))
+
+                    # Capture the sentinel windows in this same pass.
+                    if line.strip():
+                        if len(head) < _MARKER_WINDOW:
+                            head.append(line)
+                        tail.append(line)
+            chunks.append((source, head, list(tail)))
         except Exception:
             continue
 
     if not all_entries:
-        return []
+        return [], chunks
 
     # Sort by the composite key
     all_entries.sort(key=lambda x: x[0])
@@ -344,7 +376,45 @@ def merge_log_files(log_dirs: Path | list[Path]) -> list[str]:
             current_source = source
         merged.append(line)
 
-    return merged
+    return merged, chunks
+
+
+def _evaluate_completion(
+    chunks: list[tuple[str, list[str], list[str]]], start_pattern: str, finish_pattern: str
+) -> tuple[bool | None, list[str], int | None]:
+    """Per-file completion verdict from run-with-log's start/finish sentinels.
+
+    chunks is (source, head, tail) per file — the first/last _MARKER_WINDOW
+    non-empty lines captured at read time. Tracked iff the start sentinel is in
+    head; complete iff the finish sentinel is in tail. A tracked log missing its
+    finish was hard-killed mid-run; a log without the start sentinel (e.g. a
+    backgrounded server's tail) is not tracked.
+
+    Returns (complete, incomplete_sources, exit_code); complete is None when no
+    tracked log is present. A non-zero finish wins over a clean one.
+    """
+    start_re = re.compile(start_pattern, re.MULTILINE)
+    finish_re = re.compile(finish_pattern, re.MULTILINE)
+    tracked = 0
+    incomplete: list[str] = []
+    exit_code: int | None = None
+    for source, head, tail in chunks:
+        if not any(start_re.search(ln) for ln in head):
+            continue
+        tracked += 1
+        finish = None
+        for ln in tail:
+            if m := finish_re.search(ln):
+                finish = m  # last match in the tail window wins
+        if finish is None:
+            incomplete.append(source)
+        elif finish.group(1) is not None:  # regex group is (\d+) → already numeric
+            ec = int(finish.group(1))
+            if exit_code is None or (exit_code == 0 and ec != 0):
+                exit_code = ec
+    if tracked == 0:
+        return None, [], exit_code
+    return len(incomplete) == 0, incomplete, exit_code
 
 
 def extract_log(
@@ -372,12 +442,12 @@ def extract_log(
         ExtractedLog with extracted sections and layer configs
     """
     if isinstance(log_source, list):
-        lines = merge_log_files(log_source)
+        lines, completion_chunks = merge_log_files(log_source)
         if not lines:
             raise ValueError(f"No .log files found in {log_source}")
         first_path = log_source[0]
     elif log_source.is_dir():
-        lines = merge_log_files(log_source)
+        lines, completion_chunks = merge_log_files(log_source)
         if not lines:
             raise ValueError(f"No .log files found in {log_source}")
         first_path = log_source
@@ -385,6 +455,8 @@ def extract_log(
         with open(log_source, "r", encoding="utf-8", errors="replace") as f:
             lines = f.readlines()
         first_path = log_source
+        nonempty = [ln for ln in lines if ln.strip()]
+        completion_chunks = [(log_source.name, nonempty[:_MARKER_WINDOW], nonempty[-_MARKER_WINDOW:])]
 
     result = ExtractedLog(total_lines=len(lines))
     result.raw_lines = lines
@@ -413,6 +485,20 @@ def extract_log(
     # Avoid matching random "exit code" mentions in logs (e.g., hugepages service)
     if match := re.search(r"Process completed with exit code (\d+)", full_text):
         result.exit_code = int(match.group(1))
+
+    # Per-file completion from run-with-log's start/finish sentinels: start but
+    # no finish == hard-killed (timeout-minutes); no start sentinel == not tracked
+    # (e.g. a backgrounded server tail), ignored.
+    start_pattern = (test_patterns or {}).get("log_start_marker")
+    finish_pattern = (test_patterns or {}).get("log_complete_marker")
+    if start_pattern and finish_pattern:
+        complete, incomplete, marker_exit = _evaluate_completion(completion_chunks, start_pattern, finish_pattern)
+        result.log_complete = complete
+        result.incomplete_logs = incomplete
+        # Marker is only the wrapped command's exit; never let it override the
+        # step's own exit code set above.
+        if marker_exit is not None and result.exit_code is None:
+            result.exit_code = marker_exit
 
     # Use provided test patterns or default to empty
     if test_patterns is None:
@@ -919,6 +1005,17 @@ def format_extracted_log(extracted: ExtractedLog) -> str:
                 parts.append("\n[Framework Layer]")
                 for name, cfg in list(lc.framework.items())[:5]:
                     parts.append(f"  {name}: {cfg.value}")
+
+    if extracted.log_complete is False:
+        parts.append("\n" + "=" * 60)
+        parts.append("INCOMPLETE LOG")
+        parts.append("=" * 60)
+        parts.append(
+            "The log ended without its completion marker: the step was killed "
+            "by the GitHub timeout-minutes limit (test ran too long or hung). "
+            "Any errors below may be a separate, independent issue — do not "
+            "assume they caused the timeout."
+        )
 
     parts.append("\n" + "=" * 60)
     parts.append(f"ERROR SECTIONS ({len(extracted.error_sections)} found)")
