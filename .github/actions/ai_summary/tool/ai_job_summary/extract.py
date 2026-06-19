@@ -313,6 +313,24 @@ def _default_expected_error_markers() -> dict:
     return load_config().get("expected_error_markers", {})
 
 
+def _default_ignored_line_patterns() -> list[str]:
+    """Bundled ignored_line_patterns, for direct extract_log() calls without config."""
+    from .config import load_config
+
+    return load_config().get("ignored_line_patterns", [])
+
+
+def _mask_ignored_lines(lines: list[str], patterns: list[str] | None = None) -> list[str]:
+    """Blank whole lines matching any ignored_line_pattern (e.g. pytest SKIPPED
+    results). Such a line is a non-event — the test never ran — so a crash/timeout
+    token quoted in its reason must not reach detection or section extraction."""
+    patterns = patterns if patterns is not None else _default_ignored_line_patterns()
+    if not patterns:
+        return lines
+    rx = re.compile("|".join(patterns))
+    return ["" if rx.search(line) else line for line in lines]
+
+
 # Buffer-flush races can interleave a C++ error line just outside its Python marker
 # block, so masking scans a few lines beyond each bracket and gates on the line's own
 # timestamp falling within the markers' span.
@@ -522,6 +540,7 @@ def extract_log(
     config_patterns: dict | None = None,
     detection_patterns: dict | None = None,
     expected_error_markers: dict | None = None,
+    ignored_line_patterns: list[str] | None = None,
 ) -> ExtractedLog:
     """
     Extract important parts from a CI log.
@@ -559,6 +578,9 @@ def extract_log(
     # they're excluded from EVERYTHING downstream — crash detection and the error
     # sections handed to the LLM alike.
     lines = _mask_expected_errors(lines, expected_error_markers)
+    # Blank non-event lines (e.g. pytest SKIPPED results) so a crash/timeout token
+    # quoted in their reason can't flip the job status.
+    lines = _mask_ignored_lines(lines, ignored_line_patterns)
 
     result = ExtractedLog(total_lines=len(lines))
     result.raw_lines = lines

@@ -50,6 +50,12 @@ expected_error_markers:
   begin: '\[EXPECTED_ERROR BEGIN\].*?message=([''"])(.*?)\1'
   end: '\[EXPECTED_ERROR END\]'
 
+# Whole lines blanked before crash/timeout detection. A pytest SKIPPED result is a
+# non-event (the test never ran), so a crash/timeout token quoted in its skip reason
+# must not flip the job status.
+ignored_line_patterns:
+  - '^SKIPPED\b'
+
 repos:
   default_branches:
     - main
