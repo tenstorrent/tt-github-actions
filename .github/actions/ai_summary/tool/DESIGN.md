@@ -80,6 +80,29 @@ common/llm_client.py → LLM client (TT Chat / OpenAI compatible)
    `apply_llm_status()`. LLM-reported `infra:*` → INFRA_FAILURE.
 9. Write `ai_job_summary_{JOB_ID}.{md,json}`.
 
+## Log masking
+
+`extract_log` blanks lines up front, before `get_job_status()` and before the
+error-sections handed to the LLM. Two passes, both config-driven (bundled
+`analysis.yaml`, extendable per project); order is irrelevant — they target
+disjoint lines.
+
+1. **Declared expected errors** (`expected_error_markers`). A test brackets a
+   deliberately-provoked error via the `expect_error` fixture (tt-metal conftest):
+   `[EXPECTED_ERROR BEGIN] <Type> message="<pat>"` … `[EXPECTED_ERROR END]`. The
+   two markers, plus any line within ±5 of the bracket that both matches `<pat>`
+   and carries a timestamp inside `[BEGIN_ts, END_ts]`, are blanked. The window +
+   timestamp gate tolerate buffer-flush interleaving — the C++ error can be
+   captured just outside its Python markers — while rejecting an unrelated
+   late-flushed line that drifted inside. No marker timestamps → fall back to
+   masking strictly between the markers. `begin` must capture the message as its
+   last group.
+2. **Non-event lines** (`ignored_line_patterns`, e.g. `^SKIPPED`). A skipped test
+   never ran, so a crash/timeout token quoted in its skip reason must not flip
+   status; the whole line is blanked.
+
+Invariant: a status-flipping token counts as real only if it survives both passes.
+
 ## Status logic
 
 Each status has exactly one owner:

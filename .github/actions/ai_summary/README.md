@@ -33,6 +33,10 @@ flowchart LR
 | 🔴 `TIMEOUT`            | Hung or over budget |
 | 🟣 `INFRA_FAILURE`      | Runner / setup / artifact issue |
 
+Detection runs on **masked** logs: errors a test declared expected (`expect_error`)
+and non-event lines (e.g. `SKIPPED`) are blanked first, so they can't flip status.
+See [DESIGN — Log masking](tool/DESIGN.md#log-masking).
+
 ## Reference
 
 - Per-leg step → [`job/README.md`](job/README.md)
