@@ -9,7 +9,12 @@ from unittest.mock import patch
 
 import pytest
 
-from ai_run_summary.cli import main, _should_call_llm, _resolve_run_metadata, synthesize_missing_legs
+from ai_run_summary.cli import (
+    main,
+    _should_call_llm,
+    _resolve_run_metadata,
+    synthesize_missing_legs,
+)
 
 
 class TestShouldCallLlm:
@@ -194,6 +199,23 @@ class TestMain:
         # .html is written alongside .md and consumed by Slack screenshot.
         assert (tmp_path / "out" / "ai_run_summary_99.html").exists()
 
+    def test_writes_json_alongside_md_and_html(self, tmp_path):
+        self._write_summaries(tmp_path)
+        config_str = self._config_json(tmp_path, input_dir=str(tmp_path), output_dir=str(tmp_path), model="none")
+        with patch("sys.argv", ["ai-run-summary", "--config", config_str]):
+            with patch.dict(os.environ, {"GITHUB_RUN_ID": "12345"}, clear=False):
+                main()
+        json_file = tmp_path / "ai_run_summary_12345.json"
+        assert json_file.exists()
+        data = json.loads(json_file.read_text())
+        assert data["run_id"] == "12345"
+        assert data["total_jobs"] == 1
+        assert data["succeeded"] == [{"job_name": "test-job", "job_url": ""}]
+        assert data["failed"] == []
+        assert data["infra_failure"] == []
+        # narrative must not leak into the machine-readable JSON
+        assert "narrative" not in data
+
     def test_env_vars_in_workspace_expanded(self, tmp_path, monkeypatch):
         """Caller writes "$GITHUB_WORKSPACE"; tool expands at runtime.
 
@@ -219,7 +241,13 @@ class TestMain:
     def test_expected_jobs_without_run_result_hard_fails(self, tmp_path, capsys):
         self._write_summaries(tmp_path)
         config_str = self._config_json(tmp_path, input_dir=str(tmp_path), output_dir=str(tmp_path), model="none")
-        argv = ["ai-run-summary", "--config", config_str, "--expected-jobs", '[{"name":"X"}]']
+        argv = [
+            "ai-run-summary",
+            "--config",
+            config_str,
+            "--expected-jobs",
+            '[{"name":"X"}]',
+        ]
         with pytest.raises(SystemExit) as exc:
             with patch("sys.argv", argv):
                 main()

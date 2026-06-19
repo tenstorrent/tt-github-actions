@@ -181,13 +181,20 @@ runs:
         fi
         echo "report_file=$REPORT_FILE" >> "$GITHUB_OUTPUT"
 
+        # Machine-readable sibling written next to the .md by the tool. Emit
+        # its path only when present so a missing JSON doesn't fail the upload.
+        JSON_FILE="${REPORT_FILE%.md}.json"
+        [ -f "$JSON_FILE" ] && echo "json_file=$JSON_FILE" >> "$GITHUB_OUTPUT"
+
     - name: Upload run summary
       if: always() && !cancelled() && steps.summarize.outputs.report_file != ''
       continue-on-error: true
       uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
         name: ai_run_summary_${{ github.run_id }}
-        path: ${{ steps.summarize.outputs.report_file }}
+        path: |
+          ${{ steps.summarize.outputs.report_file }}
+          ${{ steps.summarize.outputs.json_file }}
 
     - name: Decide whether to deliver Slack
       id: slack-gate
