@@ -49,7 +49,7 @@ runs:
         echo "job_url=${JOB_URL}" >> "$GITHUB_OUTPUT"
 
     - name: Install uv
-      uses: astral-sh/setup-uv@v5
+      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
     - name: Setup tool
       id: setup
@@ -137,7 +137,7 @@ runs:
     - name: Upload AI summary
       if: always() && !cancelled() && steps.summarize.outputs.summary_dir != ''
       continue-on-error: true
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: ai_job_summary_${{ steps.job-meta.outputs.job_id }}
         path: |
