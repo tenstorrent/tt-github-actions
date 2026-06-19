@@ -31,9 +31,7 @@ class TestShouldCallLlm:
         assert _should_call_llm({}) is False
 
     def test_valid_model(self):
-        assert (
-            _should_call_llm({"model": "anthropic/claude-sonnet-4-5-20250929"}) is True
-        )
+        assert _should_call_llm({"model": "anthropic/claude-sonnet-4-5-20250929"}) is True
 
 
 class TestResolveRunMetadata:
@@ -122,27 +120,21 @@ class TestMain:
         assert "must be a JSON object" in capsys.readouterr().err
 
     def test_missing_output_dir_exits(self, tmp_path):
-        config_str = self._config_json(
-            tmp_path, input_dir=str(tmp_path)
-        )  # no output_dir
+        config_str = self._config_json(tmp_path, input_dir=str(tmp_path))  # no output_dir
         with pytest.raises(SystemExit) as exc:
             with patch("sys.argv", ["ai-run-summary", "--config", config_str]):
                 main()
         assert exc.value.code == 1
 
     def test_missing_input_dir_exits(self, tmp_path):
-        config_str = self._config_json(
-            tmp_path, output_dir=str(tmp_path)
-        )  # no input_dir
+        config_str = self._config_json(tmp_path, output_dir=str(tmp_path))  # no input_dir
         with pytest.raises(SystemExit) as exc:
             with patch("sys.argv", ["ai-run-summary", "--config", config_str]):
                 main()
         assert exc.value.code == 1
 
     def test_dotdot_in_input_dir_exits(self, tmp_path, capsys):
-        config_str = self._config_json(
-            tmp_path, input_dir="../escape", output_dir="out"
-        )
+        config_str = self._config_json(tmp_path, input_dir="../escape", output_dir="out")
         with pytest.raises(SystemExit):
             with patch("sys.argv", ["ai-run-summary", "--config", config_str]):
                 main()
@@ -157,9 +149,7 @@ class TestMain:
 
     def test_model_none_skips_llm(self, tmp_path):
         self._write_summaries(tmp_path)
-        config_str = self._config_json(
-            tmp_path, input_dir=str(tmp_path), output_dir=str(tmp_path), model="none"
-        )
+        config_str = self._config_json(tmp_path, input_dir=str(tmp_path), output_dir=str(tmp_path), model="none")
         with patch("sys.argv", ["ai-run-summary", "--config", config_str]):
             with patch.dict(os.environ, {"GITHUB_RUN_ID": "12345"}, clear=False):
                 main()
@@ -169,9 +159,7 @@ class TestMain:
 
     def test_empty_summaries_dir_warns(self, tmp_path, capsys):
         tmp_path.mkdir(parents=True, exist_ok=True)
-        config_str = self._config_json(
-            tmp_path, input_dir=str(tmp_path), output_dir=str(tmp_path), model="none"
-        )
+        config_str = self._config_json(tmp_path, input_dir=str(tmp_path), output_dir=str(tmp_path), model="none")
         with patch("sys.argv", ["ai-run-summary", "--config", config_str]):
             main()
         stderr = capsys.readouterr().err
@@ -179,9 +167,7 @@ class TestMain:
 
     def test_run_metadata_from_env(self, tmp_path):
         self._write_summaries(tmp_path)
-        config_str = self._config_json(
-            tmp_path, input_dir=str(tmp_path), output_dir=str(tmp_path), model="none"
-        )
+        config_str = self._config_json(tmp_path, input_dir=str(tmp_path), output_dir=str(tmp_path), model="none")
         env = {
             "GITHUB_RUN_ID": "77777",
             "GITHUB_SERVER_URL": "https://github.com",
@@ -215,9 +201,7 @@ class TestMain:
 
     def test_writes_json_alongside_md_and_html(self, tmp_path):
         self._write_summaries(tmp_path)
-        config_str = self._config_json(
-            tmp_path, input_dir=str(tmp_path), output_dir=str(tmp_path), model="none"
-        )
+        config_str = self._config_json(tmp_path, input_dir=str(tmp_path), output_dir=str(tmp_path), model="none")
         with patch("sys.argv", ["ai-run-summary", "--config", config_str]):
             with patch.dict(os.environ, {"GITHUB_RUN_ID": "12345"}, clear=False):
                 main()
@@ -256,9 +240,7 @@ class TestMain:
 
     def test_expected_jobs_without_run_result_hard_fails(self, tmp_path, capsys):
         self._write_summaries(tmp_path)
-        config_str = self._config_json(
-            tmp_path, input_dir=str(tmp_path), output_dir=str(tmp_path), model="none"
-        )
+        config_str = self._config_json(tmp_path, input_dir=str(tmp_path), output_dir=str(tmp_path), model="none")
         argv = [
             "ai-run-summary",
             "--config",
@@ -276,9 +258,7 @@ class TestMain:
 
     def test_run_result_without_expected_jobs_hard_fails(self, tmp_path, capsys):
         self._write_summaries(tmp_path)
-        config_str = self._config_json(
-            tmp_path, input_dir=str(tmp_path), output_dir=str(tmp_path), model="none"
-        )
+        config_str = self._config_json(tmp_path, input_dir=str(tmp_path), output_dir=str(tmp_path), model="none")
         argv = ["ai-run-summary", "--config", config_str, "--run-result", "failure"]
         with pytest.raises(SystemExit) as exc:
             with patch("sys.argv", argv):
@@ -307,9 +287,7 @@ class TestSynthesizeMissingLegs:
 
         assert stats == {"infra_stubbed": 1}
         produced = {
-            json.loads(f.read_text())["_job"]["name"]: json.loads(f.read_text())[
-                "_job"
-            ]["status"]
+            json.loads(f.read_text())["_job"]["name"]: json.loads(f.read_text())["_job"]["status"]
             for f in summary_dir.glob("*.json")
         }
         assert produced == {"[N150] Alpha": "SUCCESS", "[N150] Beta": "INFRA FAILURE"}
@@ -331,10 +309,7 @@ class TestSynthesizeMissingLegs:
         stats = synthesize_missing_legs(summary_dir, expected, run_result="cancelled")
 
         assert stats == {"infra_stubbed": 0}
-        remaining = {
-            json.loads(f.read_text())["_job"]["name"]
-            for f in summary_dir.glob("*.json")
-        }
+        remaining = {json.loads(f.read_text())["_job"]["name"] for f in summary_dir.glob("*.json")}
         assert remaining == {"[N150] Alpha"}
 
     def test_accepts_json_string(self, tmp_path):
@@ -376,9 +351,7 @@ class TestSynthesizeMissingLegs:
     def test_malformed_json_string_warns_and_returns_zero(self, tmp_path, capsys):
         summary_dir = tmp_path / "summaries"
 
-        stats = synthesize_missing_legs(
-            summary_dir, "{not valid json", run_result="failure"
-        )
+        stats = synthesize_missing_legs(summary_dir, "{not valid json", run_result="failure")
 
         assert stats == {"infra_stubbed": 0}
         captured = capsys.readouterr()
@@ -417,9 +390,7 @@ class TestSynthesizeMissingLegs:
 
     def test_json_dict_warns_and_returns_zero(self, tmp_path, capsys):
         # JSON object instead of array — log a warning, don't crash.
-        stats = synthesize_missing_legs(
-            tmp_path, '{"name":"Alpha"}', run_result="failure"
-        )
+        stats = synthesize_missing_legs(tmp_path, '{"name":"Alpha"}', run_result="failure")
         assert stats == {"infra_stubbed": 0}
         assert "must be a JSON array" in capsys.readouterr().err
 

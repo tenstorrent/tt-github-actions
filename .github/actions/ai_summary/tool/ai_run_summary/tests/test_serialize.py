@@ -16,9 +16,7 @@ META = {
 
 
 def _job(name, status, **kw):
-    return ParsedJobSummary(
-        source_file=Path(f"{name}.json"), job_name=name, status=status, **kw
-    )
+    return ParsedJobSummary(source_file=Path(f"{name}.json"), job_name=name, status=status, **kw)
 
 
 class TestBuildRunJson:
@@ -56,9 +54,7 @@ class TestBuildRunJson:
         assert [j["job_name"] for j in out["infra_failure"]] == ["ghost"]
 
     def test_succeeded_carries_name_and_url_only(self):
-        out = build_run_json(
-            [_job("ok", "SUCCESS", job_url="u/ok", category="x")], META
-        )
+        out = build_run_json([_job("ok", "SUCCESS", job_url="u/ok", category="x")], META)
         assert out["succeeded"] == [{"job_name": "ok", "job_url": "u/ok"}]
 
     def test_failed_shape_keeps_precise_status_and_fields(self):

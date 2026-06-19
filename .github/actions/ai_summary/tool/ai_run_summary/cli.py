@@ -128,8 +128,7 @@ def synthesize_missing_legs(
                 jobs = json.loads(expected_jobs)
             except json.JSONDecodeError as e:
                 print(
-                    f"::warning::--expected-jobs is not valid JSON ({e}); "
-                    f"skipping infra-failure synthesis",
+                    f"::warning::--expected-jobs is not valid JSON ({e}); " f"skipping infra-failure synthesis",
                     file=sys.stderr,
                 )
                 return {"infra_stubbed": 0}
@@ -373,9 +372,7 @@ def main():
     (out / f"{stem}.html").write_text(report.html)
     # Machine-readable sibling. Built from summaries (not stats, which keeps
     # only failed jobs) so successes and synthesized infra rows both appear.
-    (out / f"{stem}.json").write_text(
-        json.dumps(build_run_json(summaries, meta), indent=2)
-    )
+    (out / f"{stem}.json").write_text(json.dumps(build_run_json(summaries, meta), indent=2))
     print(f"Report written to: {out / stem}.md", file=sys.stderr)
 
 
