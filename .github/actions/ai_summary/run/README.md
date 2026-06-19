@@ -77,10 +77,15 @@ The action takes inline JSON — no separate config file.
 - `input_dir` — directory where per-job artifacts are downloaded.
   Artifacts matching `ai_job_summary_*` are pulled here. **The directory
   is deleted at the end of the action**; do not store anything else here.
-- `output_dir` — directory where the aggregated report is written.
+- `output_dir` — directory where the aggregated report is written, as
+  `ai_run_summary_<run_id>.md`, `.html`, and `.json`. The `.json` carries the
+  factual per-job data (no LLM narrative) for downstream machine consumers and
+  is the only place INFRA_FAILURE rows for legs that produced no artifact
+  appear. The `.md` and `.json` are both included in the uploaded
+  `ai_run_summary_<run_id>` artifact.
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| `report-file` | Path to the aggregated `.md` report |
+| `report-file` | Path to the aggregated `.md` report (the `.json` and `.html` siblings sit next to it) |

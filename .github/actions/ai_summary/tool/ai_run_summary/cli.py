@@ -24,6 +24,7 @@ from .aggregate import compute_stats
 from .format import format_run_report
 from .narrative import generate_narrative
 from .parse import parse_summaries_dir
+from .serialize import build_run_json
 
 
 def _should_call_llm(config: dict) -> bool:
@@ -344,6 +345,9 @@ def main():
     stem = f"ai_run_summary_{run_id}"
     (out / f"{stem}.md").write_text(report.md)
     (out / f"{stem}.html").write_text(report.html)
+    # Machine-readable sibling. Built from summaries (not stats, which keeps
+    # only failed jobs) so successes and synthesized infra rows both appear.
+    (out / f"{stem}.json").write_text(json.dumps(build_run_json(summaries, meta), indent=2))
     print(f"Report written to: {out / stem}.md", file=sys.stderr)
 
 
