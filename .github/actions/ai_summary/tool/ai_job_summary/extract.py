@@ -297,6 +297,120 @@ FINAL_STATUS_PATTERNS = [
 _MARKER_WINDOW = 10
 
 
+# A test declares expected errors via the `expect_error` fixture (tt-metal
+# conftest.py), which brackets the block in the log and states the message to ignore:
+#   [EXPECTED_ERROR BEGIN] <ExceptionType> message='<pattern>'
+#   ... <any line matching <pattern>> ...
+#   [EXPECTED_ERROR END] <ExceptionType> message='<pattern>'
+# The developer chooses the message and the block; any line inside the block matching
+# <pattern> is neutralized before crash detection. This is deliberately general — it
+# is not tied to TT_FATAL or any fixed token set. A different line in the block, or
+# anything outside a bracket, is left intact.
+def _default_expected_error_markers() -> dict:
+    """Bundled expected_error_markers, for direct extract_log() calls without config."""
+    from .config import load_config
+
+    return load_config().get("expected_error_markers", {})
+
+
+def _default_ignored_line_patterns() -> list[str]:
+    """Bundled ignored_line_patterns, for direct extract_log() calls without config."""
+    from .config import load_config
+
+    return load_config().get("ignored_line_patterns", [])
+
+
+def _mask_ignored_lines(lines: list[str], patterns: list[str] | None = None) -> list[str]:
+    """Blank whole lines matching any ignored_line_pattern (e.g. pytest SKIPPED
+    results). Such a line is a non-event — the test never ran — so a crash/timeout
+    token quoted in its reason must not reach detection or section extraction."""
+    patterns = patterns if patterns is not None else _default_ignored_line_patterns()
+    if not patterns:
+        return lines
+    rx = re.compile("|".join(patterns))
+    return ["" if rx.search(line) else line for line in lines]
+
+
+# Buffer-flush races can interleave a C++ error line just outside its Python marker
+# block, so masking scans a few lines beyond each bracket and gates on the line's own
+# timestamp falling within the markers' span.
+_EXPECTED_ERROR_WINDOW = 5
+_LINE_TIME = re.compile(r"(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}[.,]\d+)")
+
+
+def _line_time(line: str) -> datetime | None:
+    """Millisecond timestamp of a log line (loguru '.mmm' or stdlib logging ',mmm').
+    Local to expected-error masking; global parse_timestamp stays second-grained."""
+    m = _LINE_TIME.search(line)
+    if not m:
+        return None
+    try:
+        return datetime.fromisoformat(m.group(1).replace(",", "."))
+    except ValueError:
+        return None
+
+
+def _expected_error_ranges(lines: list[str], begin: re.Pattern, end: re.Pattern) -> list[tuple[int, int, str]]:
+    """Line ranges of properly closed [EXPECTED_ERROR BEGIN ... message=...]...[END]
+    blocks, paired with the declared message (the begin marker's last capture group).
+    An unclosed block is ignored, so its contents are never masked."""
+    ranges: list[tuple[int, int, str]] = []
+    start: int | None = None
+    pattern = ""
+    for i, line in enumerate(lines):
+        if start is None:
+            if m := begin.search(line):
+                start, pattern = i, (m.group(m.lastindex) if m.lastindex else "")
+        elif end.search(line):
+            ranges.append((start, i, pattern))
+            start = None
+    return ranges
+
+
+def _mask_expected_errors(lines: list[str], markers: dict | None = None) -> list[str]:
+    """Return a copy of `lines` with developer-declared expected errors blanked out.
+    For each closed [EXPECTED_ERROR BEGIN ... message='<pat>']...[END] bracket, the two
+    marker lines and any nearby line matching <pat> whose timestamp falls within the
+    markers' span are replaced with "" — so they are seen by neither crash detection nor
+    section extraction. Everything else — a different line in the block, or anything
+    outside the span — is untouched.
+
+    The begin/end marker regexes live in analysis.yaml (expected_error_markers);
+    begin must capture the message as its last group. Missing markers → no-op."""
+    markers = markers if markers is not None else _default_expected_error_markers()
+    begin_pat, end_pat = markers.get("begin"), markers.get("end")
+    if not begin_pat or not end_pat:
+        return lines
+    begin, end = re.compile(begin_pat), re.compile(end_pat)
+    ranges = _expected_error_ranges(lines, begin, end)
+    if not ranges:
+        return lines
+    masked = list(lines)
+    n = len(lines)
+    for start, block_end, pattern in ranges:
+        masked[start] = ""  # [EXPECTED_ERROR BEGIN ...] marker
+        masked[block_end] = ""  # [EXPECTED_ERROR END] marker
+        try:
+            pat = re.compile(pattern)
+        except re.error:
+            continue  # malformed pattern → mask only the markers, treat content as real
+        # The error may have interleaved just outside the bracket (or an unrelated
+        # late-flushed line drifted inside it), so scan a window around the bracket and
+        # mask a match only when its own timestamp falls within the markers' span.
+        begin_ts, end_ts = _line_time(lines[start]), _line_time(lines[block_end])
+        for i in range(max(0, start - _EXPECTED_ERROR_WINDOW), min(n, block_end + _EXPECTED_ERROR_WINDOW + 1)):
+            if i in (start, block_end) or not pat.search(masked[i]):
+                continue
+            if begin_ts and end_ts:
+                t = _line_time(masked[i])
+                if t is None or not (begin_ts <= t <= end_ts):
+                    continue
+            elif not (start < i < block_end):
+                continue  # no marker timestamps to gate on → restrict to inside the bracket
+            masked[i] = ""
+    return masked
+
+
 def merge_log_files(
     log_dirs: Path | list[Path],
 ) -> tuple[list[str], list[tuple[str, list[str], list[str]]]]:
@@ -425,6 +539,8 @@ def extract_log(
     test_patterns: dict | None = None,
     config_patterns: dict | None = None,
     detection_patterns: dict | None = None,
+    expected_error_markers: dict | None = None,
+    ignored_line_patterns: list[str] | None = None,
 ) -> ExtractedLog:
     """
     Extract important parts from a CI log.
@@ -437,6 +553,10 @@ def extract_log(
         max_chars: Maximum total characters in extracted content
         test_patterns: Test result patterns
         config_patterns: Configuration extraction patterns for layer-aware attribution
+        detection_patterns: crash/timeout regex groups (analysis.yaml detection_patterns)
+        expected_error_markers: begin/end regexes bracketing developer-declared expected
+                    errors; matched lines are masked before detection
+        ignored_line_patterns: whole-line regexes blanked before detection (e.g. ^SKIPPED)
 
     Returns:
         ExtractedLog with extracted sections and layer configs
@@ -457,6 +577,14 @@ def extract_log(
         first_path = log_source
         nonempty = [ln for ln in lines if ln.strip()]
         completion_chunks = [(log_source.name, nonempty[:_MARKER_WINDOW], nonempty[-_MARKER_WINDOW:])]
+
+    # Strip developer-declared expected errors (expect_error brackets) up front, so
+    # they're excluded from EVERYTHING downstream — crash detection and the error
+    # sections handed to the LLM alike.
+    lines = _mask_expected_errors(lines, expected_error_markers)
+    # Blank non-event lines (e.g. pytest SKIPPED results) so a crash/timeout token
+    # quoted in their reason can't flip the job status.
+    lines = _mask_ignored_lines(lines, ignored_line_patterns)
 
     result = ExtractedLog(total_lines=len(lines))
     result.raw_lines = lines

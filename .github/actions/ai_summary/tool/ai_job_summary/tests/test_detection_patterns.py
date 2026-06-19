@@ -80,3 +80,91 @@ class TestOverlay:
     def test_custom_pattern_detected(self, tmp_path):
         det = {"crash": GOLDEN["crash"] + ["MY_CUSTOM_FATAL"]}
         assert _extract(tmp_path, "MY_CUSTOM_FATAL hit\n", detection_patterns=det).has_crash
+
+
+class TestExpectedErrorMasking:
+    """A TT_FATAL a test declared expected is masked before the analysis.yaml
+    crash patterns scan; an undeclared error in the same block still crashes.
+    The first two cases have no timestamps and exercise the fallback (mask only
+    inside the bracket); the rest exercise the timestamp-gated window."""
+
+    def test_declared_error_is_masked(self, tmp_path):
+        log = (
+            '[EXPECTED_ERROR BEGIN] RuntimeError message="must be BFLOAT8_B"\n'
+            "TT_FATAL global_tensor must be BFLOAT8_B or BFLOAT16, got Float32\n"
+            '[EXPECTED_ERROR END] RuntimeError message="must be BFLOAT8_B"\n'
+        )
+        assert not _extract(tmp_path, log).has_crash
+
+    def test_undeclared_error_in_block_still_crashes(self, tmp_path):
+        log = (
+            '[EXPECTED_ERROR BEGIN] RuntimeError message="must be BFLOAT8_B"\n'
+            "TT_FATAL unrelated device hang\n"
+            '[EXPECTED_ERROR END] RuntimeError message="must be BFLOAT8_B"\n'
+        )
+        assert _extract(tmp_path, log).has_crash
+
+    # Buffer-flush races interleave the C++ TT_FATAL just outside its Python markers.
+    def test_error_flushed_before_begin_is_masked(self, tmp_path):
+        log = (
+            "2026-06-19 08:13:19.562 | critical | TT_FATAL must be BFLOAT8_B or BFLOAT16\n"
+            '2026-06-19 08:13:19.561 | INFO | [EXPECTED_ERROR BEGIN] RuntimeError message="must be BFLOAT8_B"\n'
+            '2026-06-19 08:13:19.563 | INFO | [EXPECTED_ERROR END] RuntimeError message="must be BFLOAT8_B"\n'
+        )
+        assert not _extract(tmp_path, log).has_crash
+
+    def test_error_flushed_after_end_is_masked(self, tmp_path):
+        log = (
+            '2026-06-19 08:13:19.561 | INFO | [EXPECTED_ERROR BEGIN] RuntimeError message="must be BFLOAT8_B"\n'
+            '2026-06-19 08:13:19.563 | INFO | [EXPECTED_ERROR END] RuntimeError message="must be BFLOAT8_B"\n'
+            "2026-06-19 08:13:19.562 | critical | TT_FATAL must be BFLOAT8_B or BFLOAT16\n"
+        )
+        assert not _extract(tmp_path, log).has_crash
+
+    def test_same_millisecond_error_is_masked(self, tmp_path):
+        log = (
+            '2026-06-19 08:13:19.561 | INFO | [EXPECTED_ERROR BEGIN] RuntimeError message="must be BFLOAT8_B"\n'
+            "2026-06-19 08:13:19.561 | critical | TT_FATAL must be BFLOAT8_B or BFLOAT16\n"
+            '2026-06-19 08:13:19.561 | INFO | [EXPECTED_ERROR END] RuntimeError message="must be BFLOAT8_B"\n'
+        )
+        assert not _extract(tmp_path, log).has_crash
+
+    def test_error_inside_bracket_but_outside_time_span_still_crashes(self, tmp_path):
+        # Physically between the markers, but timestamped outside their span — a late
+        # flush from elsewhere, not this expected error.
+        log = (
+            '2026-06-19 08:13:19.561 | INFO | [EXPECTED_ERROR BEGIN] RuntimeError message="must be BFLOAT8_B"\n'
+            "2026-06-19 08:13:25.000 | critical | TT_FATAL must be BFLOAT8_B or BFLOAT16\n"
+            '2026-06-19 08:13:19.563 | INFO | [EXPECTED_ERROR END] RuntimeError message="must be BFLOAT8_B"\n'
+        )
+        assert _extract(tmp_path, log).has_crash
+
+    def test_match_beyond_window_still_crashes(self, tmp_path):
+        filler = "".join(f"2026-06-19 08:13:19.562 | INFO | noise {i}\n" for i in range(6))
+        log = (
+            '2026-06-19 08:13:19.561 | INFO | [EXPECTED_ERROR BEGIN] RuntimeError message="must be BFLOAT8_B"\n'
+            '2026-06-19 08:13:19.563 | INFO | [EXPECTED_ERROR END] RuntimeError message="must be BFLOAT8_B"\n'
+            + filler
+            + "2026-06-19 08:13:19.562 | critical | TT_FATAL must be BFLOAT8_B or BFLOAT16\n"
+        )
+        assert _extract(tmp_path, log).has_crash
+
+
+class TestIgnoredLines:
+    """A pytest SKIPPED result is a non-event; a crash/timeout token quoted in its
+    reason must not flip the job status."""
+
+    def test_skipped_line_with_crash_token_is_not_a_crash(self, tmp_path):
+        log = "SKIPPED [1] tests/foo.py:474: Disabled by #44858: blackhole TT_FATAL num_cores\n"
+        assert not _extract(tmp_path, log).has_crash
+
+    def test_skipped_line_with_timeout_token_is_not_a_timeout(self, tmp_path):
+        log = "SKIPPED [1] tests/foo.py:12: flaky, test timed out on nightly\n"
+        assert not _extract(tmp_path, log).has_timeout
+
+    def test_real_crash_not_on_skipped_line_still_crashes(self, tmp_path):
+        log = (
+            "SKIPPED [1] tests/foo.py:474: Disabled by #44858: blackhole TT_FATAL num_cores\n"
+            "2026-06-19 08:13:19.562 | critical | TT_FATAL: real device assert\n"
+        )
+        assert _extract(tmp_path, log).has_crash

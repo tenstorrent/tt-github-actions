@@ -239,6 +239,8 @@ def main():
             present_dirs,
             test_patterns=test_patterns,
             detection_patterns=config.get("detection_patterns"),
+            expected_error_markers=config.get("expected_error_markers"),
+            ignored_line_patterns=config.get("ignored_line_patterns"),
         )
         print(
             f"Extracted {extracted.extracted_lines}/{extracted.total_lines} lines "
