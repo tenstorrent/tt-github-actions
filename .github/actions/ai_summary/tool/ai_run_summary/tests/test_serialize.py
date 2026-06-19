@@ -16,7 +16,9 @@ META = {
 
 
 def _job(name, status, **kw):
-    return ParsedJobSummary(source_file=Path(f"{name}.json"), job_name=name, status=status, **kw)
+    return ParsedJobSummary(
+        source_file=Path(f"{name}.json"), job_name=name, status=status, **kw
+    )
 
 
 class TestBuildRunJson:
@@ -30,11 +32,22 @@ class TestBuildRunJson:
     def test_three_way_grouping(self):
         summaries = [
             _job("ok", "SUCCESS", job_url="u/ok"),
-            _job("boom", "CRASHED", job_url="u/boom", category="cat", subcategory="sub",
-                 error_message="kaboom", root_cause="bad ptr"),
+            _job(
+                "boom",
+                "CRASHED",
+                job_url="u/boom",
+                category="cat",
+                subcategory="sub",
+                error_message="kaboom",
+                root_cause="bad ptr",
+            ),
             _job("late", "TIMEOUT", job_url="u/late"),
-            _job("ghost", "INFRA_FAILURE", category="infra:no_artifact",
-                 root_cause="no artifact"),
+            _job(
+                "ghost",
+                "INFRA_FAILURE",
+                category="infra:no_artifact",
+                root_cause="no artifact",
+            ),
         ]
         out = build_run_json(summaries, META)
         assert out["total_jobs"] == 4
@@ -43,39 +56,65 @@ class TestBuildRunJson:
         assert [j["job_name"] for j in out["infra_failure"]] == ["ghost"]
 
     def test_succeeded_carries_name_and_url_only(self):
-        out = build_run_json([_job("ok", "SUCCESS", job_url="u/ok", category="x")], META)
+        out = build_run_json(
+            [_job("ok", "SUCCESS", job_url="u/ok", category="x")], META
+        )
         assert out["succeeded"] == [{"job_name": "ok", "job_url": "u/ok"}]
 
     def test_failed_shape_keeps_precise_status_and_fields(self):
-        summaries = [_job("late", "TIMEOUT", job_url="u/late", category="c", subcategory="s",
-                          error_message="took too long", root_cause="hang")]
+        summaries = [
+            _job(
+                "late",
+                "TIMEOUT",
+                job_url="u/late",
+                category="c",
+                subcategory="s",
+                error_message="took too long",
+                root_cause="hang",
+            )
+        ]
         out = build_run_json(summaries, META)
-        assert out["failed"] == [{
-            "job_name": "late",
-            "job_url": "u/late",
-            "status": "TIMEOUT",
-            "category": "c",
-            "subcategory": "s",
-            "error_message": "took too long",
-            "root_cause": "hang",
-        }]
+        assert out["failed"] == [
+            {
+                "job_name": "late",
+                "job_url": "u/late",
+                "status": "TIMEOUT",
+                "category": "c",
+                "subcategory": "s",
+                "error_message": "took too long",
+                "root_cause": "hang",
+            }
+        ]
 
     def test_infra_failure_shares_failed_shape(self):
-        summaries = [_job("ghost", "INFRA_FAILURE", category="infra:no_artifact",
-                          subcategory="", error_message="", root_cause="no artifact")]
+        summaries = [
+            _job(
+                "ghost",
+                "INFRA_FAILURE",
+                category="infra:no_artifact",
+                subcategory="",
+                error_message="",
+                root_cause="no artifact",
+            )
+        ]
         out = build_run_json(summaries, META)
-        assert out["infra_failure"] == [{
-            "job_name": "ghost",
-            "job_url": "",
-            "status": "INFRA_FAILURE",
-            "category": "infra:no_artifact",
-            "subcategory": "",
-            "error_message": "",
-            "root_cause": "no artifact",
-        }]
+        assert out["infra_failure"] == [
+            {
+                "job_name": "ghost",
+                "job_url": "",
+                "status": "INFRA_FAILURE",
+                "category": "infra:no_artifact",
+                "subcategory": "",
+                "error_message": "",
+                "root_cause": "no artifact",
+            }
+        ]
 
     def test_no_failures_run(self):
-        summaries = [_job("a", "SUCCESS", job_url="u/a"), _job("b", "SUCCESS", job_url="u/b")]
+        summaries = [
+            _job("a", "SUCCESS", job_url="u/a"),
+            _job("b", "SUCCESS", job_url="u/b"),
+        ]
         out = build_run_json(summaries, META)
         assert out["total_jobs"] == 2
         assert len(out["succeeded"]) == 2
@@ -84,8 +123,18 @@ class TestBuildRunJson:
 
     def test_infra_stub_only_run(self):
         summaries = [
-            _job("g1", "INFRA_FAILURE", category="infra:no_artifact", root_cause="no artifact"),
-            _job("g2", "INFRA_FAILURE", category="infra:no_artifact", root_cause="no artifact"),
+            _job(
+                "g1",
+                "INFRA_FAILURE",
+                category="infra:no_artifact",
+                root_cause="no artifact",
+            ),
+            _job(
+                "g2",
+                "INFRA_FAILURE",
+                category="infra:no_artifact",
+                root_cause="no artifact",
+            ),
         ]
         out = build_run_json(summaries, META)
         assert out["succeeded"] == []

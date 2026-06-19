@@ -111,7 +111,10 @@ def synthesize_missing_legs(
     crashing the aggregation step.
     """
     if not run_result:
-        print("::warning::--run-result is empty; skipping infra-failure synthesis", file=sys.stderr)
+        print(
+            "::warning::--run-result is empty; skipping infra-failure synthesis",
+            file=sys.stderr,
+        )
         return {"infra_stubbed": 0}
 
     if run_result.lower() in ("cancelled", "skipped"):
@@ -125,7 +128,8 @@ def synthesize_missing_legs(
                 jobs = json.loads(expected_jobs)
             except json.JSONDecodeError as e:
                 print(
-                    f"::warning::--expected-jobs is not valid JSON ({e}); " f"skipping infra-failure synthesis",
+                    f"::warning::--expected-jobs is not valid JSON ({e}); "
+                    f"skipping infra-failure synthesis",
                     file=sys.stderr,
                 )
                 return {"infra_stubbed": 0}
@@ -191,7 +195,11 @@ def main():
     parser = argparse.ArgumentParser(
         description="Aggregate per-job AI summaries into a run-level report",
     )
-    parser.add_argument("--config", required=True, help="JSON config string (model, workspace, input_dir, output_dir)")
+    parser.add_argument(
+        "--config",
+        required=True,
+        help="JSON config string (model, workspace, input_dir, output_dir)",
+    )
     parser.add_argument(
         "--expected-jobs",
         type=str,
@@ -231,7 +239,10 @@ def main():
         print(f"::error::Invalid JSON in --config: {e}", file=sys.stderr)
         sys.exit(1)
     if not isinstance(config, dict):
-        print(f"::error::--config must be a JSON object; got {type(config).__name__}", file=sys.stderr)
+        print(
+            f"::error::--config must be a JSON object; got {type(config).__name__}",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     input_dir = config.get("input_dir")
@@ -249,7 +260,10 @@ def main():
     # able to walk out of the workspace.
     for key, value in (("input_dir", input_dir), ("output_dir", output_dir)):
         if any(part == ".." for part in Path(value).parts):
-            print(f"::error::config[{key}] must not contain '..' components: {value}", file=sys.stderr)
+            print(
+                f"::error::config[{key}] must not contain '..' components: {value}",
+                file=sys.stderr,
+            )
             sys.exit(1)
 
     # workspace anchors relative paths; absolute paths pass through unchanged.
@@ -268,7 +282,10 @@ def main():
     only_expected = args.expected_jobs and not args.run_result
     only_run_result = args.run_result and not args.expected_jobs
     if only_expected or only_run_result:
-        print("::error::--expected-jobs and --run-result must be passed together", file=sys.stderr)
+        print(
+            "::error::--expected-jobs and --run-result must be passed together",
+            file=sys.stderr,
+        )
         sys.exit(1)
     if args.expected_jobs and args.run_result:
         stats = synthesize_missing_legs(
@@ -277,7 +294,10 @@ def main():
             run_result=args.run_result,
         )
         if stats["infra_stubbed"]:
-            print(f"Stubbed {stats['infra_stubbed']} INFRA_FAILURE leg(s) with no summary", file=sys.stderr)
+            print(
+                f"Stubbed {stats['infra_stubbed']} INFRA_FAILURE leg(s) with no summary",
+                file=sys.stderr,
+            )
 
     # Set model from config
     model = config.get("model", "")
@@ -321,10 +341,16 @@ def main():
         try:
             commits = json.loads(args.commits)
             if not isinstance(commits, list):
-                print("::warning::--commits must be a JSON array; skipping commit SHA header", file=sys.stderr)
+                print(
+                    "::warning::--commits must be a JSON array; skipping commit SHA header",
+                    file=sys.stderr,
+                )
                 commits = []
         except json.JSONDecodeError as e:
-            print(f"::warning::--commits is not valid JSON ({e}); skipping commit SHA header", file=sys.stderr)
+            print(
+                f"::warning::--commits is not valid JSON ({e}); skipping commit SHA header",
+                file=sys.stderr,
+            )
 
     # Format report
     report = format_run_report(
@@ -347,7 +373,9 @@ def main():
     (out / f"{stem}.html").write_text(report.html)
     # Machine-readable sibling. Built from summaries (not stats, which keeps
     # only failed jobs) so successes and synthesized infra rows both appear.
-    (out / f"{stem}.json").write_text(json.dumps(build_run_json(summaries, meta), indent=2))
+    (out / f"{stem}.json").write_text(
+        json.dumps(build_run_json(summaries, meta), indent=2)
+    )
     print(f"Report written to: {out / stem}.md", file=sys.stderr)
 
 
