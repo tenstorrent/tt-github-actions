@@ -553,6 +553,10 @@ def extract_log(
         max_chars: Maximum total characters in extracted content
         test_patterns: Test result patterns
         config_patterns: Configuration extraction patterns for layer-aware attribution
+        detection_patterns: crash/timeout regex groups (analysis.yaml detection_patterns)
+        expected_error_markers: begin/end regexes bracketing developer-declared expected
+                    errors; matched lines are masked before detection
+        ignored_line_patterns: whole-line regexes blanked before detection (e.g. ^SKIPPED)
 
     Returns:
         ExtractedLog with extracted sections and layer configs
@@ -574,7 +578,7 @@ def extract_log(
         nonempty = [ln for ln in lines if ln.strip()]
         completion_chunks = [(log_source.name, nonempty[:_MARKER_WINDOW], nonempty[-_MARKER_WINDOW:])]
 
-    # Strip developer-declared expected errors (expect_tt_error brackets) up front, so
+    # Strip developer-declared expected errors (expect_error brackets) up front, so
     # they're excluded from EVERYTHING downstream — crash detection and the error
     # sections handed to the LLM alike.
     lines = _mask_expected_errors(lines, expected_error_markers)
