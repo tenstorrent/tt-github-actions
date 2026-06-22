@@ -51,6 +51,7 @@ def parse_json_summary(file_path: Path) -> Optional[ParsedJobSummary]:
         error_message=data.get("error_message", ""),
         confidence=data.get("confidence", ""),
         failed_tests=failed_tests,
+        log_complete=job.get("log_complete"),
     )
 
 

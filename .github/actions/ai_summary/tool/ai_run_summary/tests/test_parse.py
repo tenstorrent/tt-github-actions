@@ -22,6 +22,20 @@ class TestParseJsonSummary:
         assert result.category == "tt-metal:dispatch"
         assert result.root_cause == "timeout"
 
+    def test_log_complete_read_from_job(self, tmp_path):
+        # ai_job_summary writes _job.log_complete as True/False/None.
+        for value in (True, False, None):
+            data = {"_job": {"status": "CRASHED", "log_complete": value}}
+            f = tmp_path / f"t_{value}.json"
+            f.write_text(json.dumps(data))
+            assert parse_json_summary(f).log_complete is value
+
+    def test_log_complete_defaults_none_when_absent(self, tmp_path):
+        data = {"_job": {"status": "CRASHED"}}
+        f = tmp_path / "t_absent.json"
+        f.write_text(json.dumps(data))
+        assert parse_json_summary(f).log_complete is None
+
     def test_status_from_job_field(self, tmp_path):
         data = {"_job": {"status": "CRASHED"}}
         f = tmp_path / "t.json"

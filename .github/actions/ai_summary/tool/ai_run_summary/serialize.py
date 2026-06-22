@@ -22,6 +22,9 @@ def _failed_row(s: ParsedJobSummary) -> dict:
         "subcategory": s.subcategory,
         "error_message": s.error_message,
         "root_cause": s.root_cause,
+        # True/False/None: whether the job's log reached its finish marker.
+        # False flags a truncated log, so the consumer can distrust the error.
+        "log_complete": s.log_complete,
     }
 
 

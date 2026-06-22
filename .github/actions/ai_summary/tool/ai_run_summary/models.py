@@ -71,6 +71,10 @@ class ParsedJobSummary:
     error_message: str = ""
     confidence: str = ""
     failed_tests: list[str] = field(default_factory=list)
+    # Tri-state from ai_job_summary: True (log reached its finish marker),
+    # False (truncated — e.g. runner killed by GitHub timeout, so the visible
+    # error may not be the real one), None (no finish marker configured).
+    log_complete: bool | None = None
 
 
 @dataclass
