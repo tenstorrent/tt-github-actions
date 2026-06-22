@@ -67,6 +67,7 @@ class TestBuildRunJson:
                 subcategory="s",
                 error_message="took too long",
                 root_cause="hang",
+                log_complete=False,
             )
         ]
         out = build_run_json(summaries, META)
@@ -79,8 +80,21 @@ class TestBuildRunJson:
                 "subcategory": "s",
                 "error_message": "took too long",
                 "root_cause": "hang",
+                "log_complete": False,
             }
         ]
+
+    def test_failed_log_complete_values_passthrough(self):
+        # log_complete is tri-state: True (finished), False (truncated/killed),
+        # None (no finish marker configured) -> JSON true/false/null.
+        summaries = [
+            _job("done", "FAILED", log_complete=True),
+            _job("killed", "FAILED", log_complete=False),
+            _job("unknown", "FAILED", log_complete=None),
+        ]
+        out = build_run_json(summaries, META)
+        got = {r["job_name"]: r["log_complete"] for r in out["failed"]}
+        assert got == {"done": True, "killed": False, "unknown": None}
 
     def test_infra_failure_shares_failed_shape(self):
         summaries = [
@@ -94,6 +108,7 @@ class TestBuildRunJson:
             )
         ]
         out = build_run_json(summaries, META)
+        # Synthesized infra stubs carry no log, so log_complete is null.
         assert out["infra_failure"] == [
             {
                 "job_name": "ghost",
@@ -103,6 +118,7 @@ class TestBuildRunJson:
                 "subcategory": "",
                 "error_message": "",
                 "root_cause": "no artifact",
+                "log_complete": None,
             }
         ]
 

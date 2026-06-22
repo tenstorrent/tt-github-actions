@@ -22,6 +22,7 @@ def _failed_row(s: ParsedJobSummary) -> dict:
         "subcategory": s.subcategory,
         "error_message": s.error_message,
         "root_cause": s.root_cause,
+        "log_complete": s.log_complete,
     }
 
 
