@@ -560,6 +560,28 @@ class TestTimeoutMarkerAbsent:
         assert data["_job"]["status"] == "TIMEOUT"
         assert data["_job"]["log_complete"] is False
 
+    def test_truncated_log_with_warning_noise_is_timeout_without_llm(self, tmp_path):
+        # Benign warnings carrying "failed" (e.g. UMD hugepage Issue #893) seed
+        # error_sections, but with no crash/test failure the run is still a pure
+        # GitHub timeout — declared deterministically, never sent to the LLM.
+        _write_log(
+            tmp_path / "logs",
+            "run.log",
+            "[==tt-log-start-line==]\n"
+            "warning | UMD | bind_area_to_memory_nodeset() failed (physical_device_id: 1)\n"
+            "warning | UMD | hwloc_set_area_membind(): failed: Operation not permitted\n"
+            "INFO: running test_a\n",
+        )
+        config = _config_json(tmp_path, ["logs"])
+        with patch("ai_job_summary.cli.get_llm_client") as mock_llm:
+            _run_cli(["--config", config])
+            mock_llm.assert_not_called()
+        data = json.loads(_read_summary(tmp_path, ".json"))
+        assert data["_job"]["status"] == "TIMEOUT"
+        assert data["_job"]["log_complete"] is False
+        assert data["category"] == "infra:timeout"
+        assert "GitHub timeout" in data["error_message"]
+
     def test_marker_present_clean_log_is_success(self, tmp_path):
         _write_log(
             tmp_path / "logs", "run.log", "[==tt-log-start-line==]\nINFO: ok\n[==tt-log-finish-line==] exit_code=0\n"

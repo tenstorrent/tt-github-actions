@@ -456,7 +456,9 @@ The error manifested in **{summary.layer}** layer but was caused by configuratio
 
         if summary.error_message:
             warn = ""
-            if extracted_log and extracted_log.log_complete is False:
+            # Warn about the cutoff only when a real failure outranks it; a
+            # pure timeout has nothing to hide. Matches the header flag above.
+            if extracted_log and extracted_log.log_complete is False and job_status.status_text != "TIMEOUT":
                 which = ", ".join(extracted_log.incomplete_logs or [])
                 suffix = f" (incomplete: {which})" if which else ""
                 warn = f"⚠️ Log truncated due to GitHub timeout, other issues might be hidden.{suffix}\n"

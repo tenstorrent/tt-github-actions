@@ -283,16 +283,13 @@ def main():
             )
             return
 
-        # Clean log, marker absent, all dirs present → GitHub timeout-minutes
-        # kill. Authoritative; no LLM needed.
-        if (
-            job_status.status_text == "TIMEOUT"
-            and extracted.log_complete is False
-            and not is_infra_failure
-            and not extracted.error_sections
-        ):
+        # A TIMEOUT status already rules out crash/exit/test/eval, so any error
+        # sections are noise — don't route to the LLM, which has no TIMEOUT
+        # verdict and would call the noise a CRASH.
+        if job_status.status_text == "TIMEOUT" and extracted.log_complete is False and not is_infra_failure:
             summary = FailureSummary()
             summary.category = "infra:timeout"
+            summary.error_message = "Job hit the GitHub timeout limit and was killed."
             context = CIContext()
             md = format_summary_markdown(
                 summary,
