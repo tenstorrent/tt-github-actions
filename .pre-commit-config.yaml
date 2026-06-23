@@ -1,3 +1,5 @@
+exclude: '^\.github/actions/checkout/'
+
 repos:
   - repo: https://github.com/espressif/check-copyright/
     rev: v1.0.3
