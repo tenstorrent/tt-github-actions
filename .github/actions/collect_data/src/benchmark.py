@@ -92,7 +92,7 @@ def _get_model_reports(workflow_outputs_dir, workflow_run_id: int) -> Dict[int, 
 
 class _BenchmarkDataMapper(ABC):
     @abstractmethod
-    def map_benchmark_data(self, pipeline, job_id, report_data) -> CompleteBenchmarkRun | None:
+    def map_benchmark_data(self, pipeline, job_id, report_data) -> List[CompleteBenchmarkRun] | None:
         pass
 
     def _get_job(self, pipeline, job_id):
@@ -193,9 +193,25 @@ class _BenchmarkDataMapper(ABC):
             measurements=measurements,
         )
 
+    def _format_model_name(self, model_name: str | None) -> str | None:
+        """
+        Normalizes a model name to its short form by stripping any
+        organization/namespace prefix before the first '/'
+        (e.g. "Qwen/Qwen3-32B" -> "Qwen3-32B").
+
+        Single chokepoint for model-name formatting: every mapper routes the
+        value it stores in ml_model_name through here so the short form is
+        consistent across all run types.
+        """
+        if isinstance(model_name, str) and "/" in model_name:
+            return model_name.split("/", 1)[1]
+        return model_name
+
 
 class ForgeBenchmarkDataMapper(_BenchmarkDataMapper):
-    def map_benchmark_data(self, pipeline, job_id, report_data, model_spec_data=None) -> CompleteBenchmarkRun | None:
+    def map_benchmark_data(
+        self, pipeline, job_id, report_data, model_spec_data=None
+    ) -> List[CompleteBenchmarkRun] | None:
         job = next((job for job in pipeline.jobs if job.github_job_id == job_id), None)
         if job is None:
             logger.error(f"No job found with github_job_id: {job_id}")
@@ -218,7 +234,7 @@ class ForgeBenchmarkDataMapper(_BenchmarkDataMapper):
                 device_hostname=job.host_name,
                 device_ip=report_data.get("device_ip", None),
                 device_info=report_data.get("device_info"),
-                ml_model_name=report_data.get("model"),
+                ml_model_name=self._format_model_name(report_data.get("model")),
                 ml_model_type=report_data.get("model_type"),
                 num_layers=report_data.get("num_layers"),
                 batch_size=report_data.get("batch_size", None),
@@ -255,7 +271,9 @@ class ForgeBenchmarkDataMapper(_BenchmarkDataMapper):
 
 
 class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
-    def map_benchmark_data(self, pipeline, job_id, report_data, model_spec_data=None) -> CompleteBenchmarkRun | None:
+    def map_benchmark_data(
+        self, pipeline, job_id, report_data, model_spec_data=None
+    ) -> List[CompleteBenchmarkRun] | None:
         """
         Maps benchmark and evaluation data from the report to CompleteBenchmarkRun objects.
         """
@@ -299,15 +317,6 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             failure_happened()
             logger.error(f"Validation error: {e}")
             return None
-
-    def _format_model_name(self, benchmark):
-        """
-        Formats the model name by removing any prefix before '/' from model identifier.
-        """
-        model_name = benchmark.get("model_name")
-        if model_name and "/" in model_name:
-            model_name = model_name.split("/", 1)[1]
-        return model_name
 
     def _process_benchmarks(self, pipeline, job, benchmarks, metadata=None, model_spec_data=None):
         """
@@ -356,7 +365,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 ],
             )
 
-            model_name = self._format_model_name(benchmark)
+            model_name = self._format_model_name(benchmark.get("model_name"))
 
             results.append(
                 self._create_complete_benchmark_run(
@@ -449,7 +458,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 )
                 measurements.extend(target_measurements)
 
-            model_name = self._format_model_name(benchmark)
+            model_name = self._format_model_name(benchmark.get("model_name"))
 
             # Extract device (should now be included in benchmarks_summary)
             device = benchmark.get("device", "unknown")
@@ -516,7 +525,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 run_type="acceptance_criteria",
                 measurements=measurements,
                 device_info=metadata.get("device"),
-                model_name=metadata.get("model_name"),
+                model_name=self._format_model_name(metadata.get("model_name")),
                 model_type=(model_spec_data.get("model_type") if model_spec_data else None),
                 config_params=config_params or None,
                 docker_image=(model_spec_data or {}).get("docker_image") or job.docker_image,
@@ -599,7 +608,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     run_type="eval",
                     measurements=measurements,
                     device_info=eval_entry.get("device"),
-                    model_name=eval_entry.get("model"),
+                    model_name=self._format_model_name(eval_entry.get("model")),
                     model_type=(model_spec_data.get("model_type") if model_spec_data else None),
                     input_seq_length=None,
                     output_seq_length=None,
@@ -649,7 +658,7 @@ class VllmBenchmarkDataMapper(_BenchmarkDataMapper):
 
         try:
             model_id = report_data.get("model_id", "unknown")
-            model_name = model_id.split("/", 1)[-1] if "/" in model_id else model_id
+            model_name = self._format_model_name(model_id)
 
             measurements = self._create_measurements(job, "vllm_bench_serve", report_data, self.MEASUREMENT_KEYS)
 
@@ -754,7 +763,7 @@ class GuideLLMBenchmarkDataMapper(_BenchmarkDataMapper):
             results = []
             for benchmark in report_data.get("benchmarks") or []:
                 model_id = self._safe_get(benchmark, "config.backend.model") or ""
-                model_name = model_id.split("/", 1)[-1] if "/" in model_id else model_id
+                model_name = self._format_model_name(model_id)
 
                 flat_metrics = {}
                 flat_metrics.update(self._flatten_numeric(benchmark.get("metrics") or {}, "metrics"))
