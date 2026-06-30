@@ -193,7 +193,7 @@ class _BenchmarkDataMapper(ABC):
             measurements=measurements,
         )
 
-    def _format_model_name(self, model_name):
+    def _format_model_name(self, model_name: str | None) -> str | None:
         """
         Normalizes a model name to its short form by stripping any
         organization/namespace prefix before the first '/'
@@ -203,8 +203,8 @@ class _BenchmarkDataMapper(ABC):
         value it stores in ml_model_name through here so the short form is
         consistent across all run types.
         """
-        if model_name and "/" in model_name:
-            model_name = model_name.split("/", 1)[1]
+        if isinstance(model_name, str) and "/" in model_name:
+            return model_name.split("/", 1)[1]
         return model_name
 
 
