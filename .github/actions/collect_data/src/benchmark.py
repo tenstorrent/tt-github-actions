@@ -92,7 +92,7 @@ def _get_model_reports(workflow_outputs_dir, workflow_run_id: int) -> Dict[int, 
 
 class _BenchmarkDataMapper(ABC):
     @abstractmethod
-    def map_benchmark_data(self, pipeline, job_id, report_data) -> CompleteBenchmarkRun | None:
+    def map_benchmark_data(self, pipeline, job_id, report_data) -> List[CompleteBenchmarkRun] | None:
         pass
 
     def _get_job(self, pipeline, job_id):
@@ -209,7 +209,9 @@ class _BenchmarkDataMapper(ABC):
 
 
 class ForgeBenchmarkDataMapper(_BenchmarkDataMapper):
-    def map_benchmark_data(self, pipeline, job_id, report_data, model_spec_data=None) -> CompleteBenchmarkRun | None:
+    def map_benchmark_data(
+        self, pipeline, job_id, report_data, model_spec_data=None
+    ) -> List[CompleteBenchmarkRun] | None:
         job = next((job for job in pipeline.jobs if job.github_job_id == job_id), None)
         if job is None:
             logger.error(f"No job found with github_job_id: {job_id}")
@@ -269,7 +271,9 @@ class ForgeBenchmarkDataMapper(_BenchmarkDataMapper):
 
 
 class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
-    def map_benchmark_data(self, pipeline, job_id, report_data, model_spec_data=None) -> CompleteBenchmarkRun | None:
+    def map_benchmark_data(
+        self, pipeline, job_id, report_data, model_spec_data=None
+    ) -> List[CompleteBenchmarkRun] | None:
         """
         Maps benchmark and evaluation data from the report to CompleteBenchmarkRun objects.
         """
