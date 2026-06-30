@@ -7,6 +7,7 @@ from benchmark import (
     ShieldBenchmarkDataMapper,
     VllmBenchmarkDataMapper,
     GuideLLMBenchmarkDataMapper,
+    ForgeBenchmarkDataMapper,
     CompleteBenchmarkRun,
 )
 
@@ -204,21 +205,24 @@ def test_no_job_found(mapper, pipeline):
 
 
 def test_format_model_name(mapper):
-    benchmark = {"model_name": "Llama-3.2-1B"}
-    result = mapper._format_model_name(benchmark)
-    assert result == "Llama-3.2-1B"
+    assert mapper._format_model_name("Llama-3.2-1B") == "Llama-3.2-1B"
 
 
 def test_format_model_name_with_prefix(mapper):
-    benchmark = {"model_name": "meta-llama/Llama-3.2-1B"}
-    result = mapper._format_model_name(benchmark)
-    assert result == "Llama-3.2-1B"
+    assert mapper._format_model_name("meta-llama/Llama-3.2-1B") == "Llama-3.2-1B"
+
+
+def test_format_model_name_multi_segment_prefix(mapper):
+    # Only the first segment (org/namespace) is stripped; the rest is kept.
+    assert mapper._format_model_name("a/b/c") == "b/c"
 
 
 def test_format_model_name_none(mapper):
-    benchmark = {"model_name": None}
-    result = mapper._format_model_name(benchmark)
-    assert result is None
+    assert mapper._format_model_name(None) is None
+
+
+def test_format_model_name_empty_string(mapper):
+    assert mapper._format_model_name("") == ""
 
 
 def test_benchmarks_model_type_with_model_spec(mapper, pipeline):
@@ -463,6 +467,45 @@ def test_evals_model_type_without_model_spec(mapper, pipeline):
     report_data = {"evals": [{"model": "test_model"}]}
     result = mapper.map_benchmark_data(pipeline, 1, report_data)
     assert result[0].ml_model_type is None
+
+
+# --- model-name normalization: every run_type stores the short form ---
+#
+# ml_model_name must be the short catalog name (e.g. "Qwen3-32B") for EVERY
+# run_type. Previously only benchmark/benchmark_summary routed through
+# _format_model_name; evals and acceptance_criteria passed the served HF repo
+# id through un-stripped, so v2 reports (post tt-inference-server #4214) landed
+# "Qwen/Qwen3-32B" for acceptance_criteria while benchmark rows stored
+# "Qwen3-32B". These tests pin that every path strips the org/ prefix.
+
+
+def test_process_benchmarks_strips_model_prefix(mapper, pipeline):
+    report_data = {"benchmarks": [{"device": "galaxy", "model_name": "Qwen/Qwen3-32B"}]}
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    assert result[0].ml_model_name == "Qwen3-32B"
+
+
+def test_process_benchmarks_summary_strips_model_prefix(mapper, pipeline):
+    report_data = {"benchmarks_summary": [{"device": "galaxy", "model_name": "Qwen/Qwen3-32B"}]}
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    assert result[0].ml_model_name == "Qwen3-32B"
+
+
+def test_process_evals_strips_model_prefix(mapper, pipeline):
+    report_data = {"evals": [{"device": "galaxy", "model": "Qwen/Qwen3-32B"}]}
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    assert result[0].ml_model_name == "Qwen3-32B"
+
+
+def test_forge_model_name_strips_prefix(pipeline):
+    forge_mapper = ForgeBenchmarkDataMapper()
+    report_data = {
+        "run_type": "forge_benchmark",
+        "model": "stabilityai/stable-diffusion-xl-base-1.0",
+        "measurements": [],
+    }
+    result = forge_mapper.map_benchmark_data(pipeline, 1, report_data)
+    assert result[0].ml_model_name == "stable-diffusion-xl-base-1.0"
 
 
 @pytest.mark.parametrize(
@@ -998,6 +1041,19 @@ def test_process_acceptance_criteria_pass(mapper, pipeline):
     assert run.device_info == {"device_name": "t3k"}
     by_name = {m.name: m.value for m in run.measurements}
     assert by_name == {"passed": 1.0}
+
+
+def test_process_acceptance_criteria_strips_model_prefix(mapper, pipeline):
+    """Regression: acceptance_criteria must store the short model name like
+    benchmark/eval rows. Previously this path passed metadata['model_name']
+    through un-stripped, so v2 reports (tt-inference-server #4214) landed
+    'Qwen/Qwen3-32B' while benchmark/eval rows stored 'Qwen3-32B'."""
+    report_data = {
+        "metadata": {"model_name": "Qwen/Qwen3-32B", "device": "galaxy"},
+        "acceptance_criteria": True,
+    }
+    run = _acceptance_run(mapper.map_benchmark_data(pipeline, 1, report_data))
+    assert run.ml_model_name == "Qwen3-32B"
 
 
 def test_process_acceptance_criteria_fail(mapper, pipeline):
