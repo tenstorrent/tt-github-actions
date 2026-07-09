@@ -16,6 +16,7 @@ from shared import failure_happened
 
 class TTXlaOpByOpParser(Parser):
     """Parser for python unittest report files."""
+
     def can_parse(self, filepath: str):
         # Remove trailing slash if present
         filepath = filepath.rstrip("/")
@@ -64,6 +65,7 @@ def _get_tests_from_json(project, github_job_id, filepath):
                     test_obj = _get_pydantic_test(filepath, op_name, test_data, project, github_job_id)
                     if test_obj is not None:
                         yield test_obj
+
 
 def _get_pydantic_test(filepath, name, test, project, github_job_id, default_timestamp=datetime.now()):
     # Parse timestamps from test data
