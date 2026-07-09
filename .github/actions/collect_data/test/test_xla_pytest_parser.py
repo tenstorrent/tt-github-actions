@@ -23,5 +23,5 @@ def test_xla_op_by_op_parser(dirname: str, expected: dict[str, Any]):
     filepath = os.path.join(REPORTS_PATH, dirname)
     parser = TTXlaOpByOpParser()
     assert parser.can_parse(filepath)
-    tests = parser.parse(filepath)
-    assert len(tests) == expected["num_tests"]
+    tests = parser.parse(filepath, project="tt-xla", github_job_id=0)
+    assert len(list(filter(None, tests))) == expected["num_tests"]

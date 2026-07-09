@@ -120,7 +120,7 @@ def get_github_job_id_to_test_reports(
                 file_path = pathlib.Path(root) / file
                 filename = file_path.name
                 try:
-                    stem = filename.split(".")[-2]
+                    stem = pathlib.Path(filename).stem
                     # Handle both underscore-separated (report_12345.json)
                     # and hyphen-separated (report-12345.json) job IDs
                     last_part = stem.split("_")[-1]

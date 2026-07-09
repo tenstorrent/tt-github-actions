@@ -9,15 +9,13 @@ from loguru import logger
 from datetime import datetime
 from pydantic_models import OpTest, TensorDesc
 from .parser import Parser
-from enum import IntEnum
 from typing import Optional
 from pydantic import ValidationError
 from shared import failure_happened
 
 
 class TTXlaOpByOpParser(Parser):
-    """Parser for python unitest report files."""
-
+    """Parser for python unittest report files."""
     def can_parse(self, filepath: str):
         # Remove trailing slash if present
         filepath = filepath.rstrip("/")
@@ -50,10 +48,22 @@ def _get_tests_from_json(project, github_job_id, filepath):
         data = json.load(fd)
 
     # Extract OpTest entries from tests/user_properties
-    if "tests" not in data or len(data["tests"]) == 0:
+    tests = data.get("tests") or []
+    if len(tests) == 0:
         return
 
-    user_properties = data["tests"][0].get("user_properties", [])
+    for test_entry in tests:
+        user_properties = test_entry.get("user_properties", [])
+
+        for prop in user_properties:
+            # Look for entries with "OpTest model for: *" as the key
+            for key, test_data in prop.items():
+                if key.startswith("OpTest model for:"):
+                    # Extract op name from the key
+                    op_name = key.replace("OpTest model for:", "").strip()
+                    test_obj = _get_pydantic_test(filepath, op_name, test_data, project, github_job_id)
+                    if test_obj is not None:
+                        yield test_obj
 
     for prop in user_properties:
         # Look for entries with "OpTest model for: *" as the key
@@ -98,10 +108,9 @@ def _get_pydantic_test(filepath, name, test, project, github_job_id, default_tim
             test_start_ts=test_start_ts,
             test_end_ts=test_end_ts,
             test_case_name=name,
-            filepath=filepath,
             success=success,
             skipped=skipped,
-            error_message=error_message,
+            message=error_message,
             config=config,
             frontend=project,
             model_name=model_name,
@@ -187,7 +196,7 @@ def _parse_tensor_desc_list(tensor_str):
 
 
 def _flatten(list_of_lists):
-    return [item for sublist in list_of_lists for item in sublist]
+    return [item for sublist in list_of_lists for item in sublist if item is not None]
 
 
 def _get_tests(filepath, project, github_job_id):
