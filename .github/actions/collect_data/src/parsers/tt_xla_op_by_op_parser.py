@@ -65,15 +65,6 @@ def _get_tests_from_json(project, github_job_id, filepath):
                     if test_obj is not None:
                         yield test_obj
 
-    for prop in user_properties:
-        # Look for entries with "OpTest model for: *" as the key
-        for key, test_data in prop.items():
-            if key.startswith("OpTest model for:"):
-                # Extract op name from the key
-                op_name = key.replace("OpTest model for:", "").strip()
-                yield _get_pydantic_test(filepath, op_name, test_data, project, github_job_id)
-
-
 def _get_pydantic_test(filepath, name, test, project, github_job_id, default_timestamp=datetime.now()):
     # Parse timestamps from test data
     test_start_ts = (
@@ -108,6 +99,7 @@ def _get_pydantic_test(filepath, name, test, project, github_job_id, default_tim
             test_start_ts=test_start_ts,
             test_end_ts=test_end_ts,
             test_case_name=name,
+            filepath=filepath,
             success=success,
             skipped=skipped,
             message=error_message,
