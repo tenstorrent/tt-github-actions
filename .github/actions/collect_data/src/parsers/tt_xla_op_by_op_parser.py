@@ -34,6 +34,11 @@ class TTXlaOpByOpParser(Parser):
 
 
 def _all_json_files(filepath):
+    filepath = str(filepath)
+    if os.path.isfile(filepath):
+        if filepath.endswith(".json") and not os.path.basename(filepath).startswith("."):
+            yield filepath
+        return
     for root, dirs, files in os.walk(filepath):
         for file in files:
             if file.endswith(".json") and not file.startswith("."):

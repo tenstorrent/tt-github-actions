@@ -120,7 +120,11 @@ def get_github_job_id_to_test_reports(
                 file_path = pathlib.Path(root) / file
                 filename = file_path.name
                 try:
-                    job_id = int(filename.split(".")[-2].split("_")[-1])
+                    stem = filename.split(".")[-2]
+                    # Handle both underscore-separated (report_12345.json)
+                    # and hyphen-separated (report-12345.json) job IDs
+                    last_part = stem.split("_")[-1]
+                    job_id = int(last_part.split("-")[-1])
                 except ValueError:
                     logger.warning(f"Could not extract job ID from {filename}")
                     continue

@@ -55,7 +55,7 @@ def should_use_tt_xla_op_by_op_parser(test_report: str) -> bool:
 
     :param test_report: Filename of the test report
     """
-    return "op_by_op" in str(test_report)
+    return "op_by_op" in str(test_report) and str(test_report).endswith(".json")
 
 
 def create_optest_reports(pipeline, workflow_outputs_dir):
@@ -67,9 +67,9 @@ def create_optest_reports(pipeline, workflow_outputs_dir):
     git_branch = getattr(pipeline, "git_branch_name", "")
     logger.info(f"Processing OpTest pipeline on branch: {git_branch}")
 
-    # Search for reports with both `.tar` & `.xml` extensions.
+    # Search for reports with `.tar`, `.xml` & `.json` extensions.
     github_job_id_to_test_reports = get_github_job_id_to_test_reports(
-        workflow_outputs_dir, pipeline.github_pipeline_id, [".tar", ".xml"]
+        workflow_outputs_dir, pipeline.github_pipeline_id, [".tar", ".xml", ".json"]
     )
 
     if len(github_job_id_to_test_reports) == 0:
