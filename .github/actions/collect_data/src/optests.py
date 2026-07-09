@@ -8,6 +8,7 @@ from utils import get_data_pipeline_datetime_from_datetime
 import json
 from parsers.tt_torch_model_tests_parser import TTTorchModelTestsParser
 from parsers.builder_pytest_parser import BuilderPytestParser
+from parsers.tt_xla_op_by_op_parser import TTXlaOpByOpParser
 from typing import Optional
 
 
@@ -48,6 +49,15 @@ def should_use_tt_torch_model_tests_parser(test_report: str) -> bool:
     return str(test_report).endswith(".tar")
 
 
+def should_use_tt_xla_op_by_op_parser(test_report: str) -> bool:
+    """
+    Determine if the `TTXlaOpByOpParser` should be used on `test_report`
+
+    :param test_report: Filename of the test report
+    """
+    return "op_by_op" in str(test_report) and str(test_report).endswith(".json")
+
+
 def create_optest_reports(pipeline, workflow_outputs_dir):
     reports = []
 
@@ -57,9 +67,9 @@ def create_optest_reports(pipeline, workflow_outputs_dir):
     git_branch = getattr(pipeline, "git_branch_name", "")
     logger.info(f"Processing OpTest pipeline on branch: {git_branch}")
 
-    # Search for reports with both `.tar` & `.xml` extensions.
+    # Search for reports with `.tar`, `.xml` & `.json` extensions.
     github_job_id_to_test_reports = get_github_job_id_to_test_reports(
-        workflow_outputs_dir, pipeline.github_pipeline_id, [".tar", ".xml"]
+        workflow_outputs_dir, pipeline.github_pipeline_id, [".tar", ".xml", ".json"]
     )
 
     if len(github_job_id_to_test_reports) == 0:
@@ -79,6 +89,9 @@ def create_optest_reports(pipeline, workflow_outputs_dir):
             elif should_use_tt_torch_model_tests_parser(test_report):
                 parser = TTTorchModelTestsParser()
                 logger.info(f"Using TTTorchModelTestsParser for job '{job_name}'")
+            elif should_use_tt_xla_op_by_op_parser(test_report):
+                parser = TTXlaOpByOpParser()
+                logger.info(f"Using TTXlaOpByOpParser for job '{job_name}'")
             else:
                 logger.info(f"No suitable parser found for {test_report}")
                 continue
