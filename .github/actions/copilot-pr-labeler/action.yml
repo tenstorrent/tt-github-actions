@@ -1,0 +1,150 @@
+name: 'Copilot PR Type Labeler'
+description: 'Classifies a merged pull request into a single Conventional Commits type using the GitHub Copilot CLI and applies it as a label'
+
+inputs:
+  gh_token:
+    description: 'Token used for gh CLI label operations and for authenticating the Copilot CLI. Must have pull-requests:write and copilot-requests:write.'
+    required: false
+    default: ${{ github.token }}
+  max_ai_credits:
+    description: 'Soft per-run cap on Copilot AI credits (passed to `copilot --max-ai-credits`). GitHub recommends a value above 30. Lower it to tighten cost, raise it if classification gets truncated.'
+    required: false
+    default: '50'
+  fallback_label:
+    description: 'Label to apply when Copilot is unavailable or returns no valid type. Must be one of the 11 Conventional Commits types.'
+    required: false
+    default: 'chore'
+  node_version:
+    description: 'Node.js version used to install the Copilot CLI (requires 22+).'
+    required: false
+    default: '22'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node_version }}
+
+    - name: Install Copilot CLI
+      shell: bash
+      run: npm install -g @github/copilot
+
+    - name: Classify merged PR and apply label
+      shell: bash
+      env:
+        # Passed via env (not inline ${{ }}) so attacker-influenced PR text
+        # cannot be interpolated into the shell script.
+        GH_TOKEN: ${{ inputs.gh_token }}
+        GITHUB_TOKEN: ${{ inputs.gh_token }}
+        REPO: ${{ github.repository }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        PR_TITLE: ${{ github.event.pull_request.title }}
+        PR_BODY: ${{ github.event.pull_request.body }}
+        MAX_AI_CREDITS: ${{ inputs.max_ai_credits }}
+        FALLBACK_LABEL: ${{ inputs.fallback_label }}
+      run: |
+        set -euo pipefail
+
+        if [ -z "${PR_NUMBER:-}" ]; then
+          echo "::error::No pull_request in the event context. This action must run on a 'pull_request' (types: [closed]) event, gated on merged == true."
+          exit 1
+        fi
+
+        echo "🔎 Classifying PR #${PR_NUMBER} in ${REPO}"
+
+        # ---- Gather PR context (via API, no checkout needed), with size caps ----
+        gh pr diff "$PR_NUMBER" --repo "$REPO" > full.diff 2>/dev/null || true
+        head -c 40000 full.diff > diff.txt || true
+        gh pr view "$PR_NUMBER" --repo "$REPO" --json files -q '.files[].path' > files.txt 2>/dev/null || true
+        printf '%s' "${PR_BODY:-}" | head -c 4000 > body.txt || true
+
+        # ---- Build the classification prompt (static rubric + dynamic PR data) ----
+        cat > prompt.txt <<'EOF'
+        You are a pull-request classifier. Classify the merged pull request below into
+        EXACTLY ONE Conventional Commits type. Pick the single best-fitting type.
+
+        Allowed types and definitions:
+        - feat: introduces a new feature for the user
+        - fix: patches a bug in the codebase
+        - docs: documentation-only changes
+        - style: formatting/whitespace/semicolons; no change to code behavior
+        - refactor: code change that neither fixes a bug nor adds a feature
+        - perf: code change that improves performance
+        - test: adds or corrects tests only
+        - build: changes to the build system, dependencies, packaging, or tooling config
+        - ci: changes to CI configuration files and scripts (e.g. GitHub Actions)
+        - chore: routine maintenance that fits none of the other types
+        - revert: reverts a previous commit or change
+
+        Rules:
+        - Choose exactly one type from the list above.
+        - Prefer feat or fix when the PR clearly adds functionality or fixes a bug.
+        - Do NOT run any tools or commands; all information you need is provided below.
+        - Respond with ONLY one line, no explanation, in EXACTLY this format:
+        LABEL=<type>
+        EOF
+
+        {
+          echo ""
+          echo "PR title:"
+          printf '%s\n' "${PR_TITLE:-}"
+          echo ""
+          echo "PR description (truncated):"
+          cat body.txt
+          echo ""
+          echo "Changed files:"
+          cat files.txt
+          echo ""
+          echo "Unified diff (truncated):"
+          cat diff.txt
+        } >> prompt.txt
+
+        # ---- Run the Copilot CLI (non-interactive), capped by --max-ai-credits ----
+        PROMPT="$(cat prompt.txt)"
+        echo "🤖 Running Copilot CLI (max AI credits: ${MAX_AI_CREDITS})"
+        copilot --yolo --max-ai-credits "$MAX_AI_CREDITS" -p "$PROMPT" > copilot_output.txt 2>&1 || true
+        echo "----- Copilot raw output -----"
+        cat copilot_output.txt || true
+        echo "------------------------------"
+
+        # ---- Extract + validate the label against the fixed allowlist ----
+        ALLOWED='feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert'
+        RAW="$(grep -oE "LABEL=(${ALLOWED})" copilot_output.txt | tail -n1 | cut -d= -f2 || true)"
+
+        case "$RAW" in
+          feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)
+            LABEL="$RAW"
+            echo "✅ Classified as: ${LABEL}"
+            ;;
+          *)
+            LABEL="$FALLBACK_LABEL"
+            echo "::warning::Copilot returned no valid type (org 'Copilot CLI billed to the organization' policy may be off, or output was unparseable). Applying fallback label '${LABEL}'."
+            ;;
+        esac
+
+        # ---- Color + description for the chosen type (used only if label is missing) ----
+        case "$LABEL" in
+          feat)     COLOR="0e8a16"; DESC="New feature" ;;
+          fix)      COLOR="d73a4a"; DESC="Bug fix" ;;
+          docs)     COLOR="0075ca"; DESC="Documentation only" ;;
+          style)    COLOR="fbca04"; DESC="Formatting, no code-behavior change" ;;
+          refactor) COLOR="5319e7"; DESC="Code change that neither fixes a bug nor adds a feature" ;;
+          perf)     COLOR="a2eeef"; DESC="Performance improvement" ;;
+          test)     COLOR="bfd4f2"; DESC="Adds or corrects tests" ;;
+          build)    COLOR="c2e0c6"; DESC="Build system, dependencies, or packaging" ;;
+          ci)       COLOR="1d76db"; DESC="CI configuration and scripts" ;;
+          chore)    COLOR="fef2c0"; DESC="Routine maintenance" ;;
+          revert)   COLOR="e11d21"; DESC="Reverts a previous change" ;;
+          *)        COLOR="ededed"; DESC="PR type" ;;
+        esac
+
+        # ---- Ensure the label exists (create if missing; do not overwrite custom colors) ----
+        gh label create "$LABEL" --repo "$REPO" --color "$COLOR" --description "$DESC" 2>/dev/null \
+          && echo "🏷️  Created label '${LABEL}'" \
+          || echo "🏷️  Label '${LABEL}' already exists"
+
+        # ---- Apply the single label ----
+        gh pr edit "$PR_NUMBER" --repo "$REPO" --add-label "$LABEL"
+        echo "✅ Applied label '${LABEL}' to PR #${PR_NUMBER}"
