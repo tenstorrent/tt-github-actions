@@ -8,6 +8,9 @@ seats — **no separate LLM API key or PAT is required.**
 The classifier is given the PR title, description, changed-file list, and a (truncated) diff, and
 picks exactly one [Conventional Commits](https://www.conventionalcommits.org/) type.
 
+**No setup needed beyond the workflow file below** — labels (including `unknown`, see below) are
+created automatically on first use; you don't need to pre-create any of them in the adopting repo.
+
 ## What it does
 
 - Fires once, when a PR is **opened** (not on `synchronize`/later pushes, not on merge, not on `push`).
@@ -48,11 +51,16 @@ chore     Routine maintenance
 revert    Reverts a previous change
 ```
 
+If classification fails or Copilot is unavailable, the action applies `unknown` instead of guessing
+— this is a sentinel meaning "not classified," never a real type Copilot itself is allowed to pick.
+Treat PRs labeled `unknown` as needing a manual look (or a manual label correction), and exclude them
+from any "% of PRs that are features/fixes/etc." analysis rather than counting them as `chore`.
+
 ## Prerequisites
 
 - **Org policy (one-time, org admin):** *"Allow use of Copilot CLI billed to the organization"*
   must be enabled in the organization's Copilot settings. Without it, the Copilot request fails and
-  the action applies the `fallback_label` (default `chore`) with a warning in the run log.
+  the action applies the `fallback_label` (default `unknown`) with a warning in the run log.
 - The calling workflow must grant `copilot-requests: write` (for Copilot) and `pull-requests: write`
   (to apply the label). See the example below.
 
@@ -89,7 +97,7 @@ That's the whole adoption — no checkout, no secrets, no inputs required.
 | ----------------- | -------------------- | --------------------------------------------------------------------------------------------------- |
 | `gh_token`        | `${{ github.token }}`| Token for `gh` label ops and Copilot auth. Needs `pull-requests:write` + `copilot-requests:write`.  |
 | `max_ai_credits`  | `50`                 | Soft per-run cap on Copilot AI credits (`copilot --max-ai-credits`). GitHub recommends above 30.    |
-| `fallback_label`  | `chore`              | Label applied if Copilot is unavailable or returns no valid type. Must be one of the 11 types.      |
+| `fallback_label`  | `unknown`             | Label applied if Copilot is unavailable or returns no valid type. One of the 11 types, or `unknown`.|
 | `node_version`    | `22`                 | Node.js version used to install the Copilot CLI (requires 22+).                                     |
 
 ## Cost control

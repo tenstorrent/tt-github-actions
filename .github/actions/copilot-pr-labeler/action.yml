@@ -11,9 +11,9 @@ inputs:
     required: false
     default: '50'
   fallback_label:
-    description: 'Label to apply when Copilot is unavailable or returns no valid type. Must be one of the 11 Conventional Commits types.'
+    description: 'Label to apply when Copilot is unavailable or returns no valid type. Signals that classification failed rather than asserting a real type - must be one of the 11 Conventional Commits types, or "unknown".'
     required: false
-    default: 'chore'
+    default: 'unknown'
   node_version:
     description: 'Node.js version used to install the Copilot CLI (requires 22+).'
     required: false
@@ -52,15 +52,17 @@ runs:
           exit 1
         fi
 
-        # ---- Validate the configured fallback_label against the fixed allowlist ----
-        # Same 11-item allowlist enforced on the model's own output below. A config
-        # mistake here must never hard-fail the job: warn and coerce to the safe
-        # default 'chore' rather than applying an arbitrary/unexpected label name.
+        # ---- Validate the configured fallback_label against the allowed set ----
+        # The 11 Conventional Commits types, plus 'unknown' - the sentinel meaning
+        # "classification failed or was unavailable", which the model itself is never
+        # allowed to pick (see the RAW allowlist below - it excludes 'unknown').
+        # A config mistake here must never hard-fail the job: warn and coerce to the
+        # safe default 'unknown' rather than applying an arbitrary label name.
         case "$FALLBACK_LABEL" in
-          feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert) ;;
+          feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert|unknown) ;;
           *)
-            echo "::warning::fallback_label '${FALLBACK_LABEL}' is not one of the 11 allowed Conventional Commits types; coercing to 'chore'."
-            FALLBACK_LABEL="chore"
+            echo "::warning::fallback_label '${FALLBACK_LABEL}' is not an allowed value; coercing to 'unknown'."
+            FALLBACK_LABEL="unknown"
             ;;
         esac
 
@@ -149,6 +151,7 @@ runs:
           ci)       COLOR="1d76db"; DESC="CI configuration and scripts" ;;
           chore)    COLOR="fef2c0"; DESC="Routine maintenance" ;;
           revert)   COLOR="e11d21"; DESC="Reverts a previous change" ;;
+          unknown)  COLOR="cccccc"; DESC="Classification failed or was unavailable - needs manual review" ;;
           *)        COLOR="ededed"; DESC="PR type" ;;
         esac
 
