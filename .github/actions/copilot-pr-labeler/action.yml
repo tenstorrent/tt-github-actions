@@ -52,6 +52,18 @@ runs:
           exit 1
         fi
 
+        # ---- Validate the configured fallback_label against the fixed allowlist ----
+        # Same 11-item allowlist enforced on the model's own output below. A config
+        # mistake here must never hard-fail the job: warn and coerce to the safe
+        # default 'chore' rather than applying an arbitrary/unexpected label name.
+        case "$FALLBACK_LABEL" in
+          feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert) ;;
+          *)
+            echo "::warning::fallback_label '${FALLBACK_LABEL}' is not one of the 11 allowed Conventional Commits types; coercing to 'chore'."
+            FALLBACK_LABEL="chore"
+            ;;
+        esac
+
         echo "🔎 Classifying PR #${PR_NUMBER} in ${REPO}"
 
         # ---- Gather PR context (via API, no checkout needed), with size caps ----
@@ -140,11 +152,25 @@ runs:
           *)        COLOR="ededed"; DESC="PR type" ;;
         esac
 
-        # ---- Ensure the label exists (create if missing; do not overwrite custom colors) ----
-        gh label create "$LABEL" --repo "$REPO" --color "$COLOR" --description "$DESC" 2>/dev/null \
-          && echo "🏷️  Created label '${LABEL}'" \
-          || echo "🏷️  Label '${LABEL}' already exists"
+        # ---- Ensure the label exists (create only if missing; do not overwrite custom colors) ----
+        # Check existence explicitly so a real permission/auth error on creation is
+        # surfaced as a warning (with the actual error text) instead of being silently
+        # swallowed as "already exists".
+        if gh label view "$LABEL" --repo "$REPO" >/dev/null 2>&1; then
+          echo "🏷️  Label '${LABEL}' already exists"
+        elif create_err="$(gh label create "$LABEL" --repo "$REPO" --color "$COLOR" --description "$DESC" 2>&1)"; then
+          echo "🏷️  Created label '${LABEL}'"
+        else
+          echo "::warning::Failed to create label '${LABEL}': ${create_err}. Will still attempt to apply it (it may exist despite the read failure)."
+        fi
 
-        # ---- Apply the single label ----
-        gh pr edit "$PR_NUMBER" --repo "$REPO" --add-label "$LABEL"
-        echo "✅ Applied label '${LABEL}' to PR #${PR_NUMBER}"
+        # ---- Apply the single label (tolerate read-only tokens, e.g. fork PRs) ----
+        # Under a read-only token (the pull_request event's GITHUB_TOKEN for fork PRs,
+        # regardless of the permissions block) this call fails. That is a documented,
+        # accepted limitation, so warn and exit 0 rather than hard-failing the job.
+        if gh pr edit "$PR_NUMBER" --repo "$REPO" --add-label "$LABEL"; then
+          echo "✅ Applied label '${LABEL}' to PR #${PR_NUMBER}"
+        else
+          echo "::warning::Could not apply label '${LABEL}' to PR #${PR_NUMBER}. This is expected for PRs opened from forks, where the pull_request event's GITHUB_TOKEN is read-only regardless of the permissions: block — see the 'Fork PRs (limitation)' section of the action README. Skipping label application."
+          exit 0
+        fi
