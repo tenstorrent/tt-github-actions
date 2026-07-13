@@ -1,17 +1,22 @@
 # Example workflow for using the Copilot PR Type Labeler action.
 #
 # This file is for reference only - copy it into the adopting repository's
-# .github/workflows/ directory (e.g. as label-merged-prs.yml) and adjust as needed.
+# .github/workflows/ directory (e.g. as label-prs-on-open.yml) and adjust as needed.
 #
 # Prerequisite (one-time, org admin): enable the organization Copilot policy
 # "Allow use of Copilot CLI billed to the organization". No PAT or extra secret
 # is needed - the built-in GITHUB_TOKEN authenticates Copilot.
+#
+# Design note: classifies once, when the PR is opened. It deliberately does NOT
+# re-run on later pushes or at merge time, to keep cost bounded to one Copilot
+# CLI call per PR. If a PR's scope changes significantly during review, the
+# label can go stale - since it's a normal GitHub label, fix it by hand.
 
-name: Label merged PRs by type
+name: Label PRs by type on open
 
 on:
   pull_request:
-    types: [closed]
+    types: [opened]
 
 permissions:
   contents: read
@@ -20,11 +25,9 @@ permissions:
 
 jobs:
   label:
-    # Only run for PRs that were actually merged (not just closed).
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
-      - name: Classify and label merged PR
+      - name: Classify and label PR
         uses: tenstorrent/tt-github-actions/.github/actions/copilot-pr-labeler@main
         # Optional inputs (defaults shown):
         # with:

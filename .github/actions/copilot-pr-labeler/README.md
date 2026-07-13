@@ -1,6 +1,6 @@
 # Copilot PR Type Labeler
 
-Automatically labels **merged** pull requests with a single change-type label, chosen by the
+Automatically labels pull requests **when opened** with a single change-type label, chosen by the
 [GitHub Copilot CLI](https://docs.github.com/copilot/how-tos/copilot-cli/use-copilot-cli-in-actions)
 running inside GitHub Actions. Copilot usage is billed to the organization via existing Copilot
 seats — **no separate LLM API key or PAT is required.**
@@ -10,11 +10,25 @@ picks exactly one [Conventional Commits](https://www.conventionalcommits.org/) t
 
 ## What it does
 
-- Fires when a PR is **merged** (not on plain close, not on `push`).
+- Fires once, when a PR is **opened** (not on `synchronize`/later pushes, not on merge, not on `push`).
 - Adds **exactly one** label from the fixed taxonomy below.
 - Creates the label in the target repo on demand if it doesn't already exist (existing labels,
   including any custom colors you've set, are left untouched).
-- Forward-only: it labels new merges going forward. There is **no backfill** of historical PRs.
+- Forward-only: it labels newly opened PRs going forward. There is **no backfill** of already-open
+  or historical PRs.
+
+## Design note: classify once, at open — not at every push or at merge
+
+This is a deliberate simplicity trade-off, not an oversight. The action never re-runs automatically
+after its initial classification: no `synchronize` re-run on later pushes, no second pass at merge
+time. That keeps cost fixed at exactly one Copilot CLI call per PR, no matter how many commits it
+receives during review.
+
+The trade-off: if a PR's scope changes substantially after it's opened (a small fix grows into a
+feature-sized change, say), the label can go stale. Since it's applied as a normal GitHub label,
+a human can just edit it if that happens — the label is a starting point Copilot suggests while the
+PR is still open (and easy to correct during review), not an immutable record computed after the
+fact.
 
 ## Label taxonomy
 
@@ -48,11 +62,11 @@ Add a workflow like this to the adopting repository (see
 [`example-workflow.yml`](./example-workflow.yml) for the copy-paste version):
 
 ```yaml
-name: Label merged PRs by type
+name: Label PRs by type on open
 
 on:
   pull_request:
-    types: [closed]
+    types: [opened]
 
 permissions:
   contents: read
@@ -61,10 +75,9 @@ permissions:
 
 jobs:
   label:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
-      - name: Classify and label merged PR
+      - name: Classify and label PR
         uses: tenstorrent/tt-github-actions/.github/actions/copilot-pr-labeler@main
 ```
 
@@ -81,10 +94,11 @@ That's the whole adoption — no checkout, no secrets, no inputs required.
 
 ## Cost control
 
-Because this fires on every PR merge, each run passes `--max-ai-credits` to the Copilot CLI as a
-soft per-run cap ([session limits](https://docs.github.com/copilot/how-tos/copilot-cli/use-copilot-cli/set-session-limit)).
-The diff is truncated to ~40 KB and the description to ~4 KB before it reaches the model, keeping
-each classification to a single small request.
+Because this fires once per opened PR (never re-run on later pushes), total cost scales with PR
+count, not PR activity. Each run also passes `--max-ai-credits` to the Copilot CLI as a soft
+per-run cap ([session limits](https://docs.github.com/copilot/how-tos/copilot-cli/use-copilot-cli/set-session-limit)),
+and the diff is truncated to ~40 KB and the description to ~4 KB before it reaches the model,
+keeping each classification to a single small request.
 
 ## Fork PRs (limitation)
 

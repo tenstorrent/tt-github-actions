@@ -1,5 +1,5 @@
 name: 'Copilot PR Type Labeler'
-description: 'Classifies a merged pull request into a single Conventional Commits type using the GitHub Copilot CLI and applies it as a label'
+description: 'Classifies a pull request into a single Conventional Commits type using the GitHub Copilot CLI and applies it as a label'
 
 inputs:
   gh_token:
@@ -31,7 +31,7 @@ runs:
       shell: bash
       run: npm install -g @github/copilot
 
-    - name: Classify merged PR and apply label
+    - name: Classify PR and apply label
       shell: bash
       env:
         # Passed via env (not inline ${{ }}) so attacker-influenced PR text
@@ -48,7 +48,7 @@ runs:
         set -euo pipefail
 
         if [ -z "${PR_NUMBER:-}" ]; then
-          echo "::error::No pull_request in the event context. This action must run on a 'pull_request' (types: [closed]) event, gated on merged == true."
+          echo "::error::No pull_request in the event context. This action must run on a 'pull_request' event (e.g. types: [opened])."
           exit 1
         fi
 
@@ -62,7 +62,7 @@ runs:
 
         # ---- Build the classification prompt (static rubric + dynamic PR data) ----
         cat > prompt.txt <<'EOF'
-        You are a pull-request classifier. Classify the merged pull request below into
+        You are a pull-request classifier. Classify the pull request below into
         EXACTLY ONE Conventional Commits type. Pick the single best-fitting type.
 
         Allowed types and definitions:
