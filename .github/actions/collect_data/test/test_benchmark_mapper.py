@@ -1275,3 +1275,23 @@ def test_normalize_sections_is_noop_without_sections(mapper):
     """A report with no 'sections' key is returned unchanged (same object)."""
     flat = {"evals": [{"accuracy_check": 2}], "benchmarks_summary": []}
     assert mapper._normalize_sections(flat) is flat
+
+
+def test_create_measurements_skips_none_metric_values(mapper, pipeline):
+    """A null metric value (e.g. image evals' `score`) is skipped rather than
+    logging a ValidationError — BenchmarkMeasurement.value is a required float.
+    Non-null metrics from the same block still ingest."""
+    report_data = {
+        "metadata": {"model_name": "FLUX.1-schnell", "device": "P300X2"},
+        "sections": [
+            {
+                "kind": "evals",
+                "data": {"task_name": "load_image", "accuracy_check": 2, "score": None, "fid_score": 177.58},
+            }
+        ],
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    names = _measurement_names(result, "eval")
+    assert "accuracy_check" in names
+    assert "fid_score" in names
+    assert "score" not in names  # null value -> not a measurement

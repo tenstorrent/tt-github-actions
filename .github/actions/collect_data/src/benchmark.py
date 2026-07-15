@@ -110,7 +110,11 @@ class _BenchmarkDataMapper(ABC):
         """
         measurements = []
         for key in keys:
-            if key in data:
+            # Skip absent or null metrics: BenchmarkMeasurement.value is a
+            # required float, so a null (e.g. image evals' `score`) is not a
+            # measurement — dropping it here avoids a noisy per-key
+            # ValidationError log for a legitimately-absent value.
+            if key in data and data[key] is not None:
                 try:
                     measurement = BenchmarkMeasurement(
                         step_start_ts=job.job_start_ts,
