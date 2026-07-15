@@ -265,6 +265,11 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
 
         metadata = report_data.get("metadata", {})
 
+        # Bridge the v2 "sections" report schema onto the flat schema so the
+        # flat _process_* paths (and thus the dashboard measurements) work
+        # unchanged. No-op for reports that are already flat.
+        report_data = self._normalize_sections(report_data)
+
         try:
             benchmark_runs = self._process_benchmarks(
                 pipeline,
@@ -299,6 +304,72 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             failure_happened()
             logger.error(f"Validation error: {e}")
             return None
+
+    def _normalize_sections(self, report_data):
+        """Fold the v2 "sections" report schema back into the flat lists.
+
+        Newer tt-inference-server engines (media, vLLM, ...) emit
+        ``{"sections": [{"kind": "evals"|"benchmarks"|"vllm"|..., "data": {...}}, ...]}``
+        instead of the top-level ``evals`` / ``benchmarks_summary`` / ``benchmarks``
+        arrays. Fold those blocks back into the flat lists so the existing
+        _process_* paths (and thus the dashboard measurements) work unchanged.
+        No-op for reports that are already flat.
+        """
+        sections = report_data.get("sections")
+        if not isinstance(sections, list):
+            return report_data
+
+        metadata = report_data.get("metadata", {})
+        model_name = metadata.get("model_name")
+        device = metadata.get("device")
+
+        evals = list(report_data.get("evals", []))
+        benchmarks_summary = list(report_data.get("benchmarks_summary", []))
+        benchmarks = list(report_data.get("benchmarks", []))
+
+        for block in sections:
+            kind = block.get("kind")
+            data = block.get("data") or {}
+            if kind == "evals":
+                evals.append(
+                    {
+                        "model": model_name,
+                        "device": device,
+                        "task_name": data.get("task_name") or block.get("title"),
+                        "task_type": block.get("task_type"),
+                        **data,
+                    }
+                )
+            elif kind == "benchmarks":
+                # media/image benchmark blocks nest the payload under "Benchmarks"
+                payload = data.get("Benchmarks", data)
+                benchmarks_summary.append(
+                    {
+                        "model": model_name,
+                        "model_name": model_name,
+                        "device": device,
+                        "task_type": block.get("task_type"),
+                        **payload,
+                    }
+                )
+            elif kind == "vllm":
+                # raw vLLM perf sweep -> flat "benchmark" row (feeds the perf
+                # charts; not the release check column, which needs target_checks)
+                benchmarks.append(
+                    {
+                        "model": model_name,
+                        "model_name": model_name,
+                        "device": device,
+                        **data,
+                    }
+                )
+            # spec_tests are ingested elsewhere (cicd_test); acceptance is top-level.
+
+        report_data = dict(report_data)
+        report_data["evals"] = evals
+        report_data["benchmarks_summary"] = benchmarks_summary
+        report_data["benchmarks"] = benchmarks
+        return report_data
 
     def _format_model_name(self, benchmark):
         """
@@ -423,6 +494,10 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                         "ttft",
                         "ttft_ratio",
                         "ttft_check",
+                        # Media / image (ttft reported in ms)
+                        "ttft_ms",
+                        "ttft_ms_ratio",
+                        "ttft_ms_check",
                         "tput_user",
                         "tput_user_ratio",
                         "tput_user_check",

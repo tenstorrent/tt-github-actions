@@ -320,6 +320,10 @@ _TARGET_CHECKS_KEYS = {
     "ttft",
     "ttft_ratio",
     "ttft_check",
+    # Media / image (ttft reported in ms)
+    "ttft_ms",
+    "ttft_ms_ratio",
+    "ttft_ms_check",
     "tput_user",
     "tput_user_ratio",
     "tput_user_check",
@@ -1119,3 +1123,155 @@ def test_acceptance_config_params_does_not_mutate_model_spec(mapper, pipeline):
     }
     mapper.map_benchmark_data(pipeline, 1, report_data, model_spec_data)
     assert model_spec_data == {"model_id": "test_model"}
+
+
+# --- v2 "sections" schema normalization tests ---
+#
+# Newer tt-inference-server engines (media, vLLM, ...) emit a discriminated
+# `sections[]` array of {"kind": ..., "data": {...}} blocks instead of the
+# top-level evals / benchmarks_summary / benchmarks arrays. _normalize_sections
+# folds those blocks back into the flat lists so the existing _process_* paths
+# produce the same DB measurements. These tests pin that behaviour for the
+# media (FLUX-style) and vLLM (Llama-3.3-70B-style) reports whose Evals /
+# Benchmarks columns were previously empty on the dashboard.
+
+
+def test_sections_evals_block_produces_eval_run(mapper, pipeline):
+    report_data = {
+        "metadata": {"model_name": "FLUX.1-schnell", "device": "P300X2"},
+        "sections": [
+            {
+                "kind": "evals",
+                "task_type": "image",
+                "title": "Image Eval",
+                "data": {
+                    "task_name": "load_image",
+                    "accuracy_check": 2,
+                    "fid_score": 177.58,
+                    "average_clip": 31.30,
+                },
+            }
+        ],
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    eval_runs = [r for r in result if r.run_type == "eval"]
+    assert len(eval_runs) == 1
+    assert eval_runs[0].ml_model_name == "FLUX.1-schnell"
+    assert eval_runs[0].dataset_name == "load_image"
+    names = _measurement_names(result, "eval")
+    assert "accuracy_check" in names  # feeds the dashboard Evals column
+    assert "fid_score" in names
+    assert "average_clip" in names
+
+
+def test_sections_benchmarks_block_produces_summary_checks(mapper, pipeline):
+    report_data = {
+        "metadata": {"model_name": "FLUX.1-schnell", "device": "P300X2"},
+        "sections": [
+            {
+                "kind": "benchmarks",
+                "task_type": "image",
+                # media/image benchmark payloads nest under "Benchmarks"
+                "data": {
+                    "Benchmarks": {
+                        "num_requests": 2,
+                        "target_checks": {
+                            "functional": {"ttft_ms_check": 2, "tput_user_check": 2},
+                            "complete": {"ttft_ms_check": 2, "tput_user_check": 2},
+                            "target": {"ttft_ms_check": 2, "tput_user_check": 2},
+                        },
+                    }
+                },
+            }
+        ],
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    assert len([r for r in result if r.run_type == "benchmark_summary"]) == 1
+    for tier in ("functional", "complete", "target"):
+        checks = _measurement_names(result, f"benchmark_summary_{tier}")
+        assert "ttft_ms_check" in checks  # captured via the widened allowlist
+        assert "tput_user_check" in checks
+
+
+def test_sections_vllm_block_produces_benchmark_run(mapper, pipeline):
+    report_data = {
+        "metadata": {"model_name": "meta-llama/Llama-3.3-70B-Instruct", "device": "P300X2"},
+        "sections": [
+            {
+                "kind": "vllm",
+                "data": {
+                    "mean_ttft_ms": 538.9,
+                    "mean_tpot_ms": 68.8,
+                    "request_throughput": 0.1077,
+                },
+            }
+        ],
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    bench_runs = [r for r in result if r.run_type == "benchmark"]
+    assert len(bench_runs) == 1
+    names = _measurement_names(result, "benchmark")
+    assert "mean_ttft_ms" in names
+    assert "request_throughput" in names
+
+
+def test_sections_end_to_end_flux(mapper, pipeline):
+    """FLUX-style media report: eval + benchmark + spec_tests + acceptance.
+    Evals and benchmark_summary must both materialize (were previously empty)."""
+    report_data = {
+        "metadata": {"model_name": "FLUX.1-schnell", "device": "P300X2"},
+        "sections": [
+            {"kind": "evals", "data": {"task_name": "load_image", "accuracy_check": 2}},
+            {
+                "kind": "benchmarks",
+                "data": {"Benchmarks": {"target_checks": {"functional": {"ttft_ms_check": 2, "tput_user_check": 2}}}},
+            },
+            {"kind": "spec_tests", "data": {"status": "pass"}},
+        ],
+        "acceptance_criteria": True,
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    run_types = {r.run_type for r in result}
+    assert "eval" in run_types
+    assert "benchmark_summary" in run_types
+    assert "acceptance_criteria" in run_types  # top-level, unaffected by schema
+    assert "accuracy_check" in _measurement_names(result, "eval")
+
+
+def test_sections_multiple_eval_blocks_llama(mapper, pipeline):
+    """Llama-3.3-70B-style vLLM report has two eval blocks -> two eval runs, and
+    no benchmark_summary (matches its acceptance 'Benchmarks: NA')."""
+    report_data = {
+        "metadata": {"model_name": "meta-llama/Llama-3.3-70B-Instruct", "device": "P300X2"},
+        "sections": [
+            {"kind": "evals", "data": {"task_name": "meta_ifeval", "accuracy_check": 2, "score": 90.48}},
+            {"kind": "evals", "data": {"task_name": "meta_gpqa_cot", "accuracy_check": 2, "score": 59.375}},
+            {"kind": "vllm", "data": {"mean_ttft_ms": 538.9}},
+        ],
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    eval_runs = [r for r in result if r.run_type == "eval"]
+    assert len(eval_runs) == 2
+    assert {r.dataset_name for r in eval_runs} == {"meta_ifeval", "meta_gpqa_cot"}
+    assert [r for r in result if r.run_type == "benchmark_summary"] == []
+
+
+def test_flat_report_unchanged_by_normalizer(mapper, pipeline):
+    """The legacy flat schema (yolox_nano) must be untouched: normalization is a
+    no-op and the same runs/measurements are produced as before."""
+    report_data = {
+        "metadata": {"model_name": "yolox_nano", "device": "p150"},
+        "evals": [{"model": "yolox_nano", "accuracy_check": 2, "score": 27.7}],
+        "benchmarks_summary": [{"model_name": "yolox_nano", "target_checks": {"functional": {"latency_check": 2}}}],
+        "benchmarks": [{"model_name": "yolox_nano", "mean_latency_ms": 149.29}],
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    assert {r.run_type for r in result} == {"eval", "benchmark_summary", "benchmark"}
+    assert "accuracy_check" in _measurement_names(result, "eval")
+    assert "latency_check" in _measurement_names(result, "benchmark_summary_functional")
+
+
+def test_normalize_sections_is_noop_without_sections(mapper):
+    """A report with no 'sections' key is returned unchanged (same object)."""
+    flat = {"evals": [{"accuracy_check": 2}], "benchmarks_summary": []}
+    assert mapper._normalize_sections(flat) is flat
