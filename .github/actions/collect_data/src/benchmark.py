@@ -377,12 +377,12 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
 
     def _format_model_name(self, benchmark):
         """
-        Formats the model name by removing any prefix before '/' from model identifier.
+        Return the model name unchanged, preserving any HuggingFace ``org/``
+        prefix (e.g. ``Qwen/Qwen3-32B``, ``meta-llama/Llama-3.1-8B-Instruct``).
+        The full model id is kept on purpose so the dashboard displays it as-is;
+        every run type uses this same unmodified name, so no duplicate rows result.
         """
-        model_name = benchmark.get("model_name")
-        if model_name and "/" in model_name:
-            model_name = model_name.split("/", 1)[1]
-        return model_name
+        return benchmark.get("model_name")
 
     def _process_benchmarks(self, pipeline, job, benchmarks, metadata=None, model_spec_data=None):
         """

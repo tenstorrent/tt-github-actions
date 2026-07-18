@@ -209,10 +209,10 @@ def test_format_model_name(mapper):
     assert result == "Llama-3.2-1B"
 
 
-def test_format_model_name_with_prefix(mapper):
+def test_format_model_name_keeps_prefix(mapper):
     benchmark = {"model_name": "meta-llama/Llama-3.2-1B"}
     result = mapper._format_model_name(benchmark)
-    assert result == "Llama-3.2-1B"
+    assert result == "meta-llama/Llama-3.2-1B"  # org prefix preserved (not stripped)
 
 
 def test_format_model_name_none(mapper):
@@ -1295,3 +1295,23 @@ def test_create_measurements_skips_none_metric_values(mapper, pipeline):
     assert "accuracy_check" in names
     assert "fid_score" in names
     assert "score" not in names  # null value -> not a measurement
+
+
+def test_sections_model_name_consistent_across_run_types(mapper, pipeline):
+    """Regression: an org-prefixed metadata.model_name (e.g. 'Qwen/Qwen3-32B')
+    must yield ONE ml_model_name across eval / benchmark / acceptance runs. The
+    full HF name is kept unchanged (not stripped), so the dashboard shows a single
+    'Qwen/Qwen3-32B' row rather than a 'Qwen/Qwen3-32B' + 'Qwen3-32B' duplicate."""
+    report_data = {
+        "metadata": {"model_name": "Qwen/Qwen3-32B", "device": "6u"},
+        "sections": [
+            {"kind": "evals", "data": {"task_name": "r1_aime24", "accuracy_check": 2}},
+            {"kind": "vllm", "data": {"mean_ttft_ms": 100.0}},
+        ],
+        "acceptance_criteria": True,
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    run_types = {r.run_type for r in result}
+    assert {"eval", "benchmark", "acceptance_criteria"} <= run_types  # all three present
+    names = {r.ml_model_name for r in result}
+    assert names == {"Qwen/Qwen3-32B"}, f"expected one full (unstripped) name, got {names}"
