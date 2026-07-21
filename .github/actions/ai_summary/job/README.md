@@ -3,7 +3,7 @@
 Analyzes CI job logs with an LLM and produces a structured per-job summary
 (`.md` + `.json`).
 
-> **Runtime:** uses `$VIRTUAL_ENV` if set, otherwise an ephemeral venv at `/tmp/ai-summary/venv`.
+> **Runtime:** runs in an ephemeral venv at `/tmp/ai-summary/venv`.
 
 ## Usage
 

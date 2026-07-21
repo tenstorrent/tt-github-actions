@@ -65,20 +65,17 @@ runs:
           exit 1
         fi
 
-        # If a venv is already active (Docker pattern), install into it.
-        # Otherwise build an ephemeral one in /tmp (bare runner pattern) —
-        # never write into the action cache. --clear handles a leftover
-        # venv from a prior run on the same self-hosted host (the cleanup
-        # step at the end of this action is best-effort and may not run
-        # if the job is killed mid-step).
-        if [ -n "$VIRTUAL_ENV" ]; then
-          uv pip install --no-cache --quiet "$TOOL_DIR"
-        else
-          VENV=/tmp/ai-summary/venv
-          uv venv --clear --quiet "$VENV"
-          uv pip install --no-cache --quiet --python "$VENV/bin/python" "$TOOL_DIR"
-          echo "$VENV/bin" >> "$GITHUB_PATH"
-        fi
+        # Always install into an ephemeral /tmp venv, never the caller's active
+        # $VIRTUAL_ENV: the tool is self-contained, so installing into a
+        # container's /opt/venv only risks dependency conflicts (silently
+        # swallowed by the caller's continue-on-error) and forces callers to
+        # clear $VIRTUAL_ENV themselves. --clear handles a leftover venv from a
+        # prior run on the same self-hosted host (the cleanup step is
+        # best-effort and may not run if the job is killed mid-step).
+        VENV=/tmp/ai-summary/venv
+        uv venv --clear --quiet "$VENV"
+        uv pip install --no-cache --quiet --python "$VENV/bin/python" "$TOOL_DIR"
+        echo "venv=$VENV" >> "$GITHUB_OUTPUT"
 
         # Compute the absolute output_dir for the upload-artifact step
         # (which runs outside the tool). Mirrors the tool's resolution:
@@ -114,8 +111,11 @@ runs:
         [ -n "$JOB_URL" ]  && CMD_ARGS+=(--job-url "$JOB_URL")
         [ -n "$JOB_NAME" ] && CMD_ARGS+=(--job-name "$JOB_NAME")
 
+        # Run from the ephemeral venv by explicit path, not via $GITHUB_PATH:
+        # that persists into later job steps and would shadow the caller's
+        # interpreter (e.g. a container's /opt/venv).
         echo "::group::AI Job Summary"
-        ai-job-summary "${CMD_ARGS[@]}" || {
+        "${{ steps.setup.outputs.venv }}/bin/ai-job-summary" "${CMD_ARGS[@]}" || {
           echo "::endgroup::"
           echo "::warning::ai-job-summary failed, check logs"
           echo "summary_dir=" >> "$GITHUB_OUTPUT"
@@ -148,7 +148,7 @@ runs:
       if: always()
       shell: bash
       run: |
-        # Best-effort cleanup so the next run on this self-hosted host
-        # starts fresh. Only touches the /tmp path the bare-runner branch
-        # uses; the Docker $VIRTUAL_ENV path is never created by us.
+        # Best-effort cleanup so the next run on this self-hosted host starts
+        # fresh. Only touches the /tmp venv we create; the caller's environment
+        # is never modified.
         rm -rf /tmp/ai-summary
