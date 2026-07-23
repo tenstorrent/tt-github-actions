@@ -91,6 +91,19 @@ class TestParseJsonSummary:
         f.write_text(json.dumps(data))
         assert parse_json_summary(f).log_complete is None
 
+    def test_run_attempt_read_from_job(self, tmp_path):
+        for value in (2, None):
+            data = {"_job": {"status": "SUCCESS", "run_attempt": value}}
+            f = tmp_path / f"ra_{value}.json"
+            f.write_text(json.dumps(data))
+            assert parse_json_summary(f).run_attempt == value
+
+    def test_run_attempt_defaults_none_when_absent(self, tmp_path):
+        data = {"_job": {"status": "SUCCESS"}}
+        f = tmp_path / "ra_absent.json"
+        f.write_text(json.dumps(data))
+        assert parse_json_summary(f).run_attempt is None
+
     def test_status_from_job_field(self, tmp_path):
         data = {"_job": {"status": "CRASHED"}}
         f = tmp_path / "t.json"

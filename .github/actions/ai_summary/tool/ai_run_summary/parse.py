@@ -64,7 +64,8 @@ def dedup_latest_attempt(summaries: list[ParsedJobSummary]) -> list[ParsedJobSum
     check-run id parsed from the job URL, which GitHub assigns in creation
     order — is the tiebreak and the fallback for artifacts written before
     run_attempt was stamped. Entries with no job_name (a local run without
-    --job-name) can't be keyed by leg and pass through unchanged.
+    --job-name) can't be keyed by leg; each is kept, appended after the keyed
+    legs.
 
     Precondition: job names are unique within an attempt (the matrix leg name).
     Two summaries sharing a name within one attempt are a duplicate-name

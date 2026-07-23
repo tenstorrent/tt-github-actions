@@ -278,7 +278,7 @@ def main():
         # mkdir(parents=True) climb past the missing workspace into an
         # unwritable parent and raise a misleading PermissionError.
         print(
-            f"workspace does not exist: {workspace} (upstream setup failed; nothing to summarize)",
+            f"::error::workspace does not exist: {workspace} (upstream setup failed; nothing to summarize)",
             file=sys.stderr,
         )
         sys.exit(1)
