@@ -37,11 +37,28 @@ class TestDedupLatestAttempt:
         out = dedup_latest_attempt(legs)
         assert {s.job_name for s in out} == {"A", "B"}
 
-    def test_stub_without_job_id_passes_through(self):
+    def test_named_stub_without_job_id_is_retained(self):
+        # An infra stub has a unique name and no job_id — kept via its name, not
+        # via the passthrough branch.
         legs = [_leg("A", "10"), _leg("KV", "", "INFRA_FAILURE")]
         out = dedup_latest_attempt(legs)
         assert len(out) == 2
         assert any(s.job_name == "KV" and s.status == "INFRA_FAILURE" for s in out)
+
+    def test_unnamed_entry_passes_through(self):
+        # No job_name (local run without --job-name): can't key by leg, kept.
+        legs = [_leg("A", "10"), _leg("", "")]
+        out = dedup_latest_attempt(legs)
+        assert len(out) == 2
+        assert any(s.job_name == "" for s in out)
+
+    def test_same_name_same_attempt_warns(self, capsys):
+        # Two distinct legs sharing a name within one attempt is a misconfig, not
+        # a re-run — collapsed with a warning rather than silently.
+        legs = [_leg("dup", "10", run_attempt=1), _leg("dup", "11", run_attempt=1)]
+        out = dedup_latest_attempt(legs)
+        assert len(out) == 1
+        assert "share job name 'dup'" in capsys.readouterr().err
 
 
 class TestParseJsonSummary:

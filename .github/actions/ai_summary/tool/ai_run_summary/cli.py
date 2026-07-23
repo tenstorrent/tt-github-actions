@@ -273,6 +273,15 @@ def main():
     # path, which doesn't exist inside container jobs). input_dir /
     # output_dir are project-relative and not expanded.
     workspace = Path(os.path.expandvars(config.get("workspace") or "") or os.getcwd())
+    if not workspace.is_dir():
+        # Mirror the job tool: bail cleanly instead of letting the later
+        # mkdir(parents=True) climb past the missing workspace into an
+        # unwritable parent and raise a misleading PermissionError.
+        print(
+            f"workspace does not exist: {workspace} (upstream setup failed; nothing to summarize)",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     summaries_dir = workspace / input_dir
 
     # Synthesize INFRA_FAILURE stubs for expected matrix legs that produced no

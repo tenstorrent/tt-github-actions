@@ -60,10 +60,16 @@ def dedup_latest_attempt(summaries: list[ParsedJobSummary]) -> list[ParsedJobSum
     """Keep one summary per leg, from the latest attempt.
 
     A partial re-run leaves every attempt's per-job artifact on the run.
-    run_attempt (GITHUB_RUN_ATTEMPT) is authoritative; check_run_id (numeric
-    job_id, creation-ordered) is the tiebreak and the fallback for artifacts
-    written before it was stamped. Summaries without a numeric job_id (local
-    runs, infra stubs) can't collide on a real name and pass through.
+    run_attempt (GITHUB_RUN_ATTEMPT) is authoritative; job_id — the numeric
+    check-run id parsed from the job URL, which GitHub assigns in creation
+    order — is the tiebreak and the fallback for artifacts written before
+    run_attempt was stamped. Entries with no job_name (a local run without
+    --job-name) can't be keyed by leg and pass through unchanged.
+
+    Precondition: job names are unique within an attempt (the matrix leg name).
+    Two summaries sharing a name within one attempt are a duplicate-name
+    misconfig, not a re-run; the newer job_id wins and a warning is emitted so
+    it's visible rather than silently collapsed.
     """
 
     def attempt(s: ParsedJobSummary) -> tuple[int, int]:
@@ -78,10 +84,18 @@ def dedup_latest_attempt(summaries: list[ParsedJobSummary]) -> list[ParsedJobSum
         if not s.job_name:
             passthrough.append(s)
             continue
-        if s.job_name not in best:
+        cur = best.get(s.job_name)
+        if cur is None:
             order.append(s.job_name)
             best[s.job_name] = s
-        elif attempt(s) > attempt(best[s.job_name]):
+            continue
+        if s.run_attempt is not None and s.run_attempt == cur.run_attempt and s.job_id != cur.job_id:
+            print(
+                f"::warning::two summaries share job name {s.job_name!r} within attempt "
+                f"{s.run_attempt}; keeping one and dropping the other",
+                file=sys.stderr,
+            )
+        if attempt(s) > attempt(cur):
             best[s.job_name] = s
     return [best[name] for name in order] + passthrough
 
