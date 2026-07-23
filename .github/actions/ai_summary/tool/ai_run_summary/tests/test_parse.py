@@ -8,9 +8,7 @@ from ai_run_summary.parse import dedup_latest_attempt, parse_json_summary, parse
 
 
 def _leg(name: str, job_id: str, status: str = "SUCCESS", run_attempt=None) -> ParsedJobSummary:
-    return ParsedJobSummary(
-        source_file=Path("x"), job_id=job_id, job_name=name, status=status, run_attempt=run_attempt
-    )
+    return ParsedJobSummary(source_file=Path("x"), job_id=job_id, job_name=name, status=status, run_attempt=run_attempt)
 
 
 class TestDedupLatestAttempt:
