@@ -110,10 +110,6 @@ class _BenchmarkDataMapper(ABC):
         """
         measurements = []
         for key in keys:
-            # Skip absent or null metrics: BenchmarkMeasurement.value is a
-            # required float, so a null (e.g. image evals' `score`) is not a
-            # measurement — dropping it here avoids a noisy per-key
-            # ValidationError log for a legitimately-absent value.
             if key in data and data[key] is not None:
                 try:
                     measurement = BenchmarkMeasurement(
@@ -269,9 +265,6 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
 
         metadata = report_data.get("metadata", {})
 
-        # Bridge the v2 "sections" report schema onto the flat schema so the
-        # flat _process_* paths (and thus the dashboard measurements) work
-        # unchanged. No-op for reports that are already flat.
         report_data = self._normalize_sections(report_data)
 
         try:
