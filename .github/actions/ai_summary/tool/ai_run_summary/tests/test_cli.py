@@ -126,6 +126,14 @@ class TestMain:
                 main()
         assert exc.value.code == 1
 
+    def test_missing_workspace_exits(self, tmp_path, capsys):
+        config_str = self._config_json(tmp_path / "nope", input_dir="in", output_dir="out")
+        with pytest.raises(SystemExit) as exc:
+            with patch("sys.argv", ["ai-run-summary", "--config", config_str]):
+                main()
+        assert exc.value.code == 1
+        assert "::error::workspace does not exist" in capsys.readouterr().err
+
     def test_missing_input_dir_exits(self, tmp_path):
         config_str = self._config_json(tmp_path, output_dir=str(tmp_path))  # no input_dir
         with pytest.raises(SystemExit) as exc:

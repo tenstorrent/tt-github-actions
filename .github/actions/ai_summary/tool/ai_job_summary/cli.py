@@ -51,6 +51,12 @@ def _job_id_from_url(job_url: str) -> str:
     return m.group(1) if m else ""
 
 
+def _run_attempt() -> int | None:
+    """The run's attempt number from GITHUB_RUN_ATTEMPT; None outside CI."""
+    v = os.environ.get("GITHUB_RUN_ATTEMPT", "")
+    return int(v) if v.isdigit() else None
+
+
 def _write_outputs(output_dir: Path, job_id: str, md: str, data: dict) -> tuple[Path, Path]:
     """Write both markdown and JSON summaries. Returns (md_path, json_path)."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -90,6 +96,7 @@ def _build_json(
         "url": job_url or (extracted_log.job_url if extracted_log else ""),
         "status": job_status.status_text,
         "status_code": job_status.status_code,
+        "run_attempt": _run_attempt(),
     }
     if llm_response:
         output["_llm_usage"] = {
@@ -189,6 +196,15 @@ def main():
     # container jobs). input_dirs / output_dir are project-relative and
     # not expanded — that keeps configs portable and round-trippable.
     workspace = Path(os.path.expandvars(config.get("workspace") or "") or os.getcwd())
+    if not workspace.is_dir():
+        # Bail here, not at mkdir: mkdir(parents=True) below would climb past
+        # the missing workspace into an unwritable parent (e.g. /home/user) and
+        # raise a misleading PermissionError.
+        print(
+            f"::error::workspace does not exist: {workspace} (upstream setup failed; nothing to summarize)",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     output_dir = workspace / config["output_dir"]
     input_dirs = config["input_dirs"]
 

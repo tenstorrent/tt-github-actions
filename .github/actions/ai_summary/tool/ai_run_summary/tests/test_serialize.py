@@ -12,6 +12,7 @@ META = {
     "run_id": "27490793160",
     "run_url": "https://github.com/org/repo/actions/runs/27490793160",
     "run_date": "2026-06-14",
+    "run_attempt": 2,
 }
 
 
@@ -25,7 +26,12 @@ class TestBuildRunJson:
         assert out["run_id"] == "27490793160"
         assert out["run_url"] == META["run_url"]
         assert out["run_date"] == "2026-06-14"
+        assert out["run_attempt"] == 2
         assert out["total_jobs"] == 1
+
+    def test_run_attempt_none_when_absent(self):
+        out = build_run_json([_job("a", "SUCCESS")], {"run_id": "1"})
+        assert out["run_attempt"] is None
 
     def test_three_way_grouping(self):
         summaries = [

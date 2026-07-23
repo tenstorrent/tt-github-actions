@@ -13,6 +13,18 @@ from typing import Optional
 from .models import ParsedJobSummary, resolve_status
 
 
+def _as_attempt(value) -> Optional[int]:
+    """Coerce a JSON run_attempt to int|None so the dedup ordering key never
+    mixes types, whatever a producer wrote."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and value.isdigit():
+        return int(value)
+    return None
+
+
 def parse_json_summary(file_path: Path) -> Optional[ParsedJobSummary]:
     """Parse a JSON summary file produced by ai-job-summary.
 
@@ -52,7 +64,53 @@ def parse_json_summary(file_path: Path) -> Optional[ParsedJobSummary]:
         confidence=data.get("confidence", ""),
         failed_tests=failed_tests,
         log_complete=job.get("log_complete"),
+        run_attempt=_as_attempt(job.get("run_attempt")),
     )
+
+
+def dedup_latest_attempt(summaries: list[ParsedJobSummary]) -> list[ParsedJobSummary]:
+    """Keep one summary per leg, from the latest attempt.
+
+    A partial re-run leaves every attempt's per-job artifact on the run.
+    run_attempt (GITHUB_RUN_ATTEMPT) is authoritative; job_id — the numeric
+    check-run id parsed from the job URL, which GitHub assigns in creation
+    order — is the tiebreak and the fallback for artifacts written before
+    run_attempt was stamped. Entries with no job_name (a local run without
+    --job-name) can't be keyed by leg; each is kept, appended after the keyed
+    legs.
+
+    Precondition: job names are unique within an attempt (the matrix leg name).
+    Two summaries sharing a name within one attempt are a duplicate-name
+    misconfig, not a re-run; the newer job_id wins and a warning is emitted so
+    it's visible rather than silently collapsed.
+    """
+
+    def attempt(s: ParsedJobSummary) -> tuple[int, int]:
+        ra = s.run_attempt if s.run_attempt is not None else -1
+        cid = int(s.job_id) if s.job_id.isdigit() else -1
+        return (ra, cid)
+
+    best: dict[str, ParsedJobSummary] = {}
+    order: list[str] = []
+    passthrough: list[ParsedJobSummary] = []
+    for s in summaries:
+        if not s.job_name:
+            passthrough.append(s)
+            continue
+        cur = best.get(s.job_name)
+        if cur is None:
+            order.append(s.job_name)
+            best[s.job_name] = s
+            continue
+        if s.run_attempt is not None and s.run_attempt == cur.run_attempt and s.job_id != cur.job_id:
+            print(
+                f"::warning::two summaries share job name {s.job_name!r} within attempt "
+                f"{s.run_attempt}; keeping one and dropping the other",
+                file=sys.stderr,
+            )
+        if attempt(s) > attempt(cur):
+            best[s.job_name] = s
+    return [best[name] for name in order] + passthrough
 
 
 def parse_summaries_dir(directory: Path) -> list[ParsedJobSummary]:

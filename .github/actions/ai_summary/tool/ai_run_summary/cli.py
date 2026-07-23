@@ -23,7 +23,7 @@ from common.llm_client import get_llm_client
 from .aggregate import compute_stats
 from .format import format_run_report
 from .narrative import generate_narrative
-from .parse import parse_summaries_dir
+from .parse import dedup_latest_attempt, parse_summaries_dir
 from .serialize import build_run_json
 
 
@@ -166,9 +166,10 @@ def _resolve_run_metadata() -> dict:
     """Gather run metadata from environment variables.
 
     Works with GitHub Actions, GitLab CI, or plain invocation.
-    Returns dict with keys: run_url, run_id, run_date, pr
+    Returns dict with keys: run_url, run_id, run_date, run_attempt, pr
     """
     run_id = os.environ.get("GITHUB_RUN_ID", "")
+    attempt = os.environ.get("GITHUB_RUN_ATTEMPT", "")
     server = os.environ.get("GITHUB_SERVER_URL", "")
     repo = os.environ.get("GITHUB_REPOSITORY", "")
 
@@ -186,6 +187,7 @@ def _resolve_run_metadata() -> dict:
         "run_url": run_url,
         "run_id": run_id,
         "run_date": datetime.date.today().isoformat(),
+        "run_attempt": int(attempt) if attempt.isdigit() else None,
         "pr": pr,
     }
 
@@ -271,6 +273,15 @@ def main():
     # path, which doesn't exist inside container jobs). input_dir /
     # output_dir are project-relative and not expanded.
     workspace = Path(os.path.expandvars(config.get("workspace") or "") or os.getcwd())
+    if not workspace.is_dir():
+        # Mirror the job tool: bail cleanly instead of letting the later
+        # mkdir(parents=True) climb past the missing workspace into an
+        # unwritable parent and raise a misleading PermissionError.
+        print(
+            f"::error::workspace does not exist: {workspace} (upstream setup failed; nothing to summarize)",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     summaries_dir = workspace / input_dir
 
     # Synthesize INFRA_FAILURE stubs for expected matrix legs that produced no
@@ -307,6 +318,13 @@ def main():
     print(f"Scanning {summaries_dir} for summaries...", file=sys.stderr)
     summaries = parse_summaries_dir(summaries_dir)
     print(f"Parsed {len(summaries)} summary files", file=sys.stderr)
+    deduped = dedup_latest_attempt(summaries)
+    if len(deduped) != len(summaries):
+        print(
+            f"Dropped {len(summaries) - len(deduped)} superseded per-leg summary file(s) from earlier attempts",
+            file=sys.stderr,
+        )
+    summaries = deduped
 
     if not summaries:
         print("Warning: No summary files found", file=sys.stderr)
