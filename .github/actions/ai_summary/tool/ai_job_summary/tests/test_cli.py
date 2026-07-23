@@ -214,6 +214,15 @@ class TestConfigParsing:
 class TestWorkspace:
     """workspace field anchors relative input_dirs and output_dir."""
 
+    def test_missing_workspace_exits(self, tmp_path, capsys):
+        config = json.dumps(
+            {"model": "test", "workspace": str(tmp_path / "nope"), "input_dirs": ["logs"], "output_dir": str(tmp_path)}
+        )
+        with pytest.raises(SystemExit) as exc:
+            _run_cli(["--config", config])
+        assert exc.value.code == 1
+        assert "::error::workspace does not exist" in capsys.readouterr().err
+
     def test_relative_input_dirs_resolve_against_workspace(self, tmp_path):
         _write_log(tmp_path / "logs", "run.log", "INFO: ok\n[==tt-log-finish-line==] exit_code=0\n")
         config = json.dumps(

@@ -13,6 +13,18 @@ from typing import Optional
 from .models import ParsedJobSummary, resolve_status
 
 
+def _as_attempt(value) -> Optional[int]:
+    """Coerce a JSON run_attempt to int|None so the dedup ordering key never
+    mixes types, whatever a producer wrote."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and value.isdigit():
+        return int(value)
+    return None
+
+
 def parse_json_summary(file_path: Path) -> Optional[ParsedJobSummary]:
     """Parse a JSON summary file produced by ai-job-summary.
 
@@ -52,7 +64,7 @@ def parse_json_summary(file_path: Path) -> Optional[ParsedJobSummary]:
         confidence=data.get("confidence", ""),
         failed_tests=failed_tests,
         log_complete=job.get("log_complete"),
-        run_attempt=job.get("run_attempt"),
+        run_attempt=_as_attempt(job.get("run_attempt")),
     )
 
 

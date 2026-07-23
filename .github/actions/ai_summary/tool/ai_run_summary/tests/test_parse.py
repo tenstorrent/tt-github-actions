@@ -91,12 +91,13 @@ class TestParseJsonSummary:
         f.write_text(json.dumps(data))
         assert parse_json_summary(f).log_complete is None
 
-    def test_run_attempt_read_from_job(self, tmp_path):
-        for value in (2, None):
-            data = {"_job": {"status": "SUCCESS", "run_attempt": value}}
-            f = tmp_path / f"ra_{value}.json"
+    def test_run_attempt_coerced_to_int(self, tmp_path):
+        # int passes through; a stringly-typed producer is coerced; junk → None.
+        for raw, expected in ((2, 2), ("2", 2), ("x", None), (None, None)):
+            data = {"_job": {"status": "SUCCESS", "run_attempt": raw}}
+            f = tmp_path / f"ra_{raw}.json"
             f.write_text(json.dumps(data))
-            assert parse_json_summary(f).run_attempt == value
+            assert parse_json_summary(f).run_attempt == expected
 
     def test_run_attempt_defaults_none_when_absent(self, tmp_path):
         data = {"_job": {"status": "SUCCESS"}}

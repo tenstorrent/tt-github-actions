@@ -321,7 +321,7 @@ def main():
     deduped = dedup_latest_attempt(summaries)
     if len(deduped) != len(summaries):
         print(
-            f"Collapsed {len(summaries) - len(deduped)} superseded re-run attempt(s)",
+            f"Dropped {len(summaries) - len(deduped)} superseded per-leg summary file(s) from earlier attempts",
             file=sys.stderr,
         )
     summaries = deduped
