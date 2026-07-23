@@ -72,6 +72,7 @@ class ParsedJobSummary:
     confidence: str = ""
     failed_tests: list[str] = field(default_factory=list)
     log_complete: bool | None = None
+    run_attempt: int | None = None
 
 
 @dataclass

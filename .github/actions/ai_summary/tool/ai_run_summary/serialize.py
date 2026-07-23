@@ -51,6 +51,7 @@ def build_run_json(summaries: list[ParsedJobSummary], meta: dict) -> dict:
         "run_id": meta.get("run_id", ""),
         "run_url": meta.get("run_url", ""),
         "run_date": meta.get("run_date", ""),
+        "run_attempt": meta.get("run_attempt"),
         "total_jobs": len(summaries),
         "succeeded": sorted(succeeded, key=lambda r: r["job_name"]),
         "failed": sorted((_failed_row(s) for s in failed), key=lambda r: r["job_name"]),

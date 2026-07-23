@@ -23,7 +23,7 @@ from common.llm_client import get_llm_client
 from .aggregate import compute_stats
 from .format import format_run_report
 from .narrative import generate_narrative
-from .parse import parse_summaries_dir
+from .parse import dedup_latest_attempt, parse_summaries_dir
 from .serialize import build_run_json
 
 
@@ -166,9 +166,10 @@ def _resolve_run_metadata() -> dict:
     """Gather run metadata from environment variables.
 
     Works with GitHub Actions, GitLab CI, or plain invocation.
-    Returns dict with keys: run_url, run_id, run_date, pr
+    Returns dict with keys: run_url, run_id, run_date, run_attempt, pr
     """
     run_id = os.environ.get("GITHUB_RUN_ID", "")
+    attempt = os.environ.get("GITHUB_RUN_ATTEMPT", "")
     server = os.environ.get("GITHUB_SERVER_URL", "")
     repo = os.environ.get("GITHUB_REPOSITORY", "")
 
@@ -186,6 +187,7 @@ def _resolve_run_metadata() -> dict:
         "run_url": run_url,
         "run_id": run_id,
         "run_date": datetime.date.today().isoformat(),
+        "run_attempt": int(attempt) if attempt.isdigit() else None,
         "pr": pr,
     }
 
@@ -307,6 +309,13 @@ def main():
     print(f"Scanning {summaries_dir} for summaries...", file=sys.stderr)
     summaries = parse_summaries_dir(summaries_dir)
     print(f"Parsed {len(summaries)} summary files", file=sys.stderr)
+    deduped = dedup_latest_attempt(summaries)
+    if len(deduped) != len(summaries):
+        print(
+            f"Collapsed {len(summaries) - len(deduped)} superseded re-run attempt(s)",
+            file=sys.stderr,
+        )
+    summaries = deduped
 
     if not summaries:
         print("Warning: No summary files found", file=sys.stderr)

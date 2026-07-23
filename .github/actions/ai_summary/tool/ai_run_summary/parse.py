@@ -52,7 +52,38 @@ def parse_json_summary(file_path: Path) -> Optional[ParsedJobSummary]:
         confidence=data.get("confidence", ""),
         failed_tests=failed_tests,
         log_complete=job.get("log_complete"),
+        run_attempt=job.get("run_attempt"),
     )
+
+
+def dedup_latest_attempt(summaries: list[ParsedJobSummary]) -> list[ParsedJobSummary]:
+    """Keep one summary per leg, from the latest attempt.
+
+    A partial re-run leaves every attempt's per-job artifact on the run.
+    run_attempt (GITHUB_RUN_ATTEMPT) is authoritative; check_run_id (numeric
+    job_id, creation-ordered) is the tiebreak and the fallback for artifacts
+    written before it was stamped. Summaries without a numeric job_id (local
+    runs, infra stubs) can't collide on a real name and pass through.
+    """
+
+    def attempt(s: ParsedJobSummary) -> tuple[int, int]:
+        ra = s.run_attempt if s.run_attempt is not None else -1
+        cid = int(s.job_id) if s.job_id.isdigit() else -1
+        return (ra, cid)
+
+    best: dict[str, ParsedJobSummary] = {}
+    order: list[str] = []
+    passthrough: list[ParsedJobSummary] = []
+    for s in summaries:
+        if not s.job_name:
+            passthrough.append(s)
+            continue
+        if s.job_name not in best:
+            order.append(s.job_name)
+            best[s.job_name] = s
+        elif attempt(s) > attempt(best[s.job_name]):
+            best[s.job_name] = s
+    return [best[name] for name in order] + passthrough
 
 
 def parse_summaries_dir(directory: Path) -> list[ParsedJobSummary]:

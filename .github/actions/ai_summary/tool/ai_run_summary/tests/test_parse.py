@@ -1,7 +1,47 @@
 # SPDX-FileCopyrightText: (c) 2026 Tenstorrent USA, Inc.
 # SPDX-License-Identifier: Apache-2.0
 import json
-from ai_run_summary.parse import parse_json_summary, parse_summaries_dir
+from pathlib import Path
+
+from ai_run_summary.models import ParsedJobSummary
+from ai_run_summary.parse import dedup_latest_attempt, parse_json_summary, parse_summaries_dir
+
+
+def _leg(name: str, job_id: str, status: str = "SUCCESS", run_attempt=None) -> ParsedJobSummary:
+    return ParsedJobSummary(
+        source_file=Path("x"), job_id=job_id, job_name=name, status=status, run_attempt=run_attempt
+    )
+
+
+class TestDedupLatestAttempt:
+    def test_run_attempt_wins_over_job_id_order(self):
+        # run_attempt=2 wins even though its check_run_id is lower.
+        legs = [
+            _leg("MLA", "200", "TIMEOUT", run_attempt=1),
+            _leg("MLA", "100", "SUCCESS", run_attempt=2),
+        ]
+        out = dedup_latest_attempt(legs)
+        assert len(out) == 1
+        assert out[0].run_attempt == 2
+        assert out[0].status == "SUCCESS"
+
+    def test_falls_back_to_job_id_when_no_run_attempt(self):
+        legs = [_leg("MLA", "100", "TIMEOUT"), _leg("MLA", "200", "SUCCESS")]
+        out = dedup_latest_attempt(legs)
+        assert len(out) == 1
+        assert out[0].job_id == "200"
+        assert out[0].status == "SUCCESS"
+
+    def test_single_attempt_legs_untouched(self):
+        legs = [_leg("A", "10"), _leg("B", "11")]
+        out = dedup_latest_attempt(legs)
+        assert {s.job_name for s in out} == {"A", "B"}
+
+    def test_stub_without_job_id_passes_through(self):
+        legs = [_leg("A", "10"), _leg("KV", "", "INFRA_FAILURE")]
+        out = dedup_latest_attempt(legs)
+        assert len(out) == 2
+        assert any(s.job_name == "KV" and s.status == "INFRA_FAILURE" for s in out)
 
 
 class TestParseJsonSummary:
