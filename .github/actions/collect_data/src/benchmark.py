@@ -325,8 +325,17 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         benchmarks = list(report_data.get("benchmarks", []))
 
         for block in sections:
+            if not isinstance(block, dict):
+                # Skip malformed non-dict section entries instead of letting
+                # ``.get()`` raise and crash ingestion.
+                logger.warning(f"Skipping non-dict section block: {block!r}")
+                continue
             kind = block.get("kind")
-            data = block.get("data") or {}
+            data = block.get("data")
+            if not isinstance(data, dict):
+                # Missing/non-mapping payload -> empty dict so the ``**data`` /
+                # ``data.get(...)`` uses below can never raise.
+                data = {}
             if kind == "evals":
                 evals.append(
                     {
@@ -340,6 +349,8 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             elif kind == "benchmarks":
                 # media/image benchmark blocks nest the payload under "Benchmarks"
                 payload = data.get("Benchmarks", data)
+                if not isinstance(payload, dict):
+                    payload = data
                 benchmarks_summary.append(
                     {
                         "model": model_name,

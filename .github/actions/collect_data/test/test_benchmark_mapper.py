@@ -1277,6 +1277,30 @@ def test_normalize_sections_is_noop_without_sections(mapper):
     assert mapper._normalize_sections(flat) is flat
 
 
+def test_normalize_sections_skips_malformed_blocks(mapper, pipeline):
+    """Defensive: non-dict section entries and blocks whose `data`/payload are
+    not mappings must be tolerated without raising (map_benchmark_data only
+    catches ValidationError), while valid blocks in the same report still
+    ingest."""
+    report_data = {
+        "metadata": {"model_name": "FLUX.1-schnell", "device": "P300X2"},
+        "sections": [
+            "not-a-dict",  # non-dict block entry
+            123,  # non-dict block entry
+            None,  # non-dict block entry
+            {"kind": "evals", "data": ["bad"]},  # non-mapping data
+            {"kind": "vllm", "data": "oops"},  # non-mapping data
+            {"kind": "benchmarks", "data": {"Benchmarks": ["bad"]}},  # non-mapping payload
+            {"kind": "evals", "data": {"task_name": "load_image", "accuracy_check": 2}},  # valid
+        ],
+    }
+    # Must not raise despite the malformed entries.
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    # The one valid eval block still produced its run + accuracy_check measurement.
+    assert any(r.run_type == "eval" and r.dataset_name == "load_image" for r in result)
+    assert "accuracy_check" in _measurement_names(result, "eval")
+
+
 def test_create_measurements_skips_none_metric_values(mapper, pipeline):
     """A null metric value (e.g. image evals' `score`) is skipped rather than
     logging a ValidationError — BenchmarkMeasurement.value is a required float.
