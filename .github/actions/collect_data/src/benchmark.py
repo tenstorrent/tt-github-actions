@@ -373,7 +373,8 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         Return the model name unchanged, preserving any HuggingFace ``org/``
         prefix (e.g. ``Qwen/Qwen3-32B``, ``meta-llama/Llama-3.1-8B-Instruct``).
         The full model id is kept on purpose so the dashboard displays it as-is;
-        every run type uses this same unmodified name, so no duplicate rows result.
+        benchmark and benchmark_summary runs use this unmodified name to avoid
+        duplicate rows caused by inconsistent stripping.
         """
         return benchmark.get("model_name")
 
