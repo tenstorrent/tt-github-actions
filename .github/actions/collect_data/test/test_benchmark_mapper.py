@@ -1148,7 +1148,7 @@ def test_sections_evals_block_produces_eval_run(mapper, pipeline):
     assert eval_runs[0].ml_model_name == "FLUX.1-schnell"
     assert eval_runs[0].dataset_name == "load_image"
     names = _measurement_names(result, "eval")
-    assert "accuracy_check" in names  # feeds the dashboard Evals column
+    assert "accuracy_check" in names
     assert "fid_score" in names
     assert "average_clip" in names
 
