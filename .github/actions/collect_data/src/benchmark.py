@@ -265,27 +265,25 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
 
         metadata = report_data.get("metadata", {})
 
-        report_data = self._normalize_sections(report_data)
-
         try:
             benchmark_runs = self._process_benchmarks(
                 pipeline,
                 job,
-                report_data.get("benchmarks", []),
+                report_data,
                 metadata,
                 model_spec_data,
             )
             benchmark_summary_runs = self._process_benchmarks_summary(
                 pipeline,
                 job,
-                report_data.get("benchmarks_summary", []),
+                report_data,
                 metadata,
                 model_spec_data,
             )
             eval_runs = self._process_evals(
                 pipeline,
                 job,
-                report_data.get("evals", []),
+                report_data,
                 metadata,
                 model_spec_data,
             )
@@ -302,80 +300,6 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             logger.error(f"Validation error: {e}")
             return None
 
-    def _normalize_sections(self, report_data):
-        """Fold the v2 "sections" report schema back into the flat lists.
-
-        Newer tt-inference-server engines (media, vLLM, ...) emit
-        ``{"sections": [{"kind": "evals"|"benchmarks"|"vllm"|..., "data": {...}}, ...]}``
-        instead of the top-level ``evals`` / ``benchmarks_summary`` / ``benchmarks``
-        arrays. Fold those blocks back into the flat lists so the existing
-        _process_* paths (and thus the dashboard measurements) work unchanged.
-        No-op for reports that are already flat.
-        """
-        sections = report_data.get("sections")
-        if not isinstance(sections, list):
-            return report_data
-
-        metadata = report_data.get("metadata", {})
-        model_name = metadata.get("model_name")
-        device = metadata.get("device")
-
-        evals = list(report_data.get("evals", []))
-        benchmarks_summary = list(report_data.get("benchmarks_summary", []))
-        benchmarks = list(report_data.get("benchmarks", []))
-
-        for block in sections:
-            if not isinstance(block, dict):
-                # Skip malformed non-dict section entries instead of letting
-                # ``.get()`` raise and crash ingestion.
-                logger.warning(f"Skipping non-dict section block: {block!r}")
-                continue
-            kind = block.get("kind")
-            data = block.get("data")
-            if not isinstance(data, dict):
-                # Missing/non-mapping payload -> empty dict so the ``**data`` /
-                # ``data.get(...)`` uses below can never raise.
-                data = {}
-            if kind == "evals":
-                evals.append(
-                    {
-                        "model": model_name,
-                        "device": device,
-                        "task_name": data.get("task_name") or block.get("title"),
-                        "task_type": block.get("task_type"),
-                        **data,
-                    }
-                )
-            elif kind == "benchmarks":
-                # media/image benchmark blocks nest the payload under "Benchmarks"
-                payload = data.get("Benchmarks", data)
-                if not isinstance(payload, dict):
-                    payload = data
-                benchmarks_summary.append(
-                    {
-                        "model": model_name,
-                        "model_name": model_name,
-                        "device": device,
-                        "task_type": block.get("task_type"),
-                        **payload,
-                    }
-                )
-            elif kind == "vllm":
-                benchmarks.append(
-                    {
-                        "model": model_name,
-                        "model_name": model_name,
-                        "device": device,
-                        **data,
-                    }
-                )
-
-        report_data = dict(report_data)
-        report_data["evals"] = evals
-        report_data["benchmarks_summary"] = benchmarks_summary
-        report_data["benchmarks"] = benchmarks
-        return report_data
-
     def _format_model_name(self, benchmark):
         """
         Return the model name unchanged, preserving any HuggingFace ``org/``
@@ -386,10 +310,27 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         """
         return benchmark.get("model_name")
 
-    def _process_benchmarks(self, pipeline, job, benchmarks, metadata=None, model_spec_data=None):
+    def _process_benchmarks(self, pipeline, job, report_data, metadata=None, model_spec_data=None):
         """
         Processes benchmark entries and creates CompleteBenchmarkRun objects for each entry.
         """
+        meta = metadata or {}
+        benchmarks = list(report_data.get("benchmarks", []))
+        for block in report_data.get("sections") or []:
+            if not isinstance(block, dict) or block.get("kind") != "vllm":
+                continue
+            data = block.get("data")
+            if not isinstance(data, dict):
+                data = {}
+            benchmarks.append(
+                {
+                    "model": meta.get("model_name"),
+                    "model_name": meta.get("model_name"),
+                    "device": meta.get("device"),
+                    **data,
+                }
+            )
+
         results = []
         for benchmark in benchmarks:
             if metadata:
@@ -455,10 +396,32 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             )
         return results
 
-    def _process_benchmarks_summary(self, pipeline, job, benchmarks_summary, metadata=None, model_spec_data=None):
+    def _process_benchmarks_summary(self, pipeline, job, report_data, metadata=None, model_spec_data=None):
         """
         Processes benchmark summary entries and creates CompleteBenchmarkRun objects for each entry.
         """
+        meta = metadata or {}
+        benchmarks_summary = list(report_data.get("benchmarks_summary", []))
+        for block in report_data.get("sections") or []:
+            if not isinstance(block, dict) or block.get("kind") != "benchmarks":
+                continue
+            data = block.get("data")
+            if not isinstance(data, dict):
+                data = {}
+            # media/image benchmark blocks nest the payload under "Benchmarks"
+            payload = data.get("Benchmarks", data)
+            if not isinstance(payload, dict):
+                payload = data
+            benchmarks_summary.append(
+                {
+                    "model": meta.get("model_name"),
+                    "model_name": meta.get("model_name"),
+                    "device": meta.get("device"),
+                    "task_type": block.get("task_type"),
+                    **payload,
+                }
+            )
+
         results = []
         for benchmark in benchmarks_summary:
             if metadata:
@@ -604,10 +567,28 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             )
         ]
 
-    def _process_evals(self, pipeline, job, evals, metadata=None, model_spec_data=None):
+    def _process_evals(self, pipeline, job, report_data, metadata=None, model_spec_data=None):
         """
         Processes evaluation entries and creates CompleteBenchmarkRun objects for each entry.
         """
+        meta = metadata or {}
+        evals = list(report_data.get("evals", []))
+        for block in report_data.get("sections") or []:
+            if not isinstance(block, dict) or block.get("kind") != "evals":
+                continue
+            data = block.get("data")
+            if not isinstance(data, dict):
+                data = {}
+            evals.append(
+                {
+                    "model": meta.get("model_name"),
+                    "device": meta.get("device"),
+                    "task_name": data.get("task_name") or block.get("title"),
+                    "task_type": block.get("task_type"),
+                    **data,
+                }
+            )
+
         results = []
         for eval_entry in evals:
             if metadata:

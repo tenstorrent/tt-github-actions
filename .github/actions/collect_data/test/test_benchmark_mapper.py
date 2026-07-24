@@ -1125,7 +1125,6 @@ def test_acceptance_config_params_does_not_mutate_model_spec(mapper, pipeline):
     assert model_spec_data == {"model_id": "test_model"}
 
 
-
 def test_sections_evals_block_produces_eval_run(mapper, pipeline):
     report_data = {
         "metadata": {"model_name": "FLUX.1-schnell", "device": "P300X2"},
@@ -1246,9 +1245,9 @@ def test_sections_multiple_eval_blocks_llama(mapper, pipeline):
     assert [r for r in result if r.run_type == "benchmark_summary"] == []
 
 
-def test_flat_report_unchanged_by_normalizer(mapper, pipeline):
-    """The legacy flat schema (yolox_nano) must be untouched: normalization is a
-    no-op and the same runs/measurements are produced as before."""
+def test_flat_report_still_ingests(mapper, pipeline):
+    """A report with top-level ``benchmarks`` / ``evals`` / ``benchmarks_summary``
+    arrays (no ``sections``) still produces the expected runs/measurements."""
     report_data = {
         "metadata": {"model_name": "yolox_nano", "device": "p150"},
         "evals": [{"model": "yolox_nano", "accuracy_check": 2, "score": 27.7}],
@@ -1261,13 +1260,7 @@ def test_flat_report_unchanged_by_normalizer(mapper, pipeline):
     assert "latency_check" in _measurement_names(result, "benchmark_summary_functional")
 
 
-def test_normalize_sections_is_noop_without_sections(mapper):
-    """A report with no 'sections' key is returned unchanged (same object)."""
-    flat = {"evals": [{"accuracy_check": 2}], "benchmarks_summary": []}
-    assert mapper._normalize_sections(flat) is flat
-
-
-def test_normalize_sections_skips_malformed_blocks(mapper, pipeline):
+def test_malformed_section_blocks_are_skipped(mapper, pipeline):
     """Defensive: non-dict section entries and blocks whose `data`/payload are
     not mappings must be tolerated without raising (map_benchmark_data only
     catches ValidationError), while valid blocks in the same report still
