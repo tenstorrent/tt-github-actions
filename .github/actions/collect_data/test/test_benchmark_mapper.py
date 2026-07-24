@@ -1125,16 +1125,6 @@ def test_acceptance_config_params_does_not_mutate_model_spec(mapper, pipeline):
     assert model_spec_data == {"model_id": "test_model"}
 
 
-# --- v2 "sections" schema normalization tests ---
-#
-# Newer tt-inference-server engines (media, vLLM, ...) emit a discriminated
-# `sections[]` array of {"kind": ..., "data": {...}} blocks instead of the
-# top-level evals / benchmarks_summary / benchmarks arrays. _normalize_sections
-# folds those blocks back into the flat lists so the existing _process_* paths
-# produce the same DB measurements. These tests pin that behaviour for the
-# media (FLUX-style) and vLLM (Llama-3.3-70B-style) reports whose Evals /
-# Benchmarks columns were previously empty on the dashboard.
-
 
 def test_sections_evals_block_produces_eval_run(mapper, pipeline):
     report_data = {

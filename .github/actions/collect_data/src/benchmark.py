@@ -361,8 +361,6 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     }
                 )
             elif kind == "vllm":
-                # raw vLLM perf sweep -> flat "benchmark" row (feeds the perf
-                # charts; not the release check column, which needs target_checks)
                 benchmarks.append(
                     {
                         "model": model_name,
@@ -371,7 +369,6 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                         **data,
                     }
                 )
-            # spec_tests are ingested elsewhere (cicd_test); acceptance is top-level.
 
         report_data = dict(report_data)
         report_data["evals"] = evals
