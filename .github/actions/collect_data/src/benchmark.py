@@ -110,7 +110,7 @@ class _BenchmarkDataMapper(ABC):
         """
         measurements = []
         for key in keys:
-            if key in data:
+            if key in data and data[key] is not None:
                 try:
                     measurement = BenchmarkMeasurement(
                         step_start_ts=job.job_start_ts,
@@ -269,21 +269,21 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             benchmark_runs = self._process_benchmarks(
                 pipeline,
                 job,
-                report_data.get("benchmarks", []),
+                report_data,
                 metadata,
                 model_spec_data,
             )
             benchmark_summary_runs = self._process_benchmarks_summary(
                 pipeline,
                 job,
-                report_data.get("benchmarks_summary", []),
+                report_data,
                 metadata,
                 model_spec_data,
             )
             eval_runs = self._process_evals(
                 pipeline,
                 job,
-                report_data.get("evals", []),
+                report_data,
                 metadata,
                 model_spec_data,
             )
@@ -302,17 +302,35 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
 
     def _format_model_name(self, benchmark):
         """
-        Formats the model name by removing any prefix before '/' from model identifier.
+        Return the model name unchanged, preserving any HuggingFace ``org/``
+        prefix (e.g. ``Qwen/Qwen3-32B``, ``meta-llama/Llama-3.1-8B-Instruct``).
+        The full model id is kept on purpose so the dashboard displays it as-is;
+        benchmark and benchmark_summary runs use this unmodified name to avoid
+        duplicate rows caused by inconsistent stripping.
         """
-        model_name = benchmark.get("model_name")
-        if model_name and "/" in model_name:
-            model_name = model_name.split("/", 1)[1]
-        return model_name
+        return benchmark.get("model_name")
 
-    def _process_benchmarks(self, pipeline, job, benchmarks, metadata=None, model_spec_data=None):
+    def _process_benchmarks(self, pipeline, job, report_data, metadata=None, model_spec_data=None):
         """
         Processes benchmark entries and creates CompleteBenchmarkRun objects for each entry.
         """
+        meta = metadata or {}
+        benchmarks = list(report_data.get("benchmarks", []))
+        for block in report_data.get("sections") or []:
+            if not isinstance(block, dict) or block.get("kind") != "vllm":
+                continue
+            data = block.get("data")
+            if not isinstance(data, dict):
+                data = {}
+            benchmarks.append(
+                {
+                    "model": meta.get("model_name"),
+                    "model_name": meta.get("model_name"),
+                    "device": meta.get("device"),
+                    **data,
+                }
+            )
+
         results = []
         for benchmark in benchmarks:
             if metadata:
@@ -378,10 +396,32 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             )
         return results
 
-    def _process_benchmarks_summary(self, pipeline, job, benchmarks_summary, metadata=None, model_spec_data=None):
+    def _process_benchmarks_summary(self, pipeline, job, report_data, metadata=None, model_spec_data=None):
         """
         Processes benchmark summary entries and creates CompleteBenchmarkRun objects for each entry.
         """
+        meta = metadata or {}
+        benchmarks_summary = list(report_data.get("benchmarks_summary", []))
+        for block in report_data.get("sections") or []:
+            if not isinstance(block, dict) or block.get("kind") != "benchmarks":
+                continue
+            data = block.get("data")
+            if not isinstance(data, dict):
+                data = {}
+            # media/image benchmark blocks nest the payload under "Benchmarks"
+            payload = data.get("Benchmarks", data)
+            if not isinstance(payload, dict):
+                payload = data
+            benchmarks_summary.append(
+                {
+                    "model": meta.get("model_name"),
+                    "model_name": meta.get("model_name"),
+                    "device": meta.get("device"),
+                    "task_type": block.get("task_type"),
+                    **payload,
+                }
+            )
+
         results = []
         for benchmark in benchmarks_summary:
             if metadata:
@@ -423,6 +463,10 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                         "ttft",
                         "ttft_ratio",
                         "ttft_check",
+                        # Media / image (ttft reported in ms)
+                        "ttft_ms",
+                        "ttft_ms_ratio",
+                        "ttft_ms_check",
                         "tput_user",
                         "tput_user_ratio",
                         "tput_user_check",
@@ -523,10 +567,28 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             )
         ]
 
-    def _process_evals(self, pipeline, job, evals, metadata=None, model_spec_data=None):
+    def _process_evals(self, pipeline, job, report_data, metadata=None, model_spec_data=None):
         """
         Processes evaluation entries and creates CompleteBenchmarkRun objects for each entry.
         """
+        meta = metadata or {}
+        evals = list(report_data.get("evals", []))
+        for block in report_data.get("sections") or []:
+            if not isinstance(block, dict) or block.get("kind") != "evals":
+                continue
+            data = block.get("data")
+            if not isinstance(data, dict):
+                data = {}
+            evals.append(
+                {
+                    "model": meta.get("model_name"),
+                    "device": meta.get("device"),
+                    "task_name": data.get("task_name") or block.get("title"),
+                    "task_type": block.get("task_type"),
+                    **data,
+                }
+            )
+
         results = []
         for eval_entry in evals:
             if metadata:
