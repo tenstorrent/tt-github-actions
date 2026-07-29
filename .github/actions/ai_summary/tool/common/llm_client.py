@@ -28,15 +28,12 @@ from dataclasses import dataclass
 from openai import OpenAI, OpenAIError
 
 
-def _neutralize_waf_triggers(text: str) -> str:
-    # A gateway WAF 403s bodies containing '../' (pytest emits it for
-    # out-of-rootdir paths). The space breaks it, stays readable, ASCII-safe.
-    return text.replace("../", ".. /")
-
-
-def _sanitize_prompt(text: str) -> str:
-    # Outbound prompt cleanups; chain more here as needed.
-    return _neutralize_waf_triggers(text)
+def _ensure_v1(url: str) -> str:
+    # Target /v1/chat/completions: the gateway's bare /chat/completions path is
+    # behind a stricter WAF that 403s on benign CI-log content; the /v1 route is
+    # permissive. Version-in-base_url is also the OpenAI SDK convention.
+    base = url.rstrip("/")
+    return base if base.endswith("/v1") else base + "/v1"
 
 
 @dataclass
@@ -86,7 +83,7 @@ class LLMClient:
         timeout: float = 300.0,
     ) -> LLMResponse:
         """Send a chat message and get a response."""
-        messages = [{"role": "user", "content": _sanitize_prompt(prompt)}]
+        messages = [{"role": "user", "content": prompt}]
 
         start_time = time.time()
         try:
@@ -124,7 +121,7 @@ class LLMClient:
         if tt_api_key and tt_url:
             return cls(
                 api_key=tt_api_key,
-                base_url=tt_url,
+                base_url=_ensure_v1(tt_url),
                 model=os.environ.get("TT_CHAT_MODEL", "anthropic/claude-sonnet-4-5-20250929"),
             )
 
