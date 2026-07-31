@@ -1204,6 +1204,51 @@ def test_sections_vllm_block_produces_benchmark_run(mapper, pipeline):
     assert "request_throughput" in names
 
 
+def test_sections_vllm_batch_size_from_concurrency(mapper, pipeline):
+    report_data = {
+        "metadata": {"model_name": "meta-llama/Llama-3.1-8B-Instruct", "device": "P150"},
+        "sections": [
+            {"kind": "vllm", "data": {"concurrency": 32, "mean_ttft_ms": 1650.17}},
+        ],
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    bench = [r for r in result if r.run_type == "benchmark"]
+    assert len(bench) == 1
+    assert bench[0].batch_size == 32
+
+
+def test_sections_vllm_batch_size_max_con_backcompat(mapper, pipeline):
+    report_data = {
+        "metadata": {"model_name": "M", "device": "P150"},
+        "sections": [{"kind": "vllm", "data": {"max_con": 8, "mean_ttft_ms": 1.0}}],
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    bench = [r for r in result if r.run_type == "benchmark"]
+    assert bench[0].batch_size == 8
+
+
+def test_sections_vllm_whitelists_ttft_percentiles(mapper, pipeline):
+    report_data = {
+        "metadata": {"model_name": "M", "device": "P150"},
+        "sections": [
+            {
+                "kind": "vllm",
+                "data": {
+                    "concurrency": 32,
+                    "p50_ttft": 66.58,
+                    "p99_ttft": 71.98,
+                    "mean_ttft_ms": 1650.17,
+                },
+            }
+        ],
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    names = _measurement_names(result, "benchmark")
+    assert "p50_ttft" in names
+    assert "p99_ttft" in names
+    assert "concurrency" not in names
+
+
 def test_sections_end_to_end_flux(mapper, pipeline):
     """FLUX-style media report: eval + benchmark + spec_tests + acceptance.
     Evals and benchmark_summary must both materialize (were previously empty)."""

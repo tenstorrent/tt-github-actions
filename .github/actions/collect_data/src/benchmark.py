@@ -353,6 +353,8 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "mean_e2el_ms",
                     "request_throughput",
                     "num_requests",
+                    "p50_ttft",
+                    "p99_ttft",
                     "total_input_tokens",
                     "total_output_tokens",
                     "total_token_throughput",
@@ -389,7 +391,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     input_seq_length=benchmark.get("input_sequence_length"),
                     output_seq_length=benchmark.get("output_sequence_length"),
                     dataset_name=benchmark.get("model_id", None),
-                    batch_size=benchmark.get("max_con"),
+                    batch_size=benchmark.get("max_con") or benchmark.get("concurrency"),
                     config_params=model_spec_data,
                     docker_image=(model_spec_data or {}).get("docker_image") or job.docker_image,
                 )
