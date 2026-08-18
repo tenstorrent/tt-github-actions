@@ -753,3 +753,42 @@ class TestPromptPersisted:
         assert not list(tmp_path.glob("*.txt"))
         assert list(tmp_path.glob("ai_job_summary*.json"))
         assert "::warning::Could not persist the LLM prompt" in capsys.readouterr().err
+
+
+class TestArtifactNamePublication:
+    """action.yml takes the artifact name from the tool, never rebuilds it."""
+
+    def _run(self, tmp_path, monkeypatch, extra_config=None):
+        gh_out = tmp_path / "gh_output"
+        gh_out.write_text("")
+        monkeypatch.setenv("GITHUB_OUTPUT", str(gh_out))
+        monkeypatch.setenv("GITHUB_RUN_ID", "5")
+        monkeypatch.setenv("GITHUB_RUN_ATTEMPT", "2")
+        _write_log(tmp_path / "run_logs", "run.log", "INFO: all good\n[==tt-log-finish-line==] exit_code=0\n")
+        _write_log(tmp_path / "docker_server", "server.log", "INFO: server ready\n")
+        config = json.loads(_config_json(tmp_path, ["run_logs", "docker_server"]))
+        config.update(extra_config or {})
+        _run_cli(["--config", json.dumps(config), "--job-url", "https://github.com/o/r/actions/runs/5/job/77"])
+        return dict(line.split("=", 1) for line in gh_out.read_text().splitlines() if "=" in line)
+
+    def test_name_matches_the_file_written(self, tmp_path, monkeypatch):
+        out = self._run(tmp_path, monkeypatch)
+        assert out["summary_artifact"] == "ai_job_summary_r5_a2_j77"
+        assert (tmp_path / f"{out['summary_artifact']}.json").exists()
+
+    def test_scope_from_config_reaches_the_name(self, tmp_path, monkeypatch):
+        out = self._run(tmp_path, monkeypatch, {"scope": "Ubuntu 24.04"})
+        assert out["summary_artifact"] == "ai_job_summary_ubuntu-24-04_r5_a2_j77"
+        assert (tmp_path / f"{out['summary_artifact']}.json").exists()
+
+    def test_scope_recorded_unslugged_for_the_run_stage_to_match(self, tmp_path, monkeypatch):
+        out = self._run(tmp_path, monkeypatch, {"scope": "Ubuntu 24.04"})
+        data = json.loads((tmp_path / f"{out['summary_artifact']}.json").read_text())
+        assert data["_job"]["scope"] == "Ubuntu 24.04"
+
+    def test_nothing_published_outside_ci(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+        _write_log(tmp_path / "run_logs", "run.log", "INFO: ok\n[==tt-log-finish-line==] exit_code=0\n")
+        _write_log(tmp_path / "docker_server", "server.log", "INFO: ready\n")
+        _run_cli(["--config", _config_json(tmp_path, ["run_logs", "docker_server"])])
+        assert (tmp_path / "ai_job_summary.json").exists()

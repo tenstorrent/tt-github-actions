@@ -84,6 +84,12 @@ The action takes inline JSON — no separate config file.
   artifact appear. The `.md` and `.json` are both included in the uploaded
   `ai_run_summary_r<run>_a<attempt>` artifact.
 
+  Set `"scope"` in the config to the same value given to `ai_summary/job` when
+  a reusable workflow runs more than once per run; the report then covers only
+  that invocation's legs and its artifact name no longer collides with the
+  sibling invocation's. Summaries are matched on the scope recorded in each
+  file, not on the filename, so a mismatch is reported rather than silent.
+
   The name carries the run attempt, so **consumers must match the
   `ai_run_summary_r<run_id>` prefix and take the highest attempt** rather than
   download an exact name. Several attempts coexist on one run: a partial re-run

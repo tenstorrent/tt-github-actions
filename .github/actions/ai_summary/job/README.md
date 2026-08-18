@@ -80,6 +80,12 @@ and `.json`, which `ai_summary/run` aggregates) and
 `ai_job_prompt_r<run>_a<attempt>_j<job>` (the exact prompt sent to the LLM,
 kept for diagnosing a wrong verdict once the runner is gone).
 
+Set `"scope"` in the config when a reusable workflow runs more than once per
+run (e.g. a platform matrix on the `uses:` line). It is added to both names and
+recorded in the JSON, and `ai_summary/run` must be given the same value so each
+report covers only its own legs. Without it, every invocation's report
+aggregates every invocation's legs.
+
 Names carry the run attempt because artifact names are unique per run, not per
 attempt — a re-run would otherwise overwrite the attempt it replaced. Several
 attempts coexist on one run: a partial re-run deletes nothing, and a full

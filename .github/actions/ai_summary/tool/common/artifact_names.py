@@ -12,17 +12,31 @@ from __future__ import annotations
 
 import re
 
-__all__ = ["job_id_from_stem", "qualified_stem"]
+__all__ = ["job_id_from_stem", "qualified_stem", "slugify_scope"]
 
 _JOB_SEGMENT = re.compile(r"_j(\d+)$")
 
 
-def qualified_stem(prefix: str, run_id: str = "", attempt: int | None = None, job_id: str = "") -> str:
-    """``<prefix>_r<run_id>_a<attempt>_j<job_id>``, omitting segments not supplied.
+def slugify_scope(scope: str) -> str:
+    """``Ubuntu 24.04`` -> ``ubuntu-24-04``, for use inside a filename.
 
-    Segments are absent outside CI, where there is no run or attempt.
+    Must stay in step with the shell slugifier in both action.yml files, which
+    builds the artifact name and download glob. A drift there only costs extra
+    downloads: the run stage filters on the unslugged scope field.
+    """
+    out = "".join(c if c.isalnum() else "-" for c in scope.lower())
+    return "-".join(part for part in out.split("-") if part)
+
+
+def qualified_stem(prefix: str, run_id: str = "", attempt: int | None = None, job_id: str = "", scope: str = "") -> str:
+    """``<prefix>_<scope>_r<run_id>_a<attempt>_j<job_id>``, omitting empty segments.
+
+    The scope comes first so a consumer can glob one invocation's files. Run and
+    attempt are absent outside CI.
     """
     parts = [prefix]
+    if scope:
+        parts.append(slugify_scope(scope))
     if run_id:
         parts.append(f"r{run_id}")
     if attempt:

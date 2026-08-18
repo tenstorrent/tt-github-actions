@@ -65,6 +65,7 @@ def parse_json_summary(file_path: Path) -> Optional[ParsedJobSummary]:
         failed_tests=failed_tests,
         log_complete=job.get("log_complete"),
         run_attempt=_as_attempt(job.get("run_attempt")),
+        scope=job.get("scope") or "",
     )
 
 
@@ -111,6 +112,30 @@ def dedup_latest_attempt(summaries: list[ParsedJobSummary]) -> list[ParsedJobSum
         if attempt(s) > attempt(cur):
             best[s.job_name] = s
     return [best[name] for name in order] + passthrough
+
+
+def filter_by_scope(summaries: list[ParsedJobSummary], scope: str) -> list[ParsedJobSummary]:
+    """Keep only the legs belonging to ``scope``.
+
+    A reusable workflow invoked more than once per run has one run-summary job
+    per invocation, and they all download the same run-scoped artifacts. Matching
+    on the unslugged field rather than the filename keeps this correct even if the
+    two slugifiers drift.
+
+    An unscoped run stage keeps everything, but says so when scoped legs are
+    present: that combination means the legs were partitioned and the report was
+    not, which silently mixes invocations.
+    """
+    if not scope:
+        scoped = {s.scope for s in summaries if s.scope}
+        if scoped:
+            print(
+                f"::warning::job summaries carry scopes {sorted(scoped)} but this run summary has "
+                f"none, so it aggregates every invocation; pass the same scope to ai_summary/run",
+                file=sys.stderr,
+            )
+        return summaries
+    return [s for s in summaries if s.scope == scope]
 
 
 def parse_summaries_dir(directory: Path) -> list[ParsedJobSummary]:

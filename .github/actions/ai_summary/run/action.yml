@@ -3,6 +3,10 @@ description: Aggregate per-job AI summaries into a run-level report
 
 inputs:
   config:
+    # Also accepts "scope": keeps this report to one invocation's legs when a
+    # reusable workflow runs more than once per run. Must match the scope given
+    # to ai_summary/job. The download below stays broad; the tool filters on the
+    # scope recorded in each summary, which cannot drift from a glob.
     description: >-
       JSON config string. Required keys: `model` (or `none` to skip
       narrative LLM), `workspace`, `input_dir`, `output_dir`.
@@ -191,8 +195,8 @@ runs:
       continue-on-error: true
       uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
-        # Artifact names are unique per run, not per attempt.
-        name: ai_run_summary_r${{ github.run_id }}_a${{ github.run_attempt }}
+        # Name comes from the tool, as with the per-job artifacts.
+        name: ${{ steps.summarize.outputs.report_artifact }}
         path: |
           ${{ steps.summarize.outputs.report_file }}
           ${{ steps.summarize.outputs.json_file }}

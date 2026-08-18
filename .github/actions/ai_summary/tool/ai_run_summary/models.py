@@ -73,6 +73,9 @@ class ParsedJobSummary:
     failed_tests: list[str] = field(default_factory=list)
     log_complete: bool | None = None
     run_attempt: int | None = None
+    # Which invocation of a reusable workflow produced this leg; "" when the
+    # producer was not given a scope.
+    scope: str = ""
 
 
 @dataclass

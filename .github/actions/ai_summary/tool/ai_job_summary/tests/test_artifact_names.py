@@ -5,7 +5,7 @@
 
 import pytest
 
-from common.artifact_names import job_id_from_stem, qualified_stem
+from common.artifact_names import job_id_from_stem, qualified_stem, slugify_scope
 
 
 class TestQualifiedStem:
@@ -50,3 +50,37 @@ class TestJobIdFromStem:
 
     def test_round_trips_the_builder(self):
         assert job_id_from_stem(qualified_stem("ai_job_summary", "5", 2, "77")) == "77"
+
+
+class TestScope:
+    """The scope segment that partitions one run's legs by invocation."""
+
+    def test_scope_precedes_run_so_a_consumer_can_glob_it(self):
+        stem = qualified_stem("ai_job_summary", "5", 2, "77", scope="Ubuntu 24.04")
+        assert stem == "ai_job_summary_ubuntu-24-04_r5_a2_j77"
+        assert stem.startswith("ai_job_summary_ubuntu-24-04_")
+
+    def test_two_scopes_do_not_collide(self):
+        a = qualified_stem("ai_run_summary", "5", 1, scope="Ubuntu 22.04")
+        b = qualified_stem("ai_run_summary", "5", 1, scope="Ubuntu 24.04")
+        assert a != b
+
+    def test_absent_scope_reproduces_the_unscoped_stem(self):
+        assert qualified_stem("ai_job_summary", "5", 2, "77") == "ai_job_summary_r5_a2_j77"
+
+    def test_job_id_still_recoverable_with_a_scope(self):
+        assert job_id_from_stem(qualified_stem("ai_job_summary", "5", 2, "77", scope="Ubuntu 24.04")) == "77"
+
+    @pytest.mark.parametrize(
+        "scope,expected",
+        [
+            ("Ubuntu 24.04", "ubuntu-24-04"),
+            ("wh_n300 / civ2", "wh-n300-civ2"),
+            ("  spaced  ", "spaced"),
+            ("ALLCAPS", "allcaps"),
+            ("already-slug", "already-slug"),
+            ("", ""),
+        ],
+    )
+    def test_slug_is_filename_safe(self, scope, expected):
+        assert slugify_scope(scope) == expected
