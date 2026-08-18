@@ -117,6 +117,7 @@ def parse_narrative_response(
     prompt_tokens: int,
     completion_tokens: int,
     response_time_ms: float,
+    truncated: bool = False,
 ) -> RunNarrative:
     """Parse LLM response into a RunNarrative.
 
@@ -158,7 +159,8 @@ def parse_narrative_response(
     except (json.JSONDecodeError, ValueError):
         # Fallback: surface raw response as overall_health so the report still
         # contains something useful, and leave other narrative fields empty.
-        print(f"Warning: LLM response was not valid JSON, using raw response as fallback", file=sys.stderr)
+        reason = f"hit max_tokens ({_NARRATIVE_MAX_TOKENS}) and was cut off" if truncated else "was not valid JSON"
+        print(f"Warning: LLM response {reason}, using raw response as fallback", file=sys.stderr)
         return RunNarrative(
             overall_health=response_text[:_FALLBACK_HEALTH_MAX_LEN]
             if response_text
@@ -194,6 +196,7 @@ def generate_narrative(stats: RunStats, llm_client: LLMClient | None = None) -> 
     response = llm_client.chat(prompt, max_tokens=_NARRATIVE_MAX_TOKENS)
 
     return parse_narrative_response(
+        truncated=response.truncated,
         response_text=response.content,
         model=response.model,
         prompt_tokens=response.prompt_tokens,

@@ -19,7 +19,7 @@ inputs:
 
 outputs:
   summary-dir:
-    description: Directory containing ai_job_summary_r<run>_a<attempt>_j<job>.md and .json
+    description: Directory containing ai_job_summary_r<run>_a<attempt>_j<job>.{md,json} and the ai_job_prompt_*.txt dump
     value: ${{ steps.summarize.outputs.summary_dir }}
 
 runs:
@@ -141,11 +141,20 @@ runs:
       with:
         # Artifact names are unique per run, not per attempt.
         name: ai_job_summary_r${{ github.run_id }}_a${{ github.run_attempt }}_j${{ steps.job-meta.outputs.job_id }}
-        # *.txt is the prompt dump; ai_summary/run reads only the .json.
         path: |
           ${{ steps.summarize.outputs.summary_dir }}/*.json
           ${{ steps.summarize.outputs.summary_dir }}/*.md
-          ${{ steps.summarize.outputs.summary_dir }}/*.txt
+
+    # Separate artifact: ai_summary/run downloads ai_job_summary_*, and the
+    # prompt is a ~400KB-per-leg debug payload it never reads.
+    - name: Upload LLM prompt
+      if: always() && !cancelled() && steps.summarize.outputs.summary_dir != ''
+      continue-on-error: true
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      with:
+        name: ai_job_prompt_r${{ github.run_id }}_a${{ github.run_attempt }}_j${{ steps.job-meta.outputs.job_id }}
+        path: ${{ steps.summarize.outputs.summary_dir }}/*.txt
+        if-no-files-found: ignore
 
     - name: Cleanup ephemeral venv
       if: always()

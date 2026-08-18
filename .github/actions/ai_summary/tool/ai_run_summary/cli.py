@@ -18,6 +18,7 @@ import os
 import sys
 from pathlib import Path
 
+from common.artifact_names import qualified_stem
 from common.llm_client import get_llm_client
 
 from .aggregate import compute_stats
@@ -385,9 +386,7 @@ def main():
     out = workspace / output_dir
     out.mkdir(parents=True, exist_ok=True)
 
-    # Matches the per-job naming; attempt dropped outside CI.
-    attempt = meta.get("run_attempt")
-    stem = f"ai_run_summary_r{run_id}" + (f"_a{attempt}" if attempt else "")
+    stem = qualified_stem("ai_run_summary", run_id=meta["run_id"], attempt=meta.get("run_attempt"))
     (out / f"{stem}.md").write_text(report.md)
     (out / f"{stem}.html").write_text(report.html)
     # Machine-readable sibling. Built from summaries (not stats, which keeps

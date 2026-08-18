@@ -29,6 +29,7 @@ from .extract import (
     format_duration,
     get_job_status,
 )
+from common.artifact_names import qualified_stem
 from common.llm_client import get_llm_client
 from .summarize import FailureSummary, format_infra_failure_markdown, format_summary_markdown, summarize_log
 
@@ -58,28 +59,18 @@ def _run_attempt() -> int | None:
 
 
 def _qualified_stem(prefix: str, job_id: str) -> str:
-    """``<prefix>_r<run_id>_a<attempt>_j<job_id>``.
-
-    The run action merges every leg's files into one directory, so the name has
-    to identify the run and attempt as well as the job. Parts absent outside CI
-    are dropped.
-    """
-    parts = [prefix]
-    run_id = os.environ.get("GITHUB_RUN_ID", "")
-    attempt = _run_attempt()
-    if run_id:
-        parts.append(f"r{run_id}")
-    if attempt:
-        parts.append(f"a{attempt}")
-    if job_id:
-        parts.append(f"j{job_id}")
-    return "_".join(parts)
+    """Qualified stem for this run/attempt/job. See ``common.artifact_names``."""
+    return qualified_stem(
+        prefix,
+        run_id=os.environ.get("GITHUB_RUN_ID", ""),
+        attempt=_run_attempt(),
+        job_id=job_id,
+    )
 
 
 def _write_outputs(output_dir: Path, job_id: str, md: str, data: dict) -> tuple[Path, Path]:
     """Write both markdown and JSON summaries. Returns (md_path, json_path)."""
     output_dir.mkdir(parents=True, exist_ok=True)
-    # no job_id when run locally without --job-url
     stem = _qualified_stem("ai_job_summary", job_id)
     md_path = output_dir / f"{stem}.md"
     json_path = output_dir / f"{stem}.json"
@@ -484,7 +475,12 @@ def main():
             job_url=job_url,
         ),
     )
-    _write_prompt(output_dir, job_id, result.prompt)
+    try:
+        _write_prompt(output_dir, job_id, result.prompt)
+    except OSError as e:
+        # The summary is already on disk; a non-zero exit here would make
+        # job/action.yml blank summary_dir and skip the upload.
+        print(f"::warning::Could not persist the LLM prompt: {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":

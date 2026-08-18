@@ -73,4 +73,15 @@ Categories, layers, and analysis patterns come from the bundled
 
 | Name | Description |
 |------|-------------|
-| `summary-dir` | Directory containing `ai_job_summary_<job-id>.md` and `.json` |
+| `summary-dir` | Directory containing `ai_job_summary_r<run>_a<attempt>_j<job>.md` and `.json`, plus `ai_job_prompt_r<run>_a<attempt>_j<job>.txt` |
+
+Two artifacts are uploaded: `ai_job_summary_r<run>_a<attempt>_j<job>` (the `.md`
+and `.json`, which `ai_summary/run` aggregates) and
+`ai_job_prompt_r<run>_a<attempt>_j<job>` (the exact prompt sent to the LLM,
+kept for diagnosing a wrong verdict once the runner is gone).
+
+Names carry the run attempt because artifact names are unique per run, not per
+attempt — a re-run would otherwise overwrite the attempt it replaced. Several
+attempts coexist on one run: a partial re-run deletes nothing, and a full
+re-run does not reliably purge. Consumers should match the prefix and take the
+highest attempt rather than assume one file per job.

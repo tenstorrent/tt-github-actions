@@ -21,6 +21,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ai_job_summary import cli
+from common.llm_client import LLMResponse
 from ai_job_summary.cli import main, _resolve_log_dirs, _job_id_from_url
 
 from .conftest import FIXTURE_LOG_DIR, FIXTURE_RESP_DIR
@@ -67,37 +68,39 @@ def _read_summary(output_dir: Path, suffix: str = ".md") -> str:
     return summaries[0].read_text()
 
 
-def _mock_llm_response_from_fixture(fixture_name: str) -> MagicMock:
+def _mock_llm_response_from_fixture(fixture_name: str) -> LLMResponse:
     """Load a mock LLM response from fixtures/mock_responses/."""
-    resp = MagicMock()
-    resp.content = (FIXTURE_RESP_DIR / f"{fixture_name}.json").read_text()
-    resp.model = "test-model"
-    resp.prompt_tokens = 100
-    resp.completion_tokens = 50
-    resp.response_time_ms = 500.0
-    return resp
+    return _llm_response((FIXTURE_RESP_DIR / f"{fixture_name}.json").read_text())
+
+
+def _llm_response(content: str, finish_reason: str = "stop") -> LLMResponse:
+    """The real dataclass: a MagicMock would make .truncated truthy."""
+    return LLMResponse(
+        content=content,
+        model="test-model",
+        prompt_tokens=100,
+        completion_tokens=50,
+        response_time_ms=500.0,
+        finish_reason=finish_reason,
+    )
 
 
 def _mock_llm_response(status="CRASH", category="app:cli", root_cause="server failed", error_message="error", **extra):
     """Create an inline mock LLM response."""
-    resp = MagicMock()
-    resp.content = json.dumps(
-        {
-            "status": status,
-            "category": category,
-            "root_cause": root_cause,
-            "error_message": error_message,
-            "failed_tests": [],
-            "suggested_action": "fix it",
-            "confidence": "high",
-            **extra,
-        }
+    return _llm_response(
+        json.dumps(
+            {
+                "status": status,
+                "category": category,
+                "root_cause": root_cause,
+                "error_message": error_message,
+                "failed_tests": [],
+                "suggested_action": "fix it",
+                "confidence": "high",
+                **extra,
+            }
+        )
     )
-    resp.model = "test-model"
-    resp.prompt_tokens = 100
-    resp.completion_tokens = 50
-    resp.response_time_ms = 500.0
-    return resp
 
 
 # ── _job_id_from_url ──────────────────────────────────────────────────────────
@@ -307,8 +310,8 @@ class TestDualOutput:
         _write_log(tmp_path / "docker_server", "server.log", "INFO: server ready\n")
         config = _config_json(tmp_path, ["run_logs", "docker_server"])
         _run_cli(["--config", config])
-        assert any(tmp_path.glob("ai_job_summary*.md"))
-        assert any(tmp_path.glob("ai_job_summary*.json"))
+        assert (tmp_path / "ai_job_summary.md").exists()
+        assert (tmp_path / "ai_job_summary.json").exists()
 
 
 # ── Infra failure: no logs at all ─────────────────────────────────────────────
@@ -698,3 +701,55 @@ class TestAttemptScopedFilenames:
         assert a1_md.read_text() == "# a1"
         assert a2_md.read_text() == "# a2"
         assert len(list(tmp_path.glob("ai_job_summary_*.json"))) == 2
+
+
+class TestPromptPersisted:
+    """The prompt artifact, whose name two action.yml globs depend on."""
+
+    def _errored_logs(self, tmp_path):
+        _write_log(
+            tmp_path / "run_logs",
+            "run.log",
+            textwrap.dedent(
+                """\
+            error: unrecognized arguments: --num-scheduler-steps
+            2026-03-23 01:18:53 - run_workflows.py:108 - ERROR: workflow: evals, failed with return code: 1
+            Process completed with exit code 1
+        """
+            ),
+        )
+        _write_log(tmp_path / "docker_server", "server.log", "INFO: server starting\n")
+        return _config_json(tmp_path, ["run_logs", "docker_server"])
+
+    def test_written_next_to_the_summary_with_what_was_sent(self, tmp_path):
+        config = self._errored_logs(tmp_path)
+        with patch("ai_job_summary.cli.get_llm_client") as mock_llm:
+            mock_llm.return_value.chat.return_value = _mock_llm_response()
+            _run_cli(["--config", config, "--job-url", "https://github.com/o/r/actions/runs/1/job/77"])
+            sent = mock_llm.return_value.chat.call_args.args[0]
+        (prompt,) = tmp_path.glob("ai_job_prompt_*j77.txt")
+        assert prompt.read_text() == sent
+        assert "## EXTRACTED LOG" in sent
+
+    def test_absent_when_the_llm_is_never_called(self, tmp_path):
+        _write_log(tmp_path / "run_logs", "run.log", "INFO: all good\n[==tt-log-finish-line==] exit_code=0\n")
+        _write_log(tmp_path / "docker_server", "server.log", "INFO: server ready\n")
+        _run_cli(["--config", _config_json(tmp_path, ["run_logs", "docker_server"])])
+        assert not list(tmp_path.glob("*.txt"))
+
+    def test_a_failed_write_does_not_discard_the_summary(self, tmp_path, capsys):
+        config = self._errored_logs(tmp_path)
+        real_write = Path.write_text
+
+        def fail_on_txt(self, *args, **kwargs):
+            if self.suffix == ".txt":
+                raise OSError("No space left on device")
+            return real_write(self, *args, **kwargs)
+
+        with patch("ai_job_summary.cli.get_llm_client") as mock_llm:
+            mock_llm.return_value.chat.return_value = _mock_llm_response()
+            with patch.object(Path, "write_text", fail_on_txt):
+                _run_cli(["--config", config])
+        assert not list(tmp_path.glob("*.txt"))
+        assert list(tmp_path.glob("ai_job_summary*.json"))
+        assert "::warning::Could not persist the LLM prompt" in capsys.readouterr().err

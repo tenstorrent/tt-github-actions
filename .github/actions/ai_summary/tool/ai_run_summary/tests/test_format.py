@@ -6,7 +6,10 @@
 from collections import Counter
 from pathlib import Path
 
+import pytest
+
 from ai_run_summary.format import (
+    _job_id_cell,
     _extract_run_label,
     _group_by_main_category,
     _job_url,
@@ -399,3 +402,36 @@ class TestCommitSHAHeader:
             commits=[{"repo": "tenstorrent/tt-metal", "commit": "  aabbccddee112233  "}],
         )
         assert "**tt-metal**: [`aabbccd`](https://github.com/tenstorrent/tt-metal/commit/aabbccddee112233)" in report.md
+
+
+class TestJobIdCell:
+    """The Job column, over the stems the two stages actually produce."""
+
+    def test_job_id_from_the_json_wins(self):
+        assert _job_id_cell(_job(job_id="99999", source_stem="ai_job_summary_r5_a2_j77")) == "99999"
+
+    def test_falls_back_to_the_stem_job_segment(self):
+        assert _job_id_cell(_job(source_stem="ai_job_summary_r5_a2_j99999")) == "99999"
+
+    @pytest.mark.parametrize(
+        "stem",
+        [
+            # No check_run_id: the stem ends in the attempt, which is not a job id.
+            "ai_job_summary_r5_a2",
+            # Infra stub for a leg that never reported: keyed by a name hash.
+            "ai_job_summary_3c1f9ab2de4f5061",
+            "ai_job_summary",
+        ],
+    )
+    def test_a_stem_without_a_job_segment_is_not_mined_for_one(self, stem):
+        assert _job_id_cell(_job(source_stem=stem)) == "unknown"
+
+    def test_links_when_the_json_carries_the_job_id(self):
+        cell = _job_id_cell(_job(job_id="77"), run_url="https://gh/o/r/actions/runs/5")
+        assert cell == "[77](https://gh/o/r/actions/runs/5/job/77)"
+
+    def test_stem_derived_label_is_not_linked(self):
+        # _job_url keys off the parsed job_id, so a label recovered from the
+        # filename identifies the leg without claiming a URL for it.
+        cell = _job_id_cell(_job(source_stem="ai_job_summary_r5_a2_j77"), run_url="https://gh/o/r/actions/runs/5")
+        assert cell == "77"

@@ -11,6 +11,8 @@ from dataclasses import dataclass
 
 import markdown
 
+from common.artifact_names import job_id_from_stem
+
 from .models import ParsedJobSummary, RunNarrative, RunStats, STATUS_EMOJI
 
 
@@ -129,8 +131,9 @@ def _job_url(job: ParsedJobSummary, run_url: str = "") -> str:
 
 def _job_id_cell(job: ParsedJobSummary, run_url: str = "") -> str:
     """Render the Job column as a linked job ID."""
-    # No job url: last stem component is j<job-id>, or the hash for an infra stub.
-    label = job.job_id or job.source_file.stem.rsplit("_", 1)[-1].removeprefix("j")
+    # A stem with no job segment (no check_run_id, or an infra stub) has no id
+    # to show; the leg is still identified by the Run column.
+    label = job.job_id or job_id_from_stem(job.source_file.stem) or "unknown"
     url = _job_url(job, run_url)
     return f"[{label}]({url})" if url else label
 

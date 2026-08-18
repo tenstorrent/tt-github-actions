@@ -78,11 +78,16 @@ The action takes inline JSON — no separate config file.
   Artifacts matching `ai_job_summary_*` are pulled here. **The directory
   is deleted at the end of the action**; do not store anything else here.
 - `output_dir` — directory where the aggregated report is written, as
-  `ai_run_summary_<run_id>.md`, `.html`, and `.json`. The `.json` carries the
-  factual per-job data (no LLM narrative) for downstream machine consumers and
-  is the only place INFRA_FAILURE rows for legs that produced no artifact
-  appear. The `.md` and `.json` are both included in the uploaded
-  `ai_run_summary_<run_id>` artifact.
+  `ai_run_summary_r<run>_a<attempt>.md`, `.html`, and `.json`. The `.json`
+  carries the factual per-job data (no LLM narrative) for downstream machine
+  consumers and is the only place INFRA_FAILURE rows for legs that produced no
+  artifact appear. The `.md` and `.json` are both included in the uploaded
+  `ai_run_summary_r<run>_a<attempt>` artifact.
+
+  The name carries the run attempt, so **consumers must match the
+  `ai_run_summary_r<run_id>` prefix and take the highest attempt** rather than
+  download an exact name. Several attempts coexist on one run: a partial re-run
+  deletes nothing, and a full re-run does not reliably purge.
 
 ## Outputs
 

@@ -78,7 +78,10 @@ common/llm_client.py → LLM client (TT Chat / OpenAI compatible)
 7. **Partial dirs + errors** → call LLM for root cause; status stays INFRA_FAILURE.
 8. **All dirs + errors** → call LLM; LLM may refine status via
    `apply_llm_status()`. LLM-reported `infra:*` → INFRA_FAILURE.
-9. Write `ai_job_summary_{JOB_ID}.{md,json}`.
+9. Write `ai_job_summary_r<run>_a<attempt>_j<job>.{md,json}` and, on the LLM
+   paths, the `ai_job_prompt_*.txt` dump. Stems come from
+   `common.artifact_names.qualified_stem`; `job/action.yml` and
+   `run/action.yml` match these prefixes, so they are a contract.
 
 ## Log masking
 

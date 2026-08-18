@@ -79,9 +79,10 @@ class SummaryResult:
 
 
 # pr_files_in_stack is unbounded and test ids reach ~250 chars, so the response
-# needs headroom: too low a ceiling cuts the JSON mid-string. Unspent ceiling is
-# not billed.
+# needs headroom: too low a ceiling cuts the JSON mid-string. A gateway rejects a
+# ceiling above the model's output cap, so summarize_log retries once lower.
 _SUMMARY_MAX_TOKENS = 16000
+_SUMMARY_MAX_TOKENS_FALLBACK = 4000
 
 
 def _truncate_prompt_if_needed(prompt: str, max_chars: int) -> str:
@@ -333,9 +334,10 @@ def _parse_llm_response(
     except json.JSONDecodeError as e:
         if truncated:
             summary.root_cause = (
-                f"LLM response hit the max_tokens limit and was cut off mid-JSON, so it "
-                f"could not be parsed ({e}). Raise max_tokens for this job, or reduce the "
-                f"number of entries the prompt asks the model to enumerate."
+                f"LLM response hit the {_SUMMARY_MAX_TOKENS}-token ceiling and was cut off "
+                f"mid-JSON, so it could not be parsed ({e}). Raising _SUMMARY_MAX_TOKENS in "
+                f"ai_job_summary/summarize.py is the only remedy; report it to the CI tooling "
+                f"owners."
             )
         else:
             summary.root_cause = f"Failed to parse LLM response: {e}"
@@ -605,11 +607,20 @@ def summarize_log(
         llm_client = get_llm_client()
 
     prompt = build_prompt(extracted_log, context, categories, layers, config_context)
-    response = llm_client.chat(prompt, max_tokens=_SUMMARY_MAX_TOKENS)
+    try:
+        response = llm_client.chat(prompt, max_tokens=_SUMMARY_MAX_TOKENS)
+    except RuntimeError as e:
+        # The model is operator-supplied; one whose output cap sits below the
+        # ceiling rejects the request outright. A shorter summary beats none.
+        print(
+            f"::warning::LLM rejected max_tokens={_SUMMARY_MAX_TOKENS} ({e}); "
+            f"retrying at {_SUMMARY_MAX_TOKENS_FALLBACK}",
+            file=sys.stderr,
+        )
+        response = llm_client.chat(prompt, max_tokens=_SUMMARY_MAX_TOKENS_FALLBACK)
     if response.truncated:
         print(
-            f"::warning::LLM response hit max_tokens ({_SUMMARY_MAX_TOKENS}); "
-            f"the JSON is cut off and will not parse",
+            f"::warning::LLM response hit max_tokens ({_SUMMARY_MAX_TOKENS}); " f"the content may be incomplete",
             file=sys.stderr,
         )
     summary = _parse_llm_response(response.content, extracted_log, truncated=response.truncated)
