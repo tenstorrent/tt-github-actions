@@ -20,6 +20,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from ai_job_summary import cli
 from ai_job_summary.cli import main, _resolve_log_dirs, _job_id_from_url
 
 from .conftest import FIXTURE_LOG_DIR, FIXTURE_RESP_DIR
@@ -296,11 +297,12 @@ class TestDualOutput:
         _write_log(tmp_path / "docker_server", "server.log", "INFO: server ready\n")
         config = _config_json(tmp_path, ["run_logs", "docker_server"])
         _run_cli(["--config", config, "--job-url", "https://github.com/org/repo/actions/runs/1/job/99999"])
-        assert (tmp_path / "ai_job_summary_99999.md").exists()
-        assert (tmp_path / "ai_job_summary_99999.json").exists()
+        # The stem is r<run>_a<attempt>_j<job>; only the job id is under test.
+        assert list(tmp_path.glob("ai_job_summary_*j99999.md"))
+        assert list(tmp_path.glob("ai_job_summary_*j99999.json"))
 
     def test_fallback_filename_without_job_url(self, tmp_path):
-        """When no --job-url, files named ai_job_summary.md/.json (no ID suffix)."""
+        """When no --job-url, the stem carries no j<job-id> segment."""
         _write_log(tmp_path / "run_logs", "run.log", "INFO: all good\n[==tt-log-finish-line==] exit_code=0\n")
         _write_log(tmp_path / "docker_server", "server.log", "INFO: server ready\n")
         config = _config_json(tmp_path, ["run_logs", "docker_server"])
@@ -661,3 +663,38 @@ class TestLLMCrashOverride:
         md = _read_summary(tmp_path, ".md")
         assert "CRASHED" in md
         assert "TESTS FAILED" not in md
+
+
+class TestAttemptScopedFilenames:
+    """Every attempt's files must survive alongside the others.
+
+    ai_summary/run merges each leg's artifacts into one directory, so a stem
+    that names only the job leaves a re-run indistinguishable from the attempt
+    it replaced.
+    """
+
+    def test_first_attempt_is_labelled_too(self, monkeypatch):
+        monkeypatch.setenv("GITHUB_RUN_ID", "5")
+        monkeypatch.setenv("GITHUB_RUN_ATTEMPT", "1")
+        assert cli._qualified_stem("ai_job_summary", "77") == "ai_job_summary_r5_a1_j77"
+
+    def test_rerun_gets_suffix(self, monkeypatch):
+        monkeypatch.setenv("GITHUB_RUN_ID", "5")
+        monkeypatch.setenv("GITHUB_RUN_ATTEMPT", "2")
+        assert cli._qualified_stem("ai_job_summary", "77") == "ai_job_summary_r5_a2_j77"
+
+    def test_outside_ci_keeps_plain_stem(self, monkeypatch):
+        monkeypatch.delenv("GITHUB_RUN_ID", raising=False)
+        monkeypatch.delenv("GITHUB_RUN_ATTEMPT", raising=False)
+        assert cli._qualified_stem("ai_job_summary", "77") == "ai_job_summary_j77"
+
+    def test_attempts_write_distinct_files(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("GITHUB_RUN_ID", "5")
+        monkeypatch.setenv("GITHUB_RUN_ATTEMPT", "1")
+        a1_md, a1_json = cli._write_outputs(tmp_path, "999", "# a1", {"x": 1})
+        monkeypatch.setenv("GITHUB_RUN_ATTEMPT", "2")
+        a2_md, a2_json = cli._write_outputs(tmp_path, "999", "# a2", {"x": 2})
+        assert a1_json != a2_json
+        assert a1_md.read_text() == "# a1"
+        assert a2_md.read_text() == "# a2"
+        assert len(list(tmp_path.glob("ai_job_summary_*.json"))) == 2

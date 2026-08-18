@@ -161,8 +161,9 @@ class TestMain:
         with patch("sys.argv", ["ai-run-summary", "--config", config_str]):
             with patch.dict(os.environ, {"GITHUB_RUN_ID": "12345"}, clear=False):
                 main()
-        report = tmp_path / "ai_run_summary_12345.md"
-        assert report.exists()
+        # Glob the attempt segment: the stem carries r<run>_a<attempt>, and
+        # GITHUB_RUN_ATTEMPT is inherited when these tests run in CI.
+        (report,) = tmp_path.glob("ai_run_summary_r12345*.md")
         assert "AI Run Summary" in report.read_text()
 
     def test_empty_summaries_dir_warns(self, tmp_path, capsys):
@@ -184,8 +185,7 @@ class TestMain:
         with patch.dict(os.environ, env, clear=False):
             with patch("sys.argv", ["ai-run-summary", "--config", config_str]):
                 main()
-        report = tmp_path / "ai_run_summary_77777.md"
-        assert report.exists()
+        (report,) = tmp_path.glob("ai_run_summary_r77777*.md")
         assert "77777" in report.read_text()
 
     def test_relative_dirs_resolve_against_workspace(self, tmp_path):
@@ -203,9 +203,9 @@ class TestMain:
         with patch("sys.argv", ["ai-run-summary", "--config", config_str]):
             with patch.dict(os.environ, {"GITHUB_RUN_ID": "99"}, clear=False):
                 main()
-        assert (tmp_path / "out" / "ai_run_summary_99.md").exists()
+        assert list((tmp_path / "out").glob("ai_run_summary_r99*.md"))
         # .html is written alongside .md and consumed by Slack screenshot.
-        assert (tmp_path / "out" / "ai_run_summary_99.html").exists()
+        assert list((tmp_path / "out").glob("ai_run_summary_r99*.html"))
 
     def test_writes_json_alongside_md_and_html(self, tmp_path):
         self._write_summaries(tmp_path)
@@ -213,8 +213,7 @@ class TestMain:
         with patch("sys.argv", ["ai-run-summary", "--config", config_str]):
             with patch.dict(os.environ, {"GITHUB_RUN_ID": "12345"}, clear=False):
                 main()
-        json_file = tmp_path / "ai_run_summary_12345.json"
-        assert json_file.exists()
+        (json_file,) = tmp_path.glob("ai_run_summary_r12345*.json")
         data = json.loads(json_file.read_text())
         assert data["run_id"] == "12345"
         assert data["total_jobs"] == 1
@@ -244,7 +243,7 @@ class TestMain:
         with patch("sys.argv", ["ai-run-summary", "--config", config_str]):
             with patch.dict(os.environ, {"GITHUB_RUN_ID": "55"}, clear=False):
                 main()
-        assert (tmp_path / "out" / "ai_run_summary_55.md").exists()
+        assert list((tmp_path / "out").glob("ai_run_summary_r55*.md"))
 
     def test_expected_jobs_without_run_result_hard_fails(self, tmp_path, capsys):
         self._write_summaries(tmp_path)

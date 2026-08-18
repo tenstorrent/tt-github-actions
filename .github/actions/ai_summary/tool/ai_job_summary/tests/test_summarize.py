@@ -89,6 +89,19 @@ class TestParseLlmResponse:
         assert "Failed to parse" in s.root_cause
         assert s.error_message.startswith("this is not json")
 
+    # A response cut off at max_tokens fails to decode exactly like malformed
+    # output, so the root cause must name the real reason.
+    def test_truncated_response_reports_max_tokens(self):
+        cut_off = '{\n  "status": "TESTS_FAILED",\n  "pr_files_in_stack": [\n    "models/demos/a.cpp",\n    "models/de'
+        s = _parse_llm_response(cut_off, truncated=True)
+        assert "max_tokens" in s.root_cause
+        assert "Failed to parse LLM response:" not in s.root_cause
+
+    def test_untruncated_invalid_json_does_not_blame_max_tokens(self):
+        s = _parse_llm_response("{broken", truncated=False)
+        assert "max_tokens" not in s.root_cause
+        assert "Failed to parse" in s.root_cause
+
     def test_missing_fields_use_defaults(self):
         s = _parse_llm_response(json.dumps({"category": "infra:network"}))
         assert s.status == ""

@@ -74,6 +74,14 @@ class SummaryResult:
 
     summary: FailureSummary
     llm_response: LLMResponse
+    # Persisted alongside the summary so a bad verdict is diagnosable.
+    prompt: str = ""
+
+
+# pr_files_in_stack is unbounded and test ids reach ~250 chars, so the response
+# needs headroom: too low a ceiling cuts the JSON mid-string. Unspent ceiling is
+# not billed.
+_SUMMARY_MAX_TOKENS = 16000
 
 
 def _truncate_prompt_if_needed(prompt: str, max_chars: int) -> str:
@@ -267,8 +275,15 @@ Return ONLY the JSON object, no other text.
     return _truncate_prompt_if_needed(prompt, max_prompt_chars)
 
 
-def _parse_llm_response(response_text: str, extracted_log: ExtractedLog | None = None) -> FailureSummary:
-    """Parse the LLM response into a FailureSummary."""
+def _parse_llm_response(
+    response_text: str,
+    extracted_log: ExtractedLog | None = None,
+    truncated: bool = False,
+) -> FailureSummary:
+    """Parse the LLM response into a FailureSummary.
+
+    ``truncated`` distinguishes a cut-off response from a malformed one.
+    """
     summary = FailureSummary()
 
     # Extract JSON from response (handle markdown code blocks)
@@ -316,7 +331,14 @@ def _parse_llm_response(response_text: str, extracted_log: ExtractedLog | None =
                     break
 
     except json.JSONDecodeError as e:
-        summary.root_cause = f"Failed to parse LLM response: {e}"
+        if truncated:
+            summary.root_cause = (
+                f"LLM response hit the max_tokens limit and was cut off mid-JSON, so it "
+                f"could not be parsed ({e}). Raise max_tokens for this job, or reduce the "
+                f"number of entries the prompt asks the model to enumerate."
+            )
+        else:
+            summary.root_cause = f"Failed to parse LLM response: {e}"
         summary.error_message = response_text[:500]
 
     return summary
@@ -583,11 +605,17 @@ def summarize_log(
         llm_client = get_llm_client()
 
     prompt = build_prompt(extracted_log, context, categories, layers, config_context)
-    response = llm_client.chat(prompt, max_tokens=2000)
-    summary = _parse_llm_response(response.content, extracted_log)
+    response = llm_client.chat(prompt, max_tokens=_SUMMARY_MAX_TOKENS)
+    if response.truncated:
+        print(
+            f"::warning::LLM response hit max_tokens ({_SUMMARY_MAX_TOKENS}); "
+            f"the JSON is cut off and will not parse",
+            file=sys.stderr,
+        )
+    summary = _parse_llm_response(response.content, extracted_log, truncated=response.truncated)
 
     # Add context info
     summary.owner_from_test_yaml = context.job.owner_id
     summary.team = context.job.team
 
-    return SummaryResult(summary=summary, llm_response=response)
+    return SummaryResult(summary=summary, llm_response=response, prompt=prompt)

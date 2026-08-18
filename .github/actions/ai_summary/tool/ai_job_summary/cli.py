@@ -57,17 +57,49 @@ def _run_attempt() -> int | None:
     return int(v) if v.isdigit() else None
 
 
+def _qualified_stem(prefix: str, job_id: str) -> str:
+    """``<prefix>_r<run_id>_a<attempt>_j<job_id>``.
+
+    The run action merges every leg's files into one directory, so the name has
+    to identify the run and attempt as well as the job. Parts absent outside CI
+    are dropped.
+    """
+    parts = [prefix]
+    run_id = os.environ.get("GITHUB_RUN_ID", "")
+    attempt = _run_attempt()
+    if run_id:
+        parts.append(f"r{run_id}")
+    if attempt:
+        parts.append(f"a{attempt}")
+    if job_id:
+        parts.append(f"j{job_id}")
+    return "_".join(parts)
+
+
 def _write_outputs(output_dir: Path, job_id: str, md: str, data: dict) -> tuple[Path, Path]:
     """Write both markdown and JSON summaries. Returns (md_path, json_path)."""
     output_dir.mkdir(parents=True, exist_ok=True)
     # no job_id when run locally without --job-url
-    stem = f"ai_job_summary_{job_id}" if job_id else "ai_job_summary"
+    stem = _qualified_stem("ai_job_summary", job_id)
     md_path = output_dir / f"{stem}.md"
     json_path = output_dir / f"{stem}.json"
     md_path.write_text(md, encoding="utf-8")
     json_path.write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
     print(f"Wrote {md_path} and {json_path}", file=sys.stderr)
     return md_path, json_path
+
+
+def _write_prompt(output_dir: Path, job_id: str, prompt: str) -> Path:
+    """Persist the prompt sent to the LLM, for diagnosing a bad verdict.
+
+    A file rather than step-log output: prompts run to ~100k tokens.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+    stem = _qualified_stem("ai_job_prompt", job_id)
+    path = output_dir / f"{stem}.txt"
+    path.write_text(prompt, encoding="utf-8")
+    print(f"Wrote {path} ({len(prompt):,} chars)", file=sys.stderr)
+    return path
 
 
 def _resolve_log_dirs(log_dirs: list[str], base: Path) -> tuple[list[Path], list[str]]:
@@ -452,6 +484,7 @@ def main():
             job_url=job_url,
         ),
     )
+    _write_prompt(output_dir, job_id, result.prompt)
 
 
 if __name__ == "__main__":

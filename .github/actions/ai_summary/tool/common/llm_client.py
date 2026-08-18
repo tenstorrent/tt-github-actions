@@ -45,10 +45,17 @@ class LLMResponse:
     prompt_tokens: int = 0
     completion_tokens: int = 0
     response_time_ms: float = 0.0
+    # "length" = hit max_tokens, content cut mid-token. Without it a truncated
+    # response is indistinguishable from a malformed one.
+    finish_reason: str = ""
 
     @property
     def total_tokens(self) -> int:
         return self.prompt_tokens + self.completion_tokens
+
+    @property
+    def truncated(self) -> bool:
+        return self.finish_reason == "length"
 
 
 class LLMClient:
@@ -104,6 +111,7 @@ class LLMClient:
             prompt_tokens=response.usage.prompt_tokens if response.usage else 0,
             completion_tokens=response.usage.completion_tokens if response.usage else 0,
             response_time_ms=response_time_ms,
+            finish_reason=response.choices[0].finish_reason or "",
         )
 
     @classmethod

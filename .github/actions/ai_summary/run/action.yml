@@ -191,7 +191,9 @@ runs:
       continue-on-error: true
       uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
-        name: ai_run_summary_${{ github.run_id }}
+        # Consumers match the ai_run_summary_r<run> prefix and take the
+        # highest attempt.
+        name: ai_run_summary_r${{ github.run_id }}_a${{ github.run_attempt }}
         path: |
           ${{ steps.summarize.outputs.report_file }}
           ${{ steps.summarize.outputs.json_file }}
@@ -289,9 +291,11 @@ runs:
           REAL_DIR=$(realpath "$INPUT_DIR")
           REAL_WS=$(realpath "$GITHUB_WORKSPACE")
           if [[ "$REAL_DIR" == "$REAL_WS"/* ]]; then
+            # ai_job_prompt_*.txt ships in the same per-job artifacts.
             STRAY=$(find "$REAL_DIR" -mindepth 1 \
               ! -name "ai_job_summary_*.json" \
               ! -name "ai_job_summary_*.md" \
+              ! -name "ai_job_prompt_*.txt" \
               ! -type d 2>/dev/null | head -1)
             if [ -z "$STRAY" ]; then
               rm -rf "$REAL_DIR"

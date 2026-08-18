@@ -385,7 +385,9 @@ def main():
     out = workspace / output_dir
     out.mkdir(parents=True, exist_ok=True)
 
-    stem = f"ai_run_summary_{run_id}"
+    # Matches the per-job naming; attempt dropped outside CI.
+    attempt = meta.get("run_attempt")
+    stem = f"ai_run_summary_r{run_id}" + (f"_a{attempt}" if attempt else "")
     (out / f"{stem}.md").write_text(report.md)
     (out / f"{stem}.html").write_text(report.html)
     # Machine-readable sibling. Built from summaries (not stats, which keeps
