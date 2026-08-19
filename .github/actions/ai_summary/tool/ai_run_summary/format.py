@@ -220,9 +220,10 @@ def format_run_report(
         run_url: GitHub Actions run URL.
         run_id: Run identifier string.
         run_date: Human-readable run date (e.g. "2026-03-13"). Omitted if empty.
-        run_result: Aggregate result of the jobs this report covers. Anything
-            other than success is called out in the header, so a partial report
-            is not read as a complete one.
+        run_result: Aggregate result of the jobs this report covers. Only
+            cancelled/skipped is called out, since those are the cases where the
+            report covers fewer legs than were due; a failure is already visible
+            in the status table.
         pr: PR number or branch name. When set, shows PR Impact section and
             "Your Code" column in job details.
         commits: Optional list of {"repo": "owner/name", "commit": "sha"} dicts.
@@ -250,7 +251,7 @@ def format_run_report(
         details_parts.append(f"**Run**: {run_url}")
     if run_date:
         details_parts.append(f"**Date**: {run_date}")
-    if run_result and run_result != "success":
+    if run_result in ("cancelled", "skipped"):
         details_parts.append(f"**Run {run_result}** — the legs below are only those that reported")
     if pr:
         details_parts.append(f"**PR**: #{pr}")

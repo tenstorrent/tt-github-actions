@@ -103,9 +103,15 @@ class TestRunResultInHeader:
         assert "only those that reported" in md
         assert data["run_result"] == "cancelled"
 
-    def test_failure_is_called_out_too(self, tmp_path):
-        md, _ = self._report(tmp_path, "failure")
-        assert "Run failure" in md
+    def test_skipped_is_called_out_too(self, tmp_path):
+        md, _ = self._report(tmp_path, "skipped")
+        assert "Run skipped" in md
+
+    def test_failure_is_not_called_out(self, tmp_path):
+        # Every leg still reported; the status table already shows the failures.
+        md, data = self._report(tmp_path, "failure")
+        assert "only those that reported" not in md
+        assert data["run_result"] == "failure"
 
     def test_success_is_not_called_out(self, tmp_path):
         md, data = self._report(tmp_path, "success")
