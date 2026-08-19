@@ -15,7 +15,7 @@ from .config import is_default_branch
 from .config_context import ConfigContext, format_config_context_for_prompt
 from .context import CIContext, format_context_for_prompt
 from .extract import ExtractedLog, JobStatus, format_extracted_log
-from common.llm_client import LLMClient, LLMResponse, get_llm_client
+from common.llm_client import LLMBadRequest, LLMClient, LLMResponse, get_llm_client
 
 # Prompt size limit: ~4 chars per token, 128k context window, leave room for response
 MAX_PROMPT_CHARS = 400_000
@@ -74,6 +74,15 @@ class SummaryResult:
 
     summary: FailureSummary
     llm_response: LLMResponse
+    # Persisted alongside the summary so a bad verdict is diagnosable.
+    prompt: str = ""
+
+
+# pr_files_in_stack is unbounded and test ids reach ~250 chars, so the response
+# needs headroom: too low a ceiling cuts the JSON mid-string. A gateway rejects a
+# ceiling above the model's output cap, so summarize_log retries once lower.
+_SUMMARY_MAX_TOKENS = 16000
+_SUMMARY_MAX_TOKENS_FALLBACK = 4000
 
 
 def _truncate_prompt_if_needed(prompt: str, max_chars: int) -> str:
@@ -267,8 +276,16 @@ Return ONLY the JSON object, no other text.
     return _truncate_prompt_if_needed(prompt, max_prompt_chars)
 
 
-def _parse_llm_response(response_text: str, extracted_log: ExtractedLog | None = None) -> FailureSummary:
-    """Parse the LLM response into a FailureSummary."""
+def _parse_llm_response(
+    response_text: str,
+    extracted_log: ExtractedLog | None = None,
+    truncated: bool = False,
+    ceiling: int = _SUMMARY_MAX_TOKENS,
+) -> FailureSummary:
+    """Parse the LLM response into a FailureSummary.
+
+    ``truncated`` distinguishes a cut-off response from a malformed one.
+    """
     summary = FailureSummary()
 
     # Extract JSON from response (handle markdown code blocks)
@@ -316,7 +333,15 @@ def _parse_llm_response(response_text: str, extracted_log: ExtractedLog | None =
                     break
 
     except json.JSONDecodeError as e:
-        summary.root_cause = f"Failed to parse LLM response: {e}"
+        if truncated:
+            summary.root_cause = (
+                f"LLM response hit the {ceiling}-token ceiling and was cut off "
+                f"mid-JSON, so it could not be parsed ({e}). Raising _SUMMARY_MAX_TOKENS in "
+                f"ai_job_summary/summarize.py is the only remedy; report it to the CI tooling "
+                f"owners."
+            )
+        else:
+            summary.root_cause = f"Failed to parse LLM response: {e}"
         summary.error_message = response_text[:500]
 
     return summary
@@ -583,11 +608,29 @@ def summarize_log(
         llm_client = get_llm_client()
 
     prompt = build_prompt(extracted_log, context, categories, layers, config_context)
-    response = llm_client.chat(prompt, max_tokens=2000)
-    summary = _parse_llm_response(response.content, extracted_log)
+    ceiling = _SUMMARY_MAX_TOKENS
+    try:
+        response = llm_client.chat(prompt, max_tokens=ceiling)
+    except LLMBadRequest as e:
+        # The model is operator-supplied; one whose output cap sits below the
+        # ceiling rejects the request outright, and a shorter summary beats
+        # none. Only a bad request is retried: an auth or rate-limit failure
+        # would cost a second five-minute call and report the wrong cause.
+        print(
+            f"::warning::LLM rejected max_tokens={ceiling} ({e}); " f"retrying at {_SUMMARY_MAX_TOKENS_FALLBACK}",
+            file=sys.stderr,
+        )
+        ceiling = _SUMMARY_MAX_TOKENS_FALLBACK
+        response = llm_client.chat(prompt, max_tokens=ceiling)
+    if response.truncated:
+        print(
+            f"::warning::LLM response hit max_tokens ({ceiling}); the content may be incomplete",
+            file=sys.stderr,
+        )
+    summary = _parse_llm_response(response.content, extracted_log, response.truncated, ceiling)
 
     # Add context info
     summary.owner_from_test_yaml = context.job.owner_id
     summary.team = context.job.team
 
-    return SummaryResult(summary=summary, llm_response=response)
+    return SummaryResult(summary=summary, llm_response=response, prompt=prompt)

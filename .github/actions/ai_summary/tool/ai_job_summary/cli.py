@@ -29,6 +29,7 @@ from .extract import (
     format_duration,
     get_job_status,
 )
+from common.artifact_names import qualified_stem
 from common.llm_client import get_llm_client
 from .summarize import FailureSummary, format_infra_failure_markdown, format_summary_markdown, summarize_log
 
@@ -46,7 +47,11 @@ _CONTEXT_GATHER_MAX_CHARS = 50_000
 
 
 def _job_id_from_url(job_url: str) -> str:
-    """Parse the numeric job ID from a GitHub Actions job URL."""
+    """Parse the numeric job ID from a GitHub Actions job URL.
+
+    The caller builds that URL from ``job.check_run_id``, which is always
+    present in CI, so this is the id — no separate input is needed.
+    """
     m = re.search(r"/job/(\d+)", job_url)
     return m.group(1) if m else ""
 
@@ -57,17 +62,55 @@ def _run_attempt() -> int | None:
     return int(v) if v.isdigit() else None
 
 
-def _write_outputs(output_dir: Path, job_id: str, md: str, data: dict) -> tuple[Path, Path]:
+def _qualified_stem(prefix: str, job_id: str, scope: str = "") -> str:
+    """Qualified stem for this scope/run/attempt/job. See ``common.artifact_names``."""
+    return qualified_stem(
+        prefix,
+        run_id=os.environ.get("GITHUB_RUN_ID", ""),
+        attempt=_run_attempt(),
+        job_id=job_id,
+        scope=scope,
+    )
+
+
+def _publish_artifact_name(key: str, stem: str) -> None:
+    """Hand the artifact name to the composite action via $GITHUB_OUTPUT.
+
+    The stem is built here, so action.yml never rebuilds it from the same parts
+    and cannot disagree with what was written.
+    """
+    out = os.environ.get("GITHUB_OUTPUT")
+    if not out:
+        return
+    with open(out, "a", encoding="utf-8") as fh:
+        fh.write(f"{key}={stem}\n")
+
+
+def _write_outputs(output_dir: Path, job_id: str, md: str, data: dict, scope: str = "") -> tuple[Path, Path]:
     """Write both markdown and JSON summaries. Returns (md_path, json_path)."""
     output_dir.mkdir(parents=True, exist_ok=True)
-    # no job_id when run locally without --job-url
-    stem = f"ai_job_summary_{job_id}" if job_id else "ai_job_summary"
+    stem = _qualified_stem("ai_job_summary", job_id, scope)
+    _publish_artifact_name("summary_artifact", stem)
     md_path = output_dir / f"{stem}.md"
     json_path = output_dir / f"{stem}.json"
     md_path.write_text(md, encoding="utf-8")
     json_path.write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
     print(f"Wrote {md_path} and {json_path}", file=sys.stderr)
     return md_path, json_path
+
+
+def _write_prompt(output_dir: Path, job_id: str, prompt: str, scope: str = "") -> Path:
+    """Persist the prompt sent to the LLM, for diagnosing a bad verdict.
+
+    A file rather than step-log output: prompts run to ~100k tokens.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+    stem = _qualified_stem("ai_job_prompt", job_id, scope)
+    _publish_artifact_name("prompt_artifact", stem)
+    path = output_dir / f"{stem}.txt"
+    path.write_text(prompt, encoding="utf-8")
+    print(f"Wrote {path} ({len(prompt):,} chars)", file=sys.stderr)
+    return path
 
 
 def _resolve_log_dirs(log_dirs: list[str], base: Path) -> tuple[list[Path], list[str]]:
@@ -83,7 +126,13 @@ def _resolve_log_dirs(log_dirs: list[str], base: Path) -> tuple[list[Path], list
 
 
 def _build_json(
-    summary, job_status, extracted_log=None, llm_response=None, job_name: str = "", job_url: str = ""
+    summary,
+    job_status,
+    extracted_log=None,
+    llm_response=None,
+    job_name: str = "",
+    job_url: str = "",
+    scope: str = "",
 ) -> dict:
     """Build the JSON output dict.
 
@@ -97,6 +146,9 @@ def _build_json(
         "status": job_status.status_text,
         "status_code": job_status.status_code,
         "run_attempt": _run_attempt(),
+        # Which invocation of a reusable workflow produced this leg. The run
+        # stage matches on it, so it is the unslugged value, not the filename's.
+        "scope": scope,
     }
     if llm_response:
         output["_llm_usage"] = {
@@ -215,6 +267,7 @@ def main():
 
     is_infra_failure = bool(missing_dirs)
     job_name = args.job_name or ""
+    scope = config.get("scope") or ""
     job_url = args.job_url or ""
     job_id = _job_id_from_url(job_url)
 
@@ -233,7 +286,9 @@ def main():
                 INFRA_FAILURE_STATUS,
                 job_name=job_name,
                 job_url=job_url,
+                scope=scope,
             ),
+            scope=scope,
         )
         return
 
@@ -295,7 +350,9 @@ def main():
                     extracted,
                     job_name=job_name,
                     job_url=job_url,
+                    scope=scope,
                 ),
+                scope=scope,
             )
             return
 
@@ -325,7 +382,9 @@ def main():
                     extracted,
                     job_name=job_name,
                     job_url=job_url,
+                    scope=scope,
                 ),
+                scope=scope,
             )
             return
 
@@ -345,7 +404,9 @@ def main():
                     extracted,
                     job_name=job_name,
                     job_url=job_url,
+                    scope=scope,
                 ),
+                scope=scope,
             )
             return
 
@@ -386,7 +447,9 @@ def main():
                 INFRA_FAILURE_STATUS,
                 job_name=job_name,
                 job_url=job_url,
+                scope=scope,
             ),
+            scope=scope,
         )
         return
     finally:
@@ -450,8 +513,16 @@ def main():
             resp,
             job_name=job_name,
             job_url=job_url,
+            scope=scope,
         ),
+        scope=scope,
     )
+    try:
+        _write_prompt(output_dir, job_id, result.prompt, scope)
+    except OSError as e:
+        # The summary is already on disk; a non-zero exit here would make
+        # job/action.yml blank summary_dir and skip the upload.
+        print(f"::warning::Could not persist the LLM prompt: {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":

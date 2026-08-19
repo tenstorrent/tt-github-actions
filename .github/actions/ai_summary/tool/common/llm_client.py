@@ -25,7 +25,7 @@ import os
 import time
 from dataclasses import dataclass
 
-from openai import OpenAI, OpenAIError
+from openai import BadRequestError, OpenAI, OpenAIError
 
 
 def _ensure_v1(url: str) -> str:
@@ -34,6 +34,10 @@ def _ensure_v1(url: str) -> str:
     # permissive. Version-in-base_url is also the OpenAI SDK convention.
     base = url.rstrip("/")
     return base if base.endswith("/v1") else base + "/v1"
+
+
+class LLMBadRequest(RuntimeError):
+    """The gateway rejected the request as malformed or out of range."""
 
 
 @dataclass
@@ -45,10 +49,17 @@ class LLMResponse:
     prompt_tokens: int = 0
     completion_tokens: int = 0
     response_time_ms: float = 0.0
+    # "length" = hit max_tokens, content cut mid-token. Without it a truncated
+    # response is indistinguishable from a malformed one.
+    finish_reason: str = ""
 
     @property
     def total_tokens(self) -> int:
         return self.prompt_tokens + self.completion_tokens
+
+    @property
+    def truncated(self) -> bool:
+        return self.finish_reason == "length"
 
 
 class LLMClient:
@@ -94,16 +105,28 @@ class LLMClient:
                 max_tokens=max_tokens,
                 timeout=timeout,
             )
+        except BadRequestError as e:
+            # The request itself is unacceptable — a max_tokens above the
+            # model's output cap lands here. Distinct so a caller can retry
+            # only this, not an auth or rate-limit failure.
+            raise LLMBadRequest(f"LLM rejected the request: {e}") from e
         except OpenAIError as e:
             raise RuntimeError(f"LLM API error: {e}") from e
         response_time_ms = (time.time() - start_time) * 1000
 
+        if not response.choices:
+            # Some OpenAI-compatible gateways return an empty list; indexing it
+            # raises IndexError and hides whatever the gateway actually said.
+            raise RuntimeError(f"LLM returned no choices (model={response.model})")
+        choice = response.choices[0]
+
         return LLMResponse(
-            content=response.choices[0].message.content,
+            content=choice.message.content,
             model=response.model,
             prompt_tokens=response.usage.prompt_tokens if response.usage else 0,
             completion_tokens=response.usage.completion_tokens if response.usage else 0,
             response_time_ms=response_time_ms,
+            finish_reason=choice.finish_reason or "",
         )
 
     @classmethod

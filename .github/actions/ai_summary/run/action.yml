@@ -4,9 +4,13 @@ description: Aggregate per-job AI summaries into a run-level report
 inputs:
   config:
     description: >-
-      JSON config string. Required keys: `model` (or `none` to skip
-      narrative LLM), `workspace`, `input_dir`, `output_dir`.
-      See README for the schema.
+      JSON config string.
+      Required: `model` (LLM id, or `none` to skip the narrative), `workspace`
+      (base for relative paths), `input_dir` (where per-job artifacts are
+      downloaded), `output_dir` (where the report is written).
+      Optional: `scope` (discriminator when the calling workflow runs more than
+      once per run; must equal the `scope` given to ai_summary/job).
+      See the Config schema table in README.md.
     required: true
   api-key:
     description: "LLM API key. Pass empty when using `model: none` in config to skip the LLM."
@@ -191,7 +195,8 @@ runs:
       continue-on-error: true
       uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
-        name: ai_run_summary_${{ github.run_id }}
+        # Name comes from the tool, as with the per-job artifacts.
+        name: ${{ steps.summarize.outputs.report_artifact }}
         path: |
           ${{ steps.summarize.outputs.report_file }}
           ${{ steps.summarize.outputs.json_file }}

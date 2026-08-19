@@ -20,6 +20,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from ai_job_summary import cli
+from common.llm_client import LLMResponse
 from ai_job_summary.cli import main, _resolve_log_dirs, _job_id_from_url
 
 from .conftest import FIXTURE_LOG_DIR, FIXTURE_RESP_DIR
@@ -66,37 +68,39 @@ def _read_summary(output_dir: Path, suffix: str = ".md") -> str:
     return summaries[0].read_text()
 
 
-def _mock_llm_response_from_fixture(fixture_name: str) -> MagicMock:
+def _mock_llm_response_from_fixture(fixture_name: str) -> LLMResponse:
     """Load a mock LLM response from fixtures/mock_responses/."""
-    resp = MagicMock()
-    resp.content = (FIXTURE_RESP_DIR / f"{fixture_name}.json").read_text()
-    resp.model = "test-model"
-    resp.prompt_tokens = 100
-    resp.completion_tokens = 50
-    resp.response_time_ms = 500.0
-    return resp
+    return _llm_response((FIXTURE_RESP_DIR / f"{fixture_name}.json").read_text())
+
+
+def _llm_response(content: str, finish_reason: str = "stop") -> LLMResponse:
+    """The real dataclass: a MagicMock would make .truncated truthy."""
+    return LLMResponse(
+        content=content,
+        model="test-model",
+        prompt_tokens=100,
+        completion_tokens=50,
+        response_time_ms=500.0,
+        finish_reason=finish_reason,
+    )
 
 
 def _mock_llm_response(status="CRASH", category="app:cli", root_cause="server failed", error_message="error", **extra):
     """Create an inline mock LLM response."""
-    resp = MagicMock()
-    resp.content = json.dumps(
-        {
-            "status": status,
-            "category": category,
-            "root_cause": root_cause,
-            "error_message": error_message,
-            "failed_tests": [],
-            "suggested_action": "fix it",
-            "confidence": "high",
-            **extra,
-        }
+    return _llm_response(
+        json.dumps(
+            {
+                "status": status,
+                "category": category,
+                "root_cause": root_cause,
+                "error_message": error_message,
+                "failed_tests": [],
+                "suggested_action": "fix it",
+                "confidence": "high",
+                **extra,
+            }
+        )
     )
-    resp.model = "test-model"
-    resp.prompt_tokens = 100
-    resp.completion_tokens = 50
-    resp.response_time_ms = 500.0
-    return resp
 
 
 # ── _job_id_from_url ──────────────────────────────────────────────────────────
@@ -296,17 +300,18 @@ class TestDualOutput:
         _write_log(tmp_path / "docker_server", "server.log", "INFO: server ready\n")
         config = _config_json(tmp_path, ["run_logs", "docker_server"])
         _run_cli(["--config", config, "--job-url", "https://github.com/org/repo/actions/runs/1/job/99999"])
-        assert (tmp_path / "ai_job_summary_99999.md").exists()
-        assert (tmp_path / "ai_job_summary_99999.json").exists()
+        # The stem is r<run>_a<attempt>_j<job>; only the job id is under test.
+        assert list(tmp_path.glob("ai_job_summary_*j99999.md"))
+        assert list(tmp_path.glob("ai_job_summary_*j99999.json"))
 
     def test_fallback_filename_without_job_url(self, tmp_path):
-        """When no --job-url, files named ai_job_summary.md/.json (no ID suffix)."""
+        """When no --job-url, the stem carries no j<job-id> segment."""
         _write_log(tmp_path / "run_logs", "run.log", "INFO: all good\n[==tt-log-finish-line==] exit_code=0\n")
         _write_log(tmp_path / "docker_server", "server.log", "INFO: server ready\n")
         config = _config_json(tmp_path, ["run_logs", "docker_server"])
         _run_cli(["--config", config])
-        assert any(tmp_path.glob("ai_job_summary*.md"))
-        assert any(tmp_path.glob("ai_job_summary*.json"))
+        assert (tmp_path / "ai_job_summary.md").exists()
+        assert (tmp_path / "ai_job_summary.json").exists()
 
 
 # ── Infra failure: no logs at all ─────────────────────────────────────────────
@@ -661,3 +666,129 @@ class TestLLMCrashOverride:
         md = _read_summary(tmp_path, ".md")
         assert "CRASHED" in md
         assert "TESTS FAILED" not in md
+
+
+class TestAttemptScopedFilenames:
+    """Every attempt's files must survive alongside the others.
+
+    ai_summary/run merges each leg's artifacts into one directory, so a stem
+    that names only the job leaves a re-run indistinguishable from the attempt
+    it replaced.
+    """
+
+    def test_first_attempt_is_labelled_too(self, monkeypatch):
+        monkeypatch.setenv("GITHUB_RUN_ID", "5")
+        monkeypatch.setenv("GITHUB_RUN_ATTEMPT", "1")
+        assert cli._qualified_stem("ai_job_summary", "77") == "ai_job_summary_r5_a1_j77"
+
+    def test_rerun_gets_suffix(self, monkeypatch):
+        monkeypatch.setenv("GITHUB_RUN_ID", "5")
+        monkeypatch.setenv("GITHUB_RUN_ATTEMPT", "2")
+        assert cli._qualified_stem("ai_job_summary", "77") == "ai_job_summary_r5_a2_j77"
+
+    def test_outside_ci_keeps_plain_stem(self, monkeypatch):
+        monkeypatch.delenv("GITHUB_RUN_ID", raising=False)
+        monkeypatch.delenv("GITHUB_RUN_ATTEMPT", raising=False)
+        assert cli._qualified_stem("ai_job_summary", "77") == "ai_job_summary_j77"
+
+    def test_attempts_write_distinct_files(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("GITHUB_RUN_ID", "5")
+        monkeypatch.setenv("GITHUB_RUN_ATTEMPT", "1")
+        a1_md, a1_json = cli._write_outputs(tmp_path, "999", "# a1", {"x": 1})
+        monkeypatch.setenv("GITHUB_RUN_ATTEMPT", "2")
+        a2_md, a2_json = cli._write_outputs(tmp_path, "999", "# a2", {"x": 2})
+        assert a1_json != a2_json
+        assert a1_md.read_text() == "# a1"
+        assert a2_md.read_text() == "# a2"
+        assert len(list(tmp_path.glob("ai_job_summary_*.json"))) == 2
+
+
+class TestPromptPersisted:
+    """The prompt artifact, whose name two action.yml globs depend on."""
+
+    def _errored_logs(self, tmp_path):
+        _write_log(
+            tmp_path / "run_logs",
+            "run.log",
+            textwrap.dedent(
+                """\
+            error: unrecognized arguments: --num-scheduler-steps
+            2026-03-23 01:18:53 - run_workflows.py:108 - ERROR: workflow: evals, failed with return code: 1
+            Process completed with exit code 1
+        """
+            ),
+        )
+        _write_log(tmp_path / "docker_server", "server.log", "INFO: server starting\n")
+        return _config_json(tmp_path, ["run_logs", "docker_server"])
+
+    def test_written_next_to_the_summary_with_what_was_sent(self, tmp_path):
+        config = self._errored_logs(tmp_path)
+        with patch("ai_job_summary.cli.get_llm_client") as mock_llm:
+            mock_llm.return_value.chat.return_value = _mock_llm_response()
+            _run_cli(["--config", config, "--job-url", "https://github.com/o/r/actions/runs/1/job/77"])
+            sent = mock_llm.return_value.chat.call_args.args[0]
+        (prompt,) = tmp_path.glob("ai_job_prompt_*j77.txt")
+        assert prompt.read_text() == sent
+        assert "## EXTRACTED LOG" in sent
+
+    def test_absent_when_the_llm_is_never_called(self, tmp_path):
+        _write_log(tmp_path / "run_logs", "run.log", "INFO: all good\n[==tt-log-finish-line==] exit_code=0\n")
+        _write_log(tmp_path / "docker_server", "server.log", "INFO: server ready\n")
+        _run_cli(["--config", _config_json(tmp_path, ["run_logs", "docker_server"])])
+        assert not list(tmp_path.glob("*.txt"))
+
+    def test_a_failed_write_does_not_discard_the_summary(self, tmp_path, capsys):
+        config = self._errored_logs(tmp_path)
+        real_write = Path.write_text
+
+        def fail_on_txt(self, *args, **kwargs):
+            if self.suffix == ".txt":
+                raise OSError("No space left on device")
+            return real_write(self, *args, **kwargs)
+
+        with patch("ai_job_summary.cli.get_llm_client") as mock_llm:
+            mock_llm.return_value.chat.return_value = _mock_llm_response()
+            with patch.object(Path, "write_text", fail_on_txt):
+                _run_cli(["--config", config])
+        assert not list(tmp_path.glob("*.txt"))
+        assert list(tmp_path.glob("ai_job_summary*.json"))
+        assert "::warning::Could not persist the LLM prompt" in capsys.readouterr().err
+
+
+class TestArtifactNamePublication:
+    """action.yml takes the artifact name from the tool, never rebuilds it."""
+
+    def _run(self, tmp_path, monkeypatch, extra_config=None):
+        gh_out = tmp_path / "gh_output"
+        gh_out.write_text("")
+        monkeypatch.setenv("GITHUB_OUTPUT", str(gh_out))
+        monkeypatch.setenv("GITHUB_RUN_ID", "5")
+        monkeypatch.setenv("GITHUB_RUN_ATTEMPT", "2")
+        _write_log(tmp_path / "run_logs", "run.log", "INFO: all good\n[==tt-log-finish-line==] exit_code=0\n")
+        _write_log(tmp_path / "docker_server", "server.log", "INFO: server ready\n")
+        config = json.loads(_config_json(tmp_path, ["run_logs", "docker_server"]))
+        config.update(extra_config or {})
+        _run_cli(["--config", json.dumps(config), "--job-url", "https://github.com/o/r/actions/runs/5/job/77"])
+        return dict(line.split("=", 1) for line in gh_out.read_text().splitlines() if "=" in line)
+
+    def test_name_matches_the_file_written(self, tmp_path, monkeypatch):
+        out = self._run(tmp_path, monkeypatch)
+        assert out["summary_artifact"] == "ai_job_summary_r5_a2_j77"
+        assert (tmp_path / f"{out['summary_artifact']}.json").exists()
+
+    def test_scope_from_config_reaches_the_name(self, tmp_path, monkeypatch):
+        out = self._run(tmp_path, monkeypatch, {"scope": "Ubuntu 24.04"})
+        assert out["summary_artifact"] == "ai_job_summary_ubuntu-24-04_r5_a2_j77"
+        assert (tmp_path / f"{out['summary_artifact']}.json").exists()
+
+    def test_scope_recorded_unslugged_for_the_run_stage_to_match(self, tmp_path, monkeypatch):
+        out = self._run(tmp_path, monkeypatch, {"scope": "Ubuntu 24.04"})
+        data = json.loads((tmp_path / f"{out['summary_artifact']}.json").read_text())
+        assert data["_job"]["scope"] == "Ubuntu 24.04"
+
+    def test_nothing_published_outside_ci(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+        _write_log(tmp_path / "run_logs", "run.log", "INFO: ok\n[==tt-log-finish-line==] exit_code=0\n")
+        _write_log(tmp_path / "docker_server", "server.log", "INFO: ready\n")
+        _run_cli(["--config", _config_json(tmp_path, ["run_logs", "docker_server"])])
+        assert (tmp_path / "ai_job_summary.json").exists()

@@ -4,8 +4,15 @@ description: Use AI to summarize CI job logs
 inputs:
   config:
     description: >-
-      JSON config string. Required keys: `model`, `workspace`,
-      `input_dirs`, `output_dir`. See README for the schema.
+      JSON config string.
+      Required: `model` (LLM id, or `none` to skip the LLM), `workspace` (base
+      for relative paths), `input_dirs` (list of log directories),
+      `output_dir` (where summaries are written).
+      Optional: `scope` (discriminator when the calling workflow runs more than
+      once per run; must equal the `scope` given to ai_summary/run),
+      `log_start_marker`, `log_complete_marker`, and the analysis fields, which
+      extend the bundled analysis.yaml rather than replacing it.
+      See the Config schema table in README.md.
     required: true
   api-key:
     description: "LLM API key (secret)"
@@ -19,7 +26,7 @@ inputs:
 
 outputs:
   summary-dir:
-    description: Directory containing ai_job_summary_<numeric-job-id>.md and .json
+    description: Directory containing the ai_job_summary_*.{md,json} outputs and the ai_job_prompt_*.txt dump
     value: ${{ steps.summarize.outputs.summary_dir }}
 
 runs:
@@ -32,19 +39,15 @@ runs:
         CHECK_RUN_ID: ${{ job.check_run_id }}
         JOB_NAME: ${{ inputs.job-name || job.name }}
       run: |
-        # CHECK_RUN_ID is the numeric job id, used both for the per-leg
-        # artifact filename suffix and the JOB_URL. It is always present
-        # in Tenstorrent CI environments. The fallback below would
-        # collide across matrix legs that share GITHUB_JOB and is only a
-        # safety net for ad-hoc / non-CI invocations.
-        JOB_ID="${CHECK_RUN_ID:-${GITHUB_RUN_ID}_${GITHUB_JOB}}"
+        # CHECK_RUN_ID is the numeric job id and is always present in
+        # Tenstorrent CI. The tool takes the id from JOB_URL, so the URL
+        # without a job segment is the only degraded case.
         JOB_URL=""
         if [ -n "$CHECK_RUN_ID" ] && [ -n "$GITHUB_SERVER_URL" ] && [ -n "$GITHUB_REPOSITORY" ] && [ -n "$GITHUB_RUN_ID" ]; then
           JOB_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/job/${CHECK_RUN_ID}"
         elif [ -n "$GITHUB_SERVER_URL" ] && [ -n "$GITHUB_REPOSITORY" ] && [ -n "$GITHUB_RUN_ID" ]; then
           JOB_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
         fi
-        echo "job_id=${JOB_ID}" >> "$GITHUB_OUTPUT"
         echo "job_name=${JOB_NAME}" >> "$GITHUB_OUTPUT"
         echo "job_url=${JOB_URL}" >> "$GITHUB_OUTPUT"
 
@@ -135,14 +138,27 @@ runs:
         fi
 
     - name: Upload AI summary
-      if: always() && !cancelled() && steps.summarize.outputs.summary_dir != ''
+      if: ${{ !cancelled() && steps.summarize.outputs.summary_artifact != '' }}
       continue-on-error: true
       uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
-        name: ai_job_summary_${{ steps.job-meta.outputs.job_id }}
+        # Name comes from the tool, which wrote the files: run, attempt and any
+        # scope are already baked in, and nothing here can disagree with it.
+        name: ${{ steps.summarize.outputs.summary_artifact }}
         path: |
           ${{ steps.summarize.outputs.summary_dir }}/*.json
           ${{ steps.summarize.outputs.summary_dir }}/*.md
+
+    # Separate artifact: ai_summary/run downloads ai_job_summary_*, and the
+    # prompt is a ~400KB-per-leg debug payload it never reads.
+    - name: Upload LLM prompt
+      if: ${{ !cancelled() && steps.summarize.outputs.prompt_artifact != '' }}
+      continue-on-error: true
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      with:
+        name: ${{ steps.summarize.outputs.prompt_artifact }}
+        path: ${{ steps.summarize.outputs.summary_dir }}/*.txt
+        if-no-files-found: ignore
 
     - name: Cleanup ephemeral venv
       if: always()

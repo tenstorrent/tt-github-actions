@@ -11,6 +11,8 @@ from dataclasses import dataclass
 
 import markdown
 
+from common.artifact_names import job_id_from_stem
+
 from .models import ParsedJobSummary, RunNarrative, RunStats, STATUS_EMOJI
 
 
@@ -129,7 +131,9 @@ def _job_url(job: ParsedJobSummary, run_url: str = "") -> str:
 
 def _job_id_cell(job: ParsedJobSummary, run_url: str = "") -> str:
     """Render the Job column as a linked job ID."""
-    label = job.job_id or job.source_file.stem.removeprefix("ai_job_summary_")
+    # A stem with no job segment (no check_run_id, or an infra stub) has no id
+    # to show; the leg is still identified by the Run column.
+    label = job.job_id or job_id_from_stem(job.source_file.stem) or "unknown"
     url = _job_url(job, run_url)
     return f"[{label}]({url})" if url else label
 
@@ -204,6 +208,7 @@ def format_run_report(
     run_url: str = "",
     run_id: str = "",
     run_date: str = "",
+    run_result: str = "",
     pr: str = "",
     commits: list[dict] | None = None,
 ) -> "RunReport":
@@ -215,6 +220,10 @@ def format_run_report(
         run_url: GitHub Actions run URL.
         run_id: Run identifier string.
         run_date: Human-readable run date (e.g. "2026-03-13"). Omitted if empty.
+        run_result: Aggregate result of the jobs this report covers. Only
+            cancelled/skipped is called out, since those are the cases where the
+            report covers fewer legs than were due; a failure is already visible
+            in the status table.
         pr: PR number or branch name. When set, shows PR Impact section and
             "Your Code" column in job details.
         commits: Optional list of {"repo": "owner/name", "commit": "sha"} dicts.
@@ -242,6 +251,8 @@ def format_run_report(
         details_parts.append(f"**Run**: {run_url}")
     if run_date:
         details_parts.append(f"**Date**: {run_date}")
+    if run_result in ("cancelled", "skipped"):
+        details_parts.append(f"**Run {run_result}** — the legs below are only those that reported")
     if pr:
         details_parts.append(f"**PR**: #{pr}")
     if details_parts:

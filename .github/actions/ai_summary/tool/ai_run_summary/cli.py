@@ -18,12 +18,13 @@ import os
 import sys
 from pathlib import Path
 
+from common.artifact_names import qualified_stem, slugify_scope
 from common.llm_client import get_llm_client
 
 from .aggregate import compute_stats
 from .format import format_run_report
 from .narrative import generate_narrative
-from .parse import dedup_latest_attempt, parse_summaries_dir
+from .parse import dedup_latest_attempt, filter_by_scope, parse_summaries_dir
 from .serialize import build_run_json
 
 
@@ -33,21 +34,27 @@ def _should_call_llm(config: dict) -> bool:
     return bool(model) and model.lower() != "none"
 
 
-def _received_names(summary_dir: Path) -> set[str]:
-    """Return names of jobs that produced an ai-job-summary artifact."""
+def _received_names(summary_dir: Path, scope: str = "") -> set[str]:
+    """Names of jobs that produced an ai-job-summary artifact for ``scope``.
+
+    Invocations of one reusable workflow run the same matrix, so their leg names
+    are identical; counting another invocation's artifact as received would
+    suppress the stub for our own missing leg.
+    """
     names: set[str] = set()
     for f in summary_dir.glob("*.json"):
         try:
             data = json.loads(f.read_text())
-            name = data.get("_job", {}).get("name", "")
-            if name:
+            job = data.get("_job", {})
+            name = job.get("name", "")
+            if name and (job.get("scope") or "") == scope:
                 names.add(name)
         except (json.JSONDecodeError, OSError):
             pass
     return names
 
 
-def _stub_infra(summary_dir: Path, name: str) -> None:
+def _stub_infra(summary_dir: Path, name: str, scope: str = "") -> None:
     """Write an INFRA_FAILURE stub for an expected leg that never reported."""
     summary_dir.mkdir(parents=True, exist_ok=True)
     # Deterministic, collision-resistant filename. Python's built-in hash()
@@ -55,8 +62,8 @@ def _stub_infra(summary_dir: Path, name: str) -> None:
     # names every invocation; sha1 gives a stable value. Not security-
     # sensitive; 16 hex chars = 64 bits, collision probability across a
     # matrix of < 10k legs is well below anything that could mask a bug.
-    slug = hashlib.sha1(name.encode("utf-8")).hexdigest()[:16]
-    path = summary_dir / f"ai_job_summary_{slug}.json"
+    slug = hashlib.sha1(f"{scope}\0{name}".encode("utf-8")).hexdigest()[:16]
+    path = summary_dir / f"{qualified_stem('ai_job_summary', scope=scope)}_{slug}.json"
     path.write_text(
         json.dumps(
             {
@@ -64,7 +71,8 @@ def _stub_infra(summary_dir: Path, name: str) -> None:
                 # job-stage CLI writes when it sets INFRA_FAILURE_STATUS.status_text.
                 # ai_run_summary's resolve_status() canonicalises both to
                 # "INFRA_FAILURE" downstream regardless.
-                "_job": {"name": name, "status": "INFRA FAILURE"},
+                # scope must be carried or filter_by_scope drops this stub.
+                "_job": {"name": name, "status": "INFRA FAILURE", "scope": scope},
                 "category": "infra:no_artifact",
                 "root_cause": (
                     "Job produced no ai-job-summary artifact. Likely cause: "
@@ -82,6 +90,7 @@ def synthesize_missing_legs(
     summary_dir: Path,
     expected_jobs: "str | list[dict]",
     run_result: str,
+    scope: str = "",
 ) -> dict[str, int]:
     """Synthesize INFRA_FAILURE stubs for expected jobs that produced no artifact.
 
@@ -143,7 +152,7 @@ def synthesize_missing_legs(
         )
         return {"infra_stubbed": 0}
 
-    received = _received_names(summary_dir)
+    received = _received_names(summary_dir, scope)
     # Dedup names within expected_jobs so a matrix with accidental duplicates
     # doesn't inflate the stub count (and doesn't write the same stub twice).
     unique_missing: list[str] = []
@@ -158,7 +167,7 @@ def synthesize_missing_legs(
         unique_missing.append(name)
 
     for name in unique_missing:
-        _stub_infra(summary_dir, name)
+        _stub_infra(summary_dir, name, scope)
     return {"infra_stubbed": len(unique_missing)}
 
 
@@ -184,6 +193,7 @@ def _resolve_run_metadata() -> dict:
         pr = ref.split("/pull/")[1].split("/")[0]
 
     return {
+        "run_result": "",
         "run_url": run_url,
         "run_id": run_id,
         "run_date": datetime.date.today().isoformat(),
@@ -248,6 +258,8 @@ def main():
 
     input_dir = config.get("input_dir")
     output_dir = config.get("output_dir")
+    # Which invocation this report covers; see filter_by_scope.
+    scope = config.get("scope") or ""
 
     if not input_dir:
         print("Error: config must specify input_dir", file=sys.stderr)
@@ -302,6 +314,7 @@ def main():
             summaries_dir,
             args.expected_jobs,
             run_result=args.run_result,
+            scope=scope,
         )
         if stats["infra_stubbed"]:
             print(
@@ -318,6 +331,13 @@ def main():
     print(f"Scanning {summaries_dir} for summaries...", file=sys.stderr)
     summaries = parse_summaries_dir(summaries_dir)
     print(f"Parsed {len(summaries)} summary files", file=sys.stderr)
+    scoped = filter_by_scope(summaries, scope)
+    if len(scoped) != len(summaries):
+        print(
+            f"Kept {len(scoped)} of {len(summaries)} summaries for scope {scope!r}",
+            file=sys.stderr,
+        )
+    summaries = scoped
     deduped = dedup_latest_attempt(summaries)
     if len(deduped) != len(summaries):
         print(
@@ -351,6 +371,7 @@ def main():
 
     # Resolve run metadata from environment
     meta = _resolve_run_metadata()
+    meta["run_result"] = (args.run_result or "").lower()
 
     # Parse commits JSON
     commits: list[dict] = []
@@ -376,6 +397,7 @@ def main():
         run_url=meta["run_url"],
         run_id=meta["run_id"],
         run_date=meta["run_date"],
+        run_result=meta["run_result"],
         pr=meta["pr"],
         commits=commits or None,
     )
@@ -385,7 +407,10 @@ def main():
     out = workspace / output_dir
     out.mkdir(parents=True, exist_ok=True)
 
-    stem = f"ai_run_summary_{run_id}"
+    stem = qualified_stem("ai_run_summary", run_id=meta["run_id"], attempt=meta.get("run_attempt"), scope=scope)
+    if os.environ.get("GITHUB_OUTPUT"):
+        with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+            fh.write(f"report_artifact={stem}\n")
     (out / f"{stem}.md").write_text(report.md)
     (out / f"{stem}.html").write_text(report.html)
     # Machine-readable sibling. Built from summaries (not stats, which keeps

@@ -7,6 +7,7 @@ emoji rendering, and markdown formatting.
 """
 
 import json
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -14,13 +15,17 @@ from ai_job_summary.context import CIContext
 from ai_job_summary.extract import ExtractedLog, JobStatus
 from ai_job_summary.summarize import (
     FailureSummary,
+    _SUMMARY_MAX_TOKENS,
+    _SUMMARY_MAX_TOKENS_FALLBACK,
     _emoji,
     _parse_llm_response,
     _truncate_prompt_if_needed,
     build_prompt,
     format_infra_failure_markdown,
     format_summary_markdown,
+    summarize_log,
 )
+from common.llm_client import LLMBadRequest, LLMResponse
 
 
 # ── _emoji ────────────────────────────────────────────────────────────────────
@@ -88,6 +93,20 @@ class TestParseLlmResponse:
         s = _parse_llm_response("this is not json at all")
         assert "Failed to parse" in s.root_cause
         assert s.error_message.startswith("this is not json")
+
+    # A response cut off at max_tokens fails to decode exactly like malformed
+    # output, so the root cause must name the real reason.
+    def test_truncated_response_reports_max_tokens(self):
+        cut_off = '{\n  "status": "TESTS_FAILED",\n  "pr_files_in_stack": [\n    "models/demos/a.cpp",\n    "models/de'
+        s = _parse_llm_response(cut_off, truncated=True)
+        assert str(_SUMMARY_MAX_TOKENS) in s.root_cause
+        assert "_SUMMARY_MAX_TOKENS" in s.root_cause
+        assert "Failed to parse LLM response:" not in s.root_cause
+
+    def test_untruncated_invalid_json_does_not_blame_the_ceiling(self):
+        s = _parse_llm_response("{broken", truncated=False)
+        assert "_SUMMARY_MAX_TOKENS" not in s.root_cause
+        assert "Failed to parse" in s.root_cause
 
     def test_missing_fields_use_defaults(self):
         s = _parse_llm_response(json.dumps({"category": "infra:network"}))
@@ -469,3 +488,82 @@ class TestFormatInfraFailureMarkdown:
         md = format_infra_failure_markdown()
         assert "INFRA FAILURE" in md
         assert "Possible Causes" in md
+
+
+class TestSummarizeLogTruncation:
+    """The wiring between the LLM response and the truncation verdict.
+
+    ``_parse_llm_response`` tests cover the verdict itself; these cover the path
+    that reaches it, which is where the ceiling and ``finish_reason`` are applied.
+    """
+
+    def _client(self, content: str, finish_reason: str, raise_first: bool = False):
+        client = MagicMock()
+        responses = [
+            LLMResponse(content=content, model="m", finish_reason=finish_reason),
+        ]
+        if raise_first:
+            client.chat.side_effect = [LLMBadRequest("max_tokens too large"), *responses]
+        else:
+            client.chat.side_effect = responses
+        return client
+
+    def _args(self):
+        return dict(
+            extracted_log=ExtractedLog(exit_code=1),
+            context=CIContext(),
+            categories={"categories": {}},
+            layers={"layers": []},
+        )
+
+    def test_sends_the_full_ceiling(self):
+        client = self._client("{}", "stop")
+        summarize_log(llm_client=client, **self._args())
+        assert client.chat.call_args.kwargs["max_tokens"] == _SUMMARY_MAX_TOKENS
+
+    def test_cut_off_response_is_reported_as_truncated(self, capsys):
+        client = self._client('{"status": "TESTS_FAILED", "failed_tests": ["a', "length")
+        result = summarize_log(llm_client=client, **self._args())
+        assert str(_SUMMARY_MAX_TOKENS) in result.summary.root_cause
+        assert "::warning::" in capsys.readouterr().err
+
+    def test_malformed_response_is_not_blamed_on_the_ceiling(self, capsys):
+        client = self._client("not json at all", "stop")
+        result = summarize_log(llm_client=client, **self._args())
+        assert "_SUMMARY_MAX_TOKENS" not in result.summary.root_cause
+        assert "Failed to parse" in result.summary.root_cause
+        assert "::warning::" not in capsys.readouterr().err
+
+    def test_rejected_ceiling_retries_lower_instead_of_losing_the_summary(self, capsys):
+        client = self._client('{"status": "TESTS_FAILED"}', "stop", raise_first=True)
+        result = summarize_log(llm_client=client, **self._args())
+        assert [c.kwargs["max_tokens"] for c in client.chat.call_args_list] == [
+            _SUMMARY_MAX_TOKENS,
+            _SUMMARY_MAX_TOKENS_FALLBACK,
+        ]
+        assert result.summary.status == "TESTS_FAILED"
+        assert "::warning::" in capsys.readouterr().err
+
+    def test_retry_reports_the_ceiling_it_actually_used(self, capsys):
+        client = self._client('{"status": "TESTS_FAILED", "failed_tests": ["a', "length", raise_first=True)
+        result = summarize_log(llm_client=client, **self._args())
+        err = capsys.readouterr().err
+        # The rejected ceiling must not be blamed for the truncation that follows.
+        assert f"max_tokens ({_SUMMARY_MAX_TOKENS_FALLBACK})" in err
+        assert str(_SUMMARY_MAX_TOKENS_FALLBACK) in result.summary.root_cause
+        assert f"the {_SUMMARY_MAX_TOKENS}-token ceiling" not in result.summary.root_cause
+
+    def test_unrelated_api_errors_are_not_retried(self):
+        # An auth or rate-limit failure would otherwise cost a second
+        # five-minute call and be reported as a token-ceiling rejection.
+        client = MagicMock()
+        client.chat.side_effect = RuntimeError("LLM API error: 401 unauthorized")
+        with pytest.raises(RuntimeError, match="401"):
+            summarize_log(llm_client=client, **self._args())
+        assert client.chat.call_count == 1
+
+    def test_prompt_is_carried_out_for_persisting(self):
+        client = self._client("{}", "stop")
+        result = summarize_log(llm_client=client, **self._args())
+        assert result.prompt == client.chat.call_args.args[0]
+        assert result.prompt
