@@ -55,16 +55,17 @@ The action takes inline JSON — no separate config file.
 | `scope` | no | `""` | Discriminator for one invocation of a reusable workflow. Set it when the calling workflow runs more than once per run, and pass the **same value** to `ai_summary/run`. See the note below. |
 | `log_start_marker` | no | run-with-log's sentinel | Regex for the log's start sentinel. |
 | `log_complete_marker` | no | run-with-log's sentinel | Regex for the log's finish sentinel, with an optional `exit_code=N` in group 1. |
-| `layers` | no | bundled `analysis.yaml` | Layer definitions. Merged unless `layers_mode` says otherwise. |
-| `layers_mode` | no | merge | `"replace"` swaps the bundled layers out instead of merging. |
-| `categories` | no | bundled `analysis.yaml` | Failure categories offered to the model. |
-| `test_patterns` | no | bundled `analysis.yaml` | Patterns identifying test lines. |
-| `failed_test_patterns` | no | bundled `analysis.yaml` | Patterns identifying failed tests. |
-| `detection_patterns` | no | bundled `analysis.yaml` | Crash / timeout detection patterns. |
-| `repos` | no | bundled `analysis.yaml` | Repo metadata, including `default_branches`. |
 
-Anything else in the JSON is passed through untouched. `tool_dir` is rejected —
-the action resolves the tool from its own location.
+Analysis fields — `layers`, `categories`, `test_patterns`,
+`failed_test_patterns`, `detection_patterns`, `repos` — default to the bundled
+[`analysis.yaml`](../tool/ai_job_summary/config/analysis.yaml); read it for the
+shape of each. Supplying one **extends** the bundled value rather than replacing
+it: lists are appended and dicts deep-merged, so a project can add a category or
+a pattern but cannot remove one. The single exception is `layers`, which
+`"layers_mode": "replace"` swaps out wholesale.
+
+`tool_dir` is rejected — the action resolves the tool from its own location.
+Any other key is passed through to the config dict untouched.
 
 ### scope
 
