@@ -42,14 +42,6 @@ inputs:
       is missing (runner/container setup failure, runner died, etc.).
     required: false
     default: ""
-  run-status:
-    description: >-
-      Aggregate outcome of the run across every child job, including
-      `cancelled`. Reported in the header and the JSON so a partial report is
-      not read as a complete one. Distinct from `run-result`, which only decides
-      whether the legs in `expected-jobs` were due to report.
-    required: false
-    default: ""
   run-result:
     description: >-
       Aggregate result of the matrix job (`needs.<matrix-job>.result`).
@@ -148,7 +140,6 @@ runs:
         CONFIG: ${{ inputs.config }}
         EXPECTED_JOBS: ${{ inputs.expected-jobs }}
         RUN_RESULT: ${{ inputs.run-result }}
-        RUN_STATUS: ${{ inputs.run-status }}
         COMMITS: ${{ inputs.commits }}
       run: |
         TOOL_DIR="${{ steps.config.outputs.tool_dir }}"
@@ -168,7 +159,6 @@ runs:
         CMD_ARGS=(--config "$CONFIG")
         [ -n "$EXPECTED_JOBS" ]           && CMD_ARGS+=(--expected-jobs "$EXPECTED_JOBS")
         [ -n "$RUN_RESULT" ]              && CMD_ARGS+=(--run-result "$RUN_RESULT")
-        [ -n "$RUN_STATUS" ]              && CMD_ARGS+=(--run-status "$RUN_STATUS")
         [ -n "$COMMITS" ] && CMD_ARGS+=(--commits "$COMMITS")
 
         echo "::group::AI Run Summary"

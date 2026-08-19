@@ -79,44 +79,40 @@ class TestScopedSynthesis:
         assert filter_by_scope(parse_summaries_dir(tmp_path), "u22") == []
 
 
-class TestRunStatus:
-    """A cancelled run must not read as a complete one.
+class TestRunResultInHeader:
+    """A cancelled run must not read as a complete one."""
 
-    run-result gates infra synthesis, so it is reduced over the children that
-    ran and never says "cancelled". run-status carries the real outcome.
-    """
-
-    def _report(self, tmp_path, status):
+    def _report(self, tmp_path, result):
         (tmp_path / "ai_job_summary_r5_a1_j1.json").write_text(
             json.dumps({"_job": {"name": "leg one", "status": "SUCCESS"}})
         )
         config = json.dumps({"model": "none", "workspace": str(tmp_path), "input_dir": ".", "output_dir": "."})
         argv = ["ai-run-summary", "--config", config]
-        if status:
-            argv += ["--run-status", status]
+        if result:
+            argv += ["--expected-jobs", "[]", "--run-result", result]
         with patch("sys.argv", argv):
             with patch.dict(os.environ, {"GITHUB_RUN_ID": "5"}, clear=False):
                 main()
-        md = (tmp_path / "ai_run_summary_r5.md").read_text()
-        data = json.loads((tmp_path / "ai_run_summary_r5.json").read_text())
-        return md, data
+        return (tmp_path / "ai_run_summary_r5.md").read_text(), json.loads(
+            (tmp_path / "ai_run_summary_r5.json").read_text()
+        )
 
     def test_cancelled_is_called_out_in_the_header(self, tmp_path):
         md, data = self._report(tmp_path, "cancelled")
         assert "Run cancelled" in md
         assert "only those that reported" in md
-        assert data["run_status"] == "cancelled"
-
-    def test_success_is_not_called_out(self, tmp_path):
-        md, data = self._report(tmp_path, "success")
-        assert "Run success" not in md
-        assert data["run_status"] == "success"
-
-    def test_absent_status_changes_nothing(self, tmp_path):
-        md, data = self._report(tmp_path, None)
-        assert "the legs below are only those that reported" not in md
-        assert data["run_status"] == ""
+        assert data["run_result"] == "cancelled"
 
     def test_failure_is_called_out_too(self, tmp_path):
         md, _ = self._report(tmp_path, "failure")
         assert "Run failure" in md
+
+    def test_success_is_not_called_out(self, tmp_path):
+        md, data = self._report(tmp_path, "success")
+        assert "Run success" not in md
+        assert data["run_result"] == "success"
+
+    def test_absent_result_changes_nothing(self, tmp_path):
+        md, data = self._report(tmp_path, None)
+        assert "the legs below are only those that reported" not in md
+        assert data["run_result"] == ""
