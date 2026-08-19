@@ -193,6 +193,7 @@ def _resolve_run_metadata() -> dict:
         pr = ref.split("/pull/")[1].split("/")[0]
 
     return {
+        "run_status": "",
         "run_url": run_url,
         "run_id": run_id,
         "run_date": datetime.date.today().isoformat(),
@@ -221,6 +222,14 @@ def main():
         "synthesize INFRA_FAILURE stubs for legs that "
         "produced no artifact. Has no effect unless "
         "--run-result is also supplied.",
+    )
+    parser.add_argument(
+        "--run-status",
+        type=str,
+        default="",
+        help="Aggregate outcome of the run over every child, including 'cancelled'. "
+        "Reported in the header and the JSON. Distinct from --run-result, which only "
+        "decides whether the legs in --expected-jobs were due to report.",
     )
     parser.add_argument(
         "--run-result",
@@ -370,6 +379,7 @@ def main():
 
     # Resolve run metadata from environment
     meta = _resolve_run_metadata()
+    meta["run_status"] = (args.run_status or "").lower()
 
     # Parse commits JSON
     commits: list[dict] = []
@@ -395,6 +405,7 @@ def main():
         run_url=meta["run_url"],
         run_id=meta["run_id"],
         run_date=meta["run_date"],
+        run_status=meta["run_status"],
         pr=meta["pr"],
         commits=commits or None,
     )

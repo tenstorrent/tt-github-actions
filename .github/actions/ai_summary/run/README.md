@@ -49,6 +49,7 @@ ai-run-summary:
 | `api-key` | yes | — | LLM API key. Pass empty when using `"model": "none"` in config to skip the LLM. |
 | `api-url` | yes | — | LLM API URL. Pass empty when using `"model": "none"` in config to skip the LLM. |
 | `expected-jobs` | no | `""` | JSON array of expected matrix legs (typically `needs.<matrix-job>.outputs.matrix`). When set with `run-result`, the action synthesizes INFRA_FAILURE rows for legs whose ai-job-summary artifact is missing. **Must be passed together with `run-result`.** |
+| `run-status` | no | `""` | Aggregate outcome across every child, `cancelled` included. Shown in the header and the JSON so a partial report is not read as complete. |
 | `run-result` | no | `""` | Aggregate matrix-job result (`needs.<matrix-job>.result`). Accepts `success`, `failure`, `cancelled`, `skipped`. Suppresses synthesis on `cancelled`/`skipped`. **Must be passed together with `expected-jobs`.** |
 | `slack-bot-token` | no | `""` | Slack bot token. Both Slack inputs must be set to send. |
 | `slack-channel-id` | no | `""` | Slack channel ID. |
