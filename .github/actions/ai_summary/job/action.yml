@@ -3,12 +3,17 @@ description: Use AI to summarize CI job logs
 
 inputs:
   config:
-    # Also accepts "scope": an invocation discriminator, needed when a reusable
-    # workflow runs more than once per run so each report covers only its own
-    # legs. It must match the scope given to ai_summary/run.
     description: >-
-      JSON config string. Required keys: `model`, `workspace`,
-      `input_dirs`, `output_dir`. See README for the schema.
+      JSON config string.
+      Required: `model` (LLM id, or `none` to skip the LLM), `workspace` (base
+      for relative paths), `input_dirs` (list of log directories),
+      `output_dir` (where summaries are written).
+      Optional: `scope` (discriminator when the calling workflow runs more than
+      once per run; must equal the `scope` given to ai_summary/run),
+      `log_start_marker`, `log_complete_marker`, and the analysis overrides
+      `layers`, `layers_mode`, `categories`, `test_patterns`,
+      `failed_test_patterns`, `detection_patterns`, `repos`.
+      See the Config schema table in README.md.
     required: true
   api-key:
     description: "LLM API key (secret)"

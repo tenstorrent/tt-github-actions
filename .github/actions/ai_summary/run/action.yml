@@ -3,14 +3,14 @@ description: Aggregate per-job AI summaries into a run-level report
 
 inputs:
   config:
-    # Also accepts "scope": keeps this report to one invocation's legs when a
-    # reusable workflow runs more than once per run. Must match the scope given
-    # to ai_summary/job. The download below stays broad; the tool filters on the
-    # scope recorded in each summary, which cannot drift from a glob.
     description: >-
-      JSON config string. Required keys: `model` (or `none` to skip
-      narrative LLM), `workspace`, `input_dir`, `output_dir`.
-      See README for the schema.
+      JSON config string.
+      Required: `model` (LLM id, or `none` to skip the narrative), `workspace`
+      (base for relative paths), `input_dir` (where per-job artifacts are
+      downloaded), `output_dir` (where the report is written).
+      Optional: `scope` (discriminator when the calling workflow runs more than
+      once per run; must equal the `scope` given to ai_summary/job).
+      See the Config schema table in README.md.
     required: true
   api-key:
     description: "LLM API key. Pass empty when using `model: none` in config to skip the LLM."
