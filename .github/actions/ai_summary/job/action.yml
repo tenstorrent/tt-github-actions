@@ -26,7 +26,7 @@ inputs:
 
 outputs:
   summary-dir:
-    description: Directory containing ai_job_summary_r<run>_a<attempt>_j<job>.{md,json} and the ai_job_prompt_*.txt dump
+    description: Directory containing the ai_job_summary_*.{md,json} outputs and the ai_job_prompt_*.txt dump
     value: ${{ steps.summarize.outputs.summary_dir }}
 
 runs:
@@ -39,19 +39,15 @@ runs:
         CHECK_RUN_ID: ${{ job.check_run_id }}
         JOB_NAME: ${{ inputs.job-name || job.name }}
       run: |
-        # CHECK_RUN_ID is the numeric job id, used both for the per-leg
-        # artifact filename suffix and the JOB_URL. It is always present
-        # in Tenstorrent CI environments. The fallback below would
-        # collide across matrix legs that share GITHUB_JOB and is only a
-        # safety net for ad-hoc / non-CI invocations.
-        JOB_ID="${CHECK_RUN_ID:-${GITHUB_RUN_ID}_${GITHUB_JOB}}"
+        # CHECK_RUN_ID is the numeric job id and is always present in
+        # Tenstorrent CI. The tool takes the id from JOB_URL, so the URL
+        # without a job segment is the only degraded case.
         JOB_URL=""
         if [ -n "$CHECK_RUN_ID" ] && [ -n "$GITHUB_SERVER_URL" ] && [ -n "$GITHUB_REPOSITORY" ] && [ -n "$GITHUB_RUN_ID" ]; then
           JOB_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/job/${CHECK_RUN_ID}"
         elif [ -n "$GITHUB_SERVER_URL" ] && [ -n "$GITHUB_REPOSITORY" ] && [ -n "$GITHUB_RUN_ID" ]; then
           JOB_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
         fi
-        echo "job_id=${JOB_ID}" >> "$GITHUB_OUTPUT"
         echo "job_name=${JOB_NAME}" >> "$GITHUB_OUTPUT"
         echo "job_url=${JOB_URL}" >> "$GITHUB_OUTPUT"
 

@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for LLM client base-url handling."""
 
+import pytest
+
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -58,3 +60,12 @@ class TestChatCarriesFinishReason:
 
     def test_absent_finish_reason_is_empty_not_none(self):
         assert self._client_with(None).chat("p").finish_reason == ""
+
+
+def test_empty_choices_raises_instead_of_indexerror():
+    client = LLMClient(api_key="k", model="m")
+    sdk = MagicMock()
+    sdk.chat.completions.create.return_value = SimpleNamespace(choices=[], model="m", usage=None)
+    client._client = sdk
+    with pytest.raises(RuntimeError, match="no choices"):
+        client.chat("p")

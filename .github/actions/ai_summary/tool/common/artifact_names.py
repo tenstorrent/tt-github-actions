@@ -20,9 +20,9 @@ _JOB_SEGMENT = re.compile(r"_j(\d+)$")
 def slugify_scope(scope: str) -> str:
     """``Ubuntu 24.04`` -> ``ubuntu-24-04``, for use inside a filename.
 
-    Must stay in step with the shell slugifier in both action.yml files, which
-    builds the artifact name and download glob. A drift there only costs extra
-    downloads: the run stage filters on the unslugged scope field.
+    Scopes must stay distinct after slugification: this is many-to-one, so
+    ``a/b`` and ``a b`` collide. Only the artifact name is at risk — the run
+    stage matches on the unslugged value recorded in each summary.
     """
     out = "".join(c if c.isalnum() else "-" for c in scope.lower())
     return "-".join(part for part in out.split("-") if part)

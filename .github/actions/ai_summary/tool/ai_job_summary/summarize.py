@@ -15,7 +15,7 @@ from .config import is_default_branch
 from .config_context import ConfigContext, format_config_context_for_prompt
 from .context import CIContext, format_context_for_prompt
 from .extract import ExtractedLog, JobStatus, format_extracted_log
-from common.llm_client import LLMClient, LLMResponse, get_llm_client
+from common.llm_client import LLMBadRequest, LLMClient, LLMResponse, get_llm_client
 
 # Prompt size limit: ~4 chars per token, 128k context window, leave room for response
 MAX_PROMPT_CHARS = 400_000
@@ -280,6 +280,7 @@ def _parse_llm_response(
     response_text: str,
     extracted_log: ExtractedLog | None = None,
     truncated: bool = False,
+    ceiling: int = _SUMMARY_MAX_TOKENS,
 ) -> FailureSummary:
     """Parse the LLM response into a FailureSummary.
 
@@ -334,7 +335,7 @@ def _parse_llm_response(
     except json.JSONDecodeError as e:
         if truncated:
             summary.root_cause = (
-                f"LLM response hit the {_SUMMARY_MAX_TOKENS}-token ceiling and was cut off "
+                f"LLM response hit the {ceiling}-token ceiling and was cut off "
                 f"mid-JSON, so it could not be parsed ({e}). Raising _SUMMARY_MAX_TOKENS in "
                 f"ai_job_summary/summarize.py is the only remedy; report it to the CI tooling "
                 f"owners."
@@ -607,23 +608,26 @@ def summarize_log(
         llm_client = get_llm_client()
 
     prompt = build_prompt(extracted_log, context, categories, layers, config_context)
+    ceiling = _SUMMARY_MAX_TOKENS
     try:
-        response = llm_client.chat(prompt, max_tokens=_SUMMARY_MAX_TOKENS)
-    except RuntimeError as e:
+        response = llm_client.chat(prompt, max_tokens=ceiling)
+    except LLMBadRequest as e:
         # The model is operator-supplied; one whose output cap sits below the
-        # ceiling rejects the request outright. A shorter summary beats none.
+        # ceiling rejects the request outright, and a shorter summary beats
+        # none. Only a bad request is retried: an auth or rate-limit failure
+        # would cost a second five-minute call and report the wrong cause.
         print(
-            f"::warning::LLM rejected max_tokens={_SUMMARY_MAX_TOKENS} ({e}); "
-            f"retrying at {_SUMMARY_MAX_TOKENS_FALLBACK}",
+            f"::warning::LLM rejected max_tokens={ceiling} ({e}); " f"retrying at {_SUMMARY_MAX_TOKENS_FALLBACK}",
             file=sys.stderr,
         )
-        response = llm_client.chat(prompt, max_tokens=_SUMMARY_MAX_TOKENS_FALLBACK)
+        ceiling = _SUMMARY_MAX_TOKENS_FALLBACK
+        response = llm_client.chat(prompt, max_tokens=ceiling)
     if response.truncated:
         print(
-            f"::warning::LLM response hit max_tokens ({_SUMMARY_MAX_TOKENS}); " f"the content may be incomplete",
+            f"::warning::LLM response hit max_tokens ({ceiling}); the content may be incomplete",
             file=sys.stderr,
         )
-    summary = _parse_llm_response(response.content, extracted_log, truncated=response.truncated)
+    summary = _parse_llm_response(response.content, extracted_log, response.truncated, ceiling)
 
     # Add context info
     summary.owner_from_test_yaml = context.job.owner_id

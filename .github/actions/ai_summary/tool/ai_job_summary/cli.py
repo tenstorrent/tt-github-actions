@@ -47,7 +47,11 @@ _CONTEXT_GATHER_MAX_CHARS = 50_000
 
 
 def _job_id_from_url(job_url: str) -> str:
-    """Parse the numeric job ID from a GitHub Actions job URL."""
+    """Parse the numeric job ID from a GitHub Actions job URL.
+
+    The caller builds that URL from ``job.check_run_id``, which is always
+    present in CI, so this is the id — no separate input is needed.
+    """
     m = re.search(r"/job/(\d+)", job_url)
     return m.group(1) if m else ""
 

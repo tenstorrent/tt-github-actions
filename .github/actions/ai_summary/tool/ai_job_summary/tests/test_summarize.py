@@ -25,7 +25,7 @@ from ai_job_summary.summarize import (
     format_summary_markdown,
     summarize_log,
 )
-from common.llm_client import LLMResponse
+from common.llm_client import LLMBadRequest, LLMResponse
 
 
 # ── _emoji ────────────────────────────────────────────────────────────────────
@@ -503,7 +503,7 @@ class TestSummarizeLogTruncation:
             LLMResponse(content=content, model="m", finish_reason=finish_reason),
         ]
         if raise_first:
-            client.chat.side_effect = [RuntimeError("max_tokens too large"), *responses]
+            client.chat.side_effect = [LLMBadRequest("max_tokens too large"), *responses]
         else:
             client.chat.side_effect = responses
         return client
@@ -543,6 +543,24 @@ class TestSummarizeLogTruncation:
         ]
         assert result.summary.status == "TESTS_FAILED"
         assert "::warning::" in capsys.readouterr().err
+
+    def test_retry_reports_the_ceiling_it_actually_used(self, capsys):
+        client = self._client('{"status": "TESTS_FAILED", "failed_tests": ["a', "length", raise_first=True)
+        result = summarize_log(llm_client=client, **self._args())
+        err = capsys.readouterr().err
+        # The rejected ceiling must not be blamed for the truncation that follows.
+        assert f"max_tokens ({_SUMMARY_MAX_TOKENS_FALLBACK})" in err
+        assert str(_SUMMARY_MAX_TOKENS_FALLBACK) in result.summary.root_cause
+        assert f"the {_SUMMARY_MAX_TOKENS}-token ceiling" not in result.summary.root_cause
+
+    def test_unrelated_api_errors_are_not_retried(self):
+        # An auth or rate-limit failure would otherwise cost a second
+        # five-minute call and be reported as a token-ceiling rejection.
+        client = MagicMock()
+        client.chat.side_effect = RuntimeError("LLM API error: 401 unauthorized")
+        with pytest.raises(RuntimeError, match="401"):
+            summarize_log(llm_client=client, **self._args())
+        assert client.chat.call_count == 1
 
     def test_prompt_is_carried_out_for_persisting(self):
         client = self._client("{}", "stop")
