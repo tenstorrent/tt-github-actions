@@ -46,56 +46,32 @@ The action takes inline JSON — no separate config file.
 }
 ```
 
-| Key | Required | Default | Description |
-|-----|----------|---------|-------------|
-| `model` | yes | — | LLM used for classification. `"none"` skips the LLM entirely. |
-| `workspace` | yes | — | Base directory for relative paths. See the note below. |
-| `input_dirs` | yes | — | List of directories holding `.log` files to analyze. |
-| `output_dir` | yes | — | Directory the per-job summary and prompt are written to. |
-| `scope` | no | `""` | Discriminator for one invocation of a reusable workflow. Set it when the calling workflow runs more than once per run, and pass the **same value** to `ai_summary/run`. See the note below. |
-| `log_start_marker` | no | run-with-log's sentinel | Regex for the log's start sentinel. |
-| `log_complete_marker` | no | run-with-log's sentinel | Regex for the log's finish sentinel, with an optional `exit_code=N` in group 1. |
+| Key | Required | Description |
+|-----|----------|-------------|
+| `model` | yes | LLM for classification; `"none"` skips it. |
+| `workspace` | yes | Base for relative paths. Use the `$GITHUB_WORKSPACE` env var — `${{ github.workspace }}` is the host path, which container jobs don't have. |
+| `input_dirs` | yes | Directories holding the `.log` files to analyze. |
+| `output_dir` | yes | Where the summary and prompt are written. |
+| `scope` | no | Set when the calling workflow runs more than once per run, so each report covers only its own legs. Pass the same value to `ai_summary/run`. |
+| `log_start_marker`, `log_complete_marker` | no | Regexes for run-with-log's sentinels; see below. |
 
-Analysis fields — `layers`, `categories`, `test_patterns`,
-`failed_test_patterns`, `detection_patterns`, `repos` — default to the bundled
-[`analysis.yaml`](../tool/ai_job_summary/config/analysis.yaml); read it for the
-shape of each. Supplying one **extends** the bundled value rather than replacing
-it: lists are appended and dicts deep-merged, so a project can add a category or
-a pattern but cannot remove one. The single exception is `layers`, which
-`"layers_mode": "replace"` swaps out wholesale.
-
-`tool_dir` is rejected — the action resolves the tool from its own location.
-Any other key is passed through to the config dict untouched.
-
-### scope
-
-A workflow invoked more than once per run (a platform matrix on the `uses:`
-line, say) produces one set of per-leg artifacts per invocation, all of them
-visible to every sibling. `scope` partitions them: it is added to the artifact
-and file names, and recorded in the summary JSON as `_job.scope`. `ai_summary/run`
-matches on that recorded value rather than on the filename, so a mismatch
-between the two is reported rather than silently mixing invocations.
-
-Leave it unset for a workflow that runs once per run; names and behaviour are
-then unchanged.
-
-### workspace
-
-Use `$GITHUB_WORKSPACE` — the env var, expanded at runtime. The
-`${{ github.workspace }}` expression resolves to the host path, which doesn't
-exist inside container jobs. For repos checked out into a subdir use
-`$GITHUB_WORKSPACE/docker-job`. Absolute paths in `input_dirs` / `output_dir`
-pass through unchanged.
+Analysis fields (`layers`, `categories`, `test_patterns`,
+`failed_test_patterns`, `detection_patterns`, `repos`) default to the bundled
+[`analysis.yaml`](../tool/ai_job_summary/config/analysis.yaml). Supplying one
+**extends** it — lists append, dicts deep-merge — so a project can add but not
+remove. Only `"layers_mode": "replace"` swaps a field out. `tool_dir` is
+rejected; any other key passes through untouched.
 
 ### Log sentinels
 
-Defaults match `[==tt-log-start-line==]` / `[==tt-log-finish-line==]`. A log
-carrying the start sentinel but not the finish one was hard-killed mid-run —
-the GitHub `timeout-minutes` kill, invisible in the log itself — so it
-classifies as TIMEOUT instead of a false SUCCESS. Logs without the start
-sentinel (e.g. a backgrounded server's tail) are untracked, so non-adopters
-need no opt-out. A crash/failure already in the log wins, with the truncation
-flagged as `log_complete: false`.
+Defaults match `[==tt-log-start-line==]` / `[==tt-log-finish-line==]` (the
+latter with an optional `exit_code=N` in group 1). A log carrying the start
+sentinel but not the finish one was hard-killed mid-run — the GitHub
+`timeout-minutes` kill, invisible in the log itself — so it classifies as
+TIMEOUT instead of a false SUCCESS. Logs without the start sentinel (e.g. a
+backgrounded server's tail) are untracked, so non-adopters need no opt-out. A
+crash/failure already in the log wins, with the truncation flagged as
+`log_complete: false`.
 
 ## Outputs
 

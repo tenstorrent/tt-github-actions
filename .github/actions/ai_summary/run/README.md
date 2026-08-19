@@ -68,48 +68,27 @@ The action takes inline JSON — no separate config file.
 }
 ```
 
-| Key | Required | Default | Description |
-|-----|----------|---------|-------------|
-| `model` | yes | — | LLM used for the narrative. `"none"` skips it; pass an empty `api-key` too. |
-| `workspace` | yes | — | Base directory for relative paths. See the note below. |
-| `input_dir` | yes | — | Directory the per-job artifacts are downloaded into. **Deleted at the end of the action** — store nothing else there. |
-| `output_dir` | yes | — | Directory the aggregated report is written to. |
-| `scope` | no | `""` | Discriminator for one invocation of a reusable workflow. Must equal the `scope` given to `ai_summary/job`. See the note below. |
+| Key | Required | Description |
+|-----|----------|-------------|
+| `model` | yes | LLM for the narrative; `"none"` skips it (pass an empty `api-key` too). |
+| `workspace` | yes | Base for relative paths. Use the `$GITHUB_WORKSPACE` env var — `${{ github.workspace }}` is the host path, which container jobs don't have. `$VAR` is expanded here only. |
+| `input_dir` | yes | Where per-job artifacts are downloaded. **Deleted at the end of the action** — store nothing else there. |
+| `output_dir` | yes | Where the report is written. |
+| `scope` | no | Set when the calling workflow runs more than once per run, so this report covers only its own legs. Must equal the `scope` given to `ai_summary/job`. |
 
-Anything else in the JSON is passed through untouched.
-
-### scope
-
-A workflow invoked more than once per run has one of these jobs per invocation,
-and each downloads the whole run's per-job artifacts. Without a scope every
-report therefore covers every invocation's legs, and the uploads collide on one
-artifact name. Setting it keeps each report to its own legs and gives its
-artifact a distinct name.
-
-Matching is on the scope recorded inside each summary (`_job.scope`), not on the
-filename, so a scope that doesn't match anything is reported rather than
-silently producing a partial report. If the per-leg summaries carry a scope and
-this action is given none, it warns and aggregates everything.
-
-### workspace
-
-Use `$GITHUB_WORKSPACE` — the env var. The `${{ github.workspace }}` expression
-renders the host path, which doesn't exist inside container jobs. `$VAR` /
-`${VAR}` are expanded only in `workspace`; `input_dir` and `output_dir` are
-project-relative.
+Any other key passes through untouched.
 
 ### Report files
 
-`output_dir` receives `.md`, `.html` and `.json`, all stemmed
-`ai_run_summary[_<scope>]_r<run>_a<attempt>`. The `.json` carries the factual
-per-job data with no LLM narrative, for downstream machine consumers, and is the
-only place INFRA_FAILURE rows for legs that produced no artifact appear. The
-`.md` and `.json` are both included in the uploaded artifact.
+`output_dir` receives `.md`, `.html` and `.json`, stemmed
+`ai_run_summary[_<scope>]_r<run>_a<attempt>`. The `.json` carries the per-job
+facts without the narrative and is the only place INFRA_FAILURE rows for legs
+that produced no artifact appear.
 
-The name carries the run attempt, so **consumers must match the
+Several attempts coexist on one run — a partial re-run deletes nothing and a
+full re-run does not reliably purge — so **consumers must match the
 `ai_run_summary…_r<run_id>` prefix and take the highest attempt** rather than
-download an exact name. Several attempts coexist on one run: a partial re-run
-deletes nothing, and a full re-run does not reliably purge.
+download an exact name.
 
 ## Outputs
 
