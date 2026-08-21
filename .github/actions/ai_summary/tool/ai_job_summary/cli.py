@@ -217,6 +217,7 @@ def main():
     )
     parser.add_argument("--job-name", type=str, help="Job name for summary header")
     parser.add_argument("--job-url", type=str, help="Job URL for summary header link")
+    parser.add_argument("--job-status", type=str, default="", help="GitHub job.status, if authoritative")
 
     args = parser.parse_args()
 
@@ -302,6 +303,11 @@ def main():
         old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
         signal.alarm(_PRE_LLM_TIMEOUT_SECONDS)
 
+    # Logged because a typo'd config key is otherwise a silent no-op.
+    authoritative_job_status = bool(config.get("authoritative_job_status"))
+    if authoritative_job_status:
+        print(f"Job status is authoritative: {args.job_status or '(unset)'}", file=sys.stderr)
+
     try:
         # Extract
         t0 = time.time()
@@ -312,6 +318,7 @@ def main():
             detection_patterns=config.get("detection_patterns"),
             expected_error_markers=config.get("expected_error_markers"),
             ignored_line_patterns=config.get("ignored_line_patterns"),
+            job_status=args.job_status if authoritative_job_status else "",
         )
         print(
             f"Extracted {extracted.extracted_lines}/{extracted.total_lines} lines "

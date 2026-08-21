@@ -63,3 +63,7 @@ class TestLoadConfigPassThrough:
         assert isinstance(config["categories"], dict)
         assert isinstance(config["layers"], list)
         assert isinstance(config["repos"], dict)
+
+    def test_authoritative_job_status_passes_through(self):
+        # An unrecognised key is forwarded verbatim; the CLI reads this one.
+        assert load_config({"authoritative_job_status": True})["authoritative_job_status"] is True

@@ -106,6 +106,10 @@ disjoint lines.
 
 Invariant: a status-flipping token counts as real only if it survives both passes.
 
+`authoritative_job_status` (config field): a green `--job-status` clears
+`has_crash`/`has_timeout` here, so nothing downstream needs to know. The CLI forwards it
+only when the config opted in, so a non-empty `job_status` already means authoritative.
+
 ## Status logic
 
 Each status has exactly one owner:

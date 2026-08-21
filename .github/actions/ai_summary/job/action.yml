@@ -105,6 +105,8 @@ runs:
         TT_CHAT_URL: ${{ inputs.api-url }}
         # Pass the JSON via env so its quotes/braces don't fight shell parsing.
         CONFIG: ${{ inputs.config }}
+        # Evaluated as this step starts, so it covers every step before it.
+        JOB_STATUS: ${{ job.status }}
       run: |
         OUTPUT_DIR="${{ steps.setup.outputs.output_dir }}"
         JOB_NAME="${{ steps.job-meta.outputs.job_name }}"
@@ -113,6 +115,7 @@ runs:
         CMD_ARGS=(--config "$CONFIG")
         [ -n "$JOB_URL" ]  && CMD_ARGS+=(--job-url "$JOB_URL")
         [ -n "$JOB_NAME" ] && CMD_ARGS+=(--job-name "$JOB_NAME")
+        [ -n "$JOB_STATUS" ] && CMD_ARGS+=(--job-status "$JOB_STATUS")
 
         # Run from the ephemeral venv by explicit path, not via $GITHUB_PATH:
         # that persists into later job steps and would shadow the caller's

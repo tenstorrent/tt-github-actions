@@ -70,6 +70,20 @@ class TestDefaultDetection:
         assert not e.has_crash and not e.has_timeout
 
 
+class TestAuthoritativeJobStatus:
+    def test_green_job_clears_crash(self, tmp_path):
+        assert not _extract(tmp_path, "TT_FATAL boom\n", job_status="success").has_crash
+
+    def test_green_job_clears_timeout(self, tmp_path):
+        assert not _extract(tmp_path, "##[error] job timed out\n", job_status="success").has_timeout
+
+    def test_red_job_keeps_crash(self, tmp_path):
+        assert _extract(tmp_path, "TT_FATAL boom\n", job_status="failure").has_crash
+
+    def test_no_job_status_keeps_crash(self, tmp_path):
+        assert _extract(tmp_path, "TT_FATAL boom\n").has_crash
+
+
 class TestOverlay:
     def test_project_extends_crash_group_additively(self):
         cfg = load_config({"detection_patterns": {"crash": ["MY_FATAL"]}})
