@@ -53,6 +53,7 @@ The action takes inline JSON — no separate config file.
 | `input_dirs` | yes | Directories holding the `.log` files to analyze. |
 | `output_dir` | yes | Where the summary and prompt are written. |
 | `scope` | no | Set when the calling workflow runs more than once per run, so each report covers only its own legs. Pass the same value to `ai_summary/run`. |
+| `authoritative_job_status` | no | `true` lets a green job clear the crash/timeout patterns; see below. |
 | `log_start_marker`, `log_complete_marker` | no | Regexes for run-with-log's sentinels; see below. |
 
 Analysis fields (`layers`, `categories`, `test_patterns`,
@@ -61,6 +62,17 @@ Analysis fields (`layers`, `categories`, `test_patterns`,
 **extends** it — lists append, dicts deep-merge — so a project can add but not
 remove. Only `"layers_mode": "replace"` swaps a field out. `tool_dir` is
 rejected; any other key passes through untouched.
+
+### Authoritative job status
+
+A `crash` or `timeout` pattern anywhere in the log sets the status by itself, wrong when
+the token does not mean the process died — a gtest negative test catching its own
+`TT_FATAL` logs one and passes. `"authoritative_job_status": true` lets a green
+`job.status` clear both; failed tests, a non-zero exit code and a missing finish marker
+still decide. Opt-in: green only means nothing that *could* fail it did.
+
+A misspelled config key is silent, so the tool logs `Job status is authoritative:
+<status>` when it takes effect.
 
 ### Log sentinels
 

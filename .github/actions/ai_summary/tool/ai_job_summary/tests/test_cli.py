@@ -792,3 +792,37 @@ class TestArtifactNamePublication:
         _write_log(tmp_path / "docker_server", "server.log", "INFO: ready\n")
         _run_cli(["--config", _config_json(tmp_path, ["run_logs", "docker_server"])])
         assert (tmp_path / "ai_job_summary.json").exists()
+
+
+class TestAuthoritativeJobStatus:
+    """config.authoritative_job_status gates whether --job-status is consulted."""
+
+    @pytest.fixture
+    def crash_token_dir(self, tmp_path):
+        # Passes, but logs a token the crash patterns match.
+        _write_log(
+            tmp_path / "run_logs",
+            "run.log",
+            "INFO: starting\nTT_FATAL: expected by a negative test\n[==tt-log-finish-line==] exit_code=0\n",
+        )
+        return tmp_path
+
+    def test_green_job_is_success_when_opted_in(self, crash_token_dir):
+        config = _config_json(crash_token_dir, ["run_logs"], authoritative_job_status=True)
+        _run_cli(["--config", config, "--job-status", "success"])
+        assert "SUCCESS" in _read_summary(crash_token_dir, ".md")
+
+    def _run_with_llm(self, config, job_status):
+        mock_llm = MagicMock()
+        mock_llm.chat.return_value = _mock_llm_response()
+        with patch("ai_job_summary.cli.get_llm_client", return_value=mock_llm):
+            _run_cli(["--config", config, "--job-status", job_status])
+
+    def test_job_status_ignored_without_the_config_key(self, crash_token_dir):
+        self._run_with_llm(_config_json(crash_token_dir, ["run_logs"]), "success")
+        assert json.loads(_read_summary(crash_token_dir, ".json"))["_job"]["has_crash"] is True
+
+    def test_red_job_still_crashes_when_opted_in(self, crash_token_dir):
+        config = _config_json(crash_token_dir, ["run_logs"], authoritative_job_status=True)
+        self._run_with_llm(config, "failure")
+        assert json.loads(_read_summary(crash_token_dir, ".json"))["_job"]["has_crash"] is True

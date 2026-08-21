@@ -5,7 +5,7 @@
 Tests for status determination and LLM status override logic.
 """
 
-from ai_job_summary.extract import JobStatus, apply_llm_status, get_job_status, ExtractedLog
+from ai_job_summary.extract import JobStatus, apply_llm_status, format_extracted_log, get_job_status, ExtractedLog
 
 
 class TestGetJobStatus:
@@ -116,3 +116,20 @@ class TestApplyLlmStatus:
     def test_unknown_llm_status_returns_unchanged(self):
         original = self._status("TESTS FAILED (2 failed)")
         assert apply_llm_status(original, "MADE_UP") is original
+
+
+class TestOutcomeLineMatchesStatus:
+    """The prompt's [OUTCOME] line is get_job_status(), so the two cannot drift."""
+
+    def _outcome(self, log: ExtractedLog) -> str:
+        return next(ln for ln in format_extracted_log(log).splitlines() if ln.startswith("[OUTCOME:"))
+
+    def test_truncated_log(self):
+        log = ExtractedLog(log_complete=False)
+        assert get_job_status(log).status_text == "TIMEOUT"
+        assert self._outcome(log) == "[OUTCOME: TIMEOUT - job did not complete]"
+
+    def test_failed_eval_with_nonzero_exit(self):
+        log = ExtractedLog(exit_code=1, failed_evals=["accuracy"])
+        assert get_job_status(log).status_text == "FAILED (exit code 1)"
+        assert self._outcome(log) == "[OUTCOME: FAILED (exit code 1)]"

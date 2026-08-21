@@ -70,6 +70,20 @@ class TestDefaultDetection:
         assert not e.has_crash and not e.has_timeout
 
 
+class TestAuthoritativeJobStatus:
+    def test_green_job_clears_crash(self, tmp_path):
+        assert not _extract(tmp_path, "TT_FATAL boom\n", job_status="success").has_crash
+
+    def test_green_job_clears_timeout(self, tmp_path):
+        assert not _extract(tmp_path, "##[error] job timed out\n", job_status="success").has_timeout
+
+    def test_red_job_keeps_crash(self, tmp_path):
+        assert _extract(tmp_path, "TT_FATAL boom\n", job_status="failure").has_crash
+
+    def test_no_job_status_keeps_crash(self, tmp_path):
+        assert _extract(tmp_path, "TT_FATAL boom\n").has_crash
+
+
 class TestOverlay:
     def test_project_extends_crash_group_additively(self):
         cfg = load_config({"detection_patterns": {"crash": ["MY_FATAL"]}})
@@ -151,8 +165,8 @@ class TestExpectedErrorMasking:
 
 
 class TestIgnoredLines:
-    """A pytest SKIPPED result is a non-event; a crash/timeout token quoted in its
-    reason must not flip the job status."""
+    """A pytest SKIPPED or XFAIL result is a non-event; a crash/timeout token quoted
+    in its reason must not flip the job status."""
 
     def test_skipped_line_with_crash_token_is_not_a_crash(self, tmp_path):
         log = "SKIPPED [1] tests/foo.py:474: Disabled by #44858: blackhole TT_FATAL num_cores\n"
@@ -161,6 +175,10 @@ class TestIgnoredLines:
     def test_skipped_line_with_timeout_token_is_not_a_timeout(self, tmp_path):
         log = "SKIPPED [1] tests/foo.py:12: flaky, test timed out on nightly\n"
         assert not _extract(tmp_path, log).has_timeout
+
+    def test_xfail_line_with_crash_token_is_not_a_crash(self, tmp_path):
+        log = "XFAIL tests/foo.py::test_bar - hits a TT_FATAL in the tilize path on this arch\n"
+        assert not _extract(tmp_path, log).has_crash
 
     def test_real_crash_not_on_skipped_line_still_crashes(self, tmp_path):
         log = (

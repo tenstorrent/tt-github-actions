@@ -541,6 +541,7 @@ def extract_log(
     detection_patterns: dict | None = None,
     expected_error_markers: dict | None = None,
     ignored_line_patterns: list[str] | None = None,
+    job_status: str = "",
 ) -> ExtractedLog:
     """
     Extract important parts from a CI log.
@@ -557,6 +558,7 @@ def extract_log(
         expected_error_markers: begin/end regexes bracketing developer-declared expected
                     errors; matched lines are masked before detection
         ignored_line_patterns: whole-line regexes blanked before detection (e.g. ^SKIPPED)
+        job_status: GitHub job.status, passed only when the caller declared it authoritative
 
     Returns:
         ExtractedLog with extracted sections and layer configs
@@ -606,8 +608,10 @@ def extract_log(
         pats = [p for g in groups for p in det.get(g, [])]
         return bool(pats and re.search("|".join(pats), full_text, flags))
 
-    result.has_crash = _any(["crash"], re.IGNORECASE) or _any(["crash_python", "crash_killed"])
-    result.has_timeout = _any(["timeout"], re.IGNORECASE)
+    # Passed only when the caller declared it authoritative.
+    job_green = job_status == "success"
+    result.has_crash = not job_green and (_any(["crash"], re.IGNORECASE) or _any(["crash_python", "crash_killed"]))
+    result.has_timeout = not job_green and _any(["timeout"], re.IGNORECASE)
 
     # Extract exit code - ONLY from the final GitHub Actions status line
     # Avoid matching random "exit code" mentions in logs (e.g., hugepages service)
@@ -1185,19 +1189,11 @@ def format_extracted_log(extracted: ExtractedLog) -> str:
     parts.append("=" * 60)
     parts.append(extracted.final_status or "(no final status found)")
 
-    # Show outcome summary
-    if extracted.has_crash:
-        parts.append("\n[OUTCOME: CRASHED - job did not complete]")
-    elif extracted.has_timeout:
-        parts.append("\n[OUTCOME: TIMEOUT - job did not complete]")
-    elif extracted.failed_tests:
-        parts.append(f"\n[OUTCOME: TESTS FAILED - {len(extracted.failed_tests)} test(s) failed]")
-    elif extracted.failed_evals:
-        parts.append(f"\n[OUTCOME: EVALS BELOW TARGET - {len(extracted.failed_evals)} eval(s) below threshold]")
-    elif extracted.exit_code is not None and extracted.exit_code != 0:
-        parts.append(f"\n[OUTCOME: FAILED - exit code {extracted.exit_code}]")
-    else:
-        parts.append("\n[OUTCOME: SUCCESS]")
+    # Read off get_job_status() rather than re-deciding: the two chains had drifted,
+    # and a prompt that contradicts the status makes the LLM contradict its own verdict.
+    status = get_job_status(extracted)
+    incomplete = " - job did not complete" if status.status_text in ("CRASHED", "TIMEOUT") else ""
+    parts.append(f"\n[OUTCOME: {status.status_text}{incomplete}]")
 
     parts.append(f"[Extracted {extracted.extracted_lines}/{extracted.total_lines} lines]")
 
