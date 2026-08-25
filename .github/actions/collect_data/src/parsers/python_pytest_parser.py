@@ -12,6 +12,7 @@ from . import junit_xml_utils
 from utils import parse_timestamp
 import ast
 import html
+import json
 from pydantic import ValidationError
 from shared import failure_happened, is_valid_testcase_
 
@@ -34,6 +35,18 @@ class PythonPytestParser(Parser):
         github_job_id: Optional[int] = None,
     ):
         return get_tests(filepath)
+
+    def get_job_tags(self, filepath: str) -> Optional[dict]:
+        """
+        Extract job-level tags from the testsuite-level 'tags' property
+        (a JSON string) of a pytest junit XML report.
+        """
+        report_root = junit_xml_utils.get_xml_file_root_element_tree(filepath).getroot()
+        properties = junit_xml_utils.get_pytest_testsuite_properties(report_root[0])
+        tag_string = properties.get("tags")
+        if tag_string is None:
+            return None
+        return json.loads(tag_string)
 
 
 def get_tests(filepath):

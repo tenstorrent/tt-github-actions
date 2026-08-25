@@ -37,3 +37,11 @@ class Parser(ABC):
         :raises ParserError: If parsing fails.
         """
         pass
+
+    def get_job_tags(self, filepath: str) -> Optional[dict]:
+        """
+        Extract job-level tags from a report file, if the format supports them.
+        :param filepath: Path to the file to extract tags from.
+        :return: Tags as a dict, or None if the report carries no job-level tags.
+        """
+        return None
