@@ -49,7 +49,11 @@ def get_job_tags(testsuite):
         tag_string = properties.get("tags")
         if tag_string is None:
             return None
-        return json.loads(tag_string)
+        tags = json.loads(tag_string)
+        if not isinstance(tags, dict):
+            logger.warning(f"Ignoring job tags: expected a JSON object, got {type(tags).__name__}")
+            return None
+        return tags
     except Exception as e:
         logger.warning(f"Error extracting job tags: {e}")
         return None
