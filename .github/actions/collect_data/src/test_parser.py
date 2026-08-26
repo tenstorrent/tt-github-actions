@@ -1,11 +1,10 @@
 # SPDX-FileCopyrightText: (c) 2024 Tenstorrent AI ULC
 #
 # SPDX-License-Identifier: Apache-2.0
-from dataclasses import dataclass, field
 from loguru import logger
-from typing import List, Optional, Union
-from pydantic_models import Test, OpTest
+from typing import Optional
 
+from parsers.parser import ParseResult
 from parsers.python_unittest_parser import PythonUnittestParser
 from parsers.python_pytest_parser import PythonPytestParser
 from parsers.parameter_support_test_parser import ParameterSupportTestParser
@@ -15,14 +14,6 @@ parsers = [
     PythonPytestParser(),
     PythonUnittestParser(),
 ]
-
-
-@dataclass
-class ParseResult:
-    """Everything extracted from a single report file."""
-
-    tests: List[Union[Test, OpTest]] = field(default_factory=list)
-    job_tags: Optional[dict] = None
 
 
 def parse_file(
@@ -40,18 +31,11 @@ def parse_file(
     for parser in parsers:
         if parser.can_parse(filepath):
             try:
-                tests = parser.parse(filepath, project=project, github_job_id=github_job_id)
+                return parser.parse(filepath, project=project, github_job_id=github_job_id)
             except Exception as e:
                 logger.error(f"Error parsing file: {filepath} using parser: {type(parser).__name__}")
                 logger.error(f"Exception: {e}")
                 logger.error("Trying next parser")
-                continue
-            try:
-                job_tags = parser.get_job_tags(filepath)
-            except Exception as e:
-                logger.warning(f"Error extracting job tags from {filepath}: {e}")
-                job_tags = None
-            return ParseResult(tests=tests, job_tags=job_tags)
     logger.error(f"No parser available for file: {filepath}")
     return ParseResult()
 

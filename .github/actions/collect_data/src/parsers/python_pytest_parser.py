@@ -7,7 +7,7 @@ from functools import partial
 from pydantic_models import Test
 from datetime import datetime, timedelta
 from typing import Optional
-from .parser import Parser
+from .parser import Parser, ParseResult
 from . import junit_xml_utils
 from utils import parse_timestamp
 import ast
@@ -34,25 +34,28 @@ class PythonPytestParser(Parser):
         project: Optional[str] = None,
         github_job_id: Optional[int] = None,
     ):
-        return get_tests(filepath)
-
-    def get_job_tags(self, filepath: str) -> Optional[dict]:
-        """
-        Extract job-level tags from the testsuite-level 'tags' property
-        (a JSON string) of a pytest junit XML report.
-        """
         report_root = junit_xml_utils.get_xml_file_root_element_tree(filepath).getroot()
-        properties = junit_xml_utils.get_pytest_testsuite_properties(report_root[0])
+        testsuite = report_root[0]
+        return ParseResult(tests=get_tests(testsuite), job_tags=get_job_tags(testsuite))
+
+
+def get_job_tags(testsuite):
+    """
+    Extract job-level tags from the testsuite-level 'tags' property
+    (a JSON string) of a pytest junit XML testsuite element.
+    """
+    try:
+        properties = junit_xml_utils.get_pytest_testsuite_properties(testsuite)
         tag_string = properties.get("tags")
         if tag_string is None:
             return None
         return json.loads(tag_string)
+    except Exception as e:
+        logger.warning(f"Error extracting job tags: {e}")
+        return None
 
 
-def get_tests(filepath):
-    report_root_tree = junit_xml_utils.get_xml_file_root_element_tree(filepath)
-    report_root = report_root_tree.getroot()
-    testsuite = report_root[0]
+def get_tests(testsuite):
     default_timestamp = parse_timestamp(testsuite.attrib["timestamp"])
     get_pydantic_test = partial(get_pydantic_test_from_pytest_testcase_, default_timestamp=default_timestamp)
     tests = []
