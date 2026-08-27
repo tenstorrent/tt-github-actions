@@ -39,19 +39,42 @@ class PythonPytestParser(Parser):
         return ParseResult(tests=get_tests(testsuite), job_tags=get_job_tags(testsuite))
 
 
+class JsonLiteralTransformer_(ast.NodeTransformer):
+    """Rewrites bare JSON literals (null/true/false) into Python constants."""
+
+    JSON_LITERALS = {"null": None, "true": True, "false": False}
+
+    def visit_Name(self, node):
+        if node.id in self.JSON_LITERALS:
+            return ast.copy_location(ast.Constant(self.JSON_LITERALS[node.id]), node)
+        return node
+
+
+def parse_tags_value_(value_string):
+    """
+    New reports carry the tags value as a JSON string. Older reports carry a
+    Python-repr-style dict that may also mix in JSON literals (null/true/false).
+    """
+    try:
+        return json.loads(value_string)
+    except ValueError:
+        tree = ast.parse(html.unescape(value_string), mode="eval")
+        return ast.literal_eval(JsonLiteralTransformer_().visit(tree))
+
+
 def get_job_tags(testsuite):
     """
     Extract job-level tags from the testsuite-level 'tags' property
-    (a JSON string) of a pytest junit XML testsuite element.
+    of a pytest junit XML testsuite element.
     """
     try:
         properties = junit_xml_utils.get_pytest_testsuite_properties(testsuite)
         tag_string = properties.get("tags")
         if tag_string is None:
             return None
-        tags = json.loads(tag_string)
+        tags = parse_tags_value_(tag_string)
         if not isinstance(tags, dict):
-            logger.warning(f"Ignoring job tags: expected a JSON object, got {type(tags).__name__}")
+            logger.warning(f"Ignoring job tags: expected an object, got {type(tags).__name__}")
             return None
         return tags
     except Exception as e:

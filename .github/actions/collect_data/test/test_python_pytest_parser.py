@@ -22,6 +22,26 @@ def test_parse_file_no_job_tags_in_non_pytest_report():
     assert result.job_tags is None
 
 
+def test_parse_file_extracts_legacy_format_job_tags(tmp_path):
+    """Old reports carry tags as a Python-repr-style dict with JSON literals mixed in."""
+    report = tmp_path / "report_1.xml"
+    report.write_text(
+        '<?xml version="1.0" encoding="utf-8"?>\n'
+        "<testsuites>\n"
+        '  <testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="1.0" '
+        'timestamp="2026-08-25T00:00:00">\n'
+        "    <properties>\n"
+        "      <property name=\"tags\" value=\"{'operators': null, 'exclude': false, 'sample': 0.1, "
+        "'plan': ['GEN'], 'id': None}\"/>\n"
+        "    </properties>\n"
+        '    <testcase classname="tests.test_a" name="test_a" time="1.0" />\n'
+        "  </testsuite>\n"
+        "</testsuites>\n"
+    )
+    tags = parse_file(str(report)).job_tags
+    assert tags == {"operators": None, "exclude": False, "sample": 0.1, "plan": ["GEN"], "id": None}
+
+
 def test_parse_file_ignores_non_object_job_tags(tmp_path):
     report = tmp_path / "report_1.xml"
     report.write_text(
