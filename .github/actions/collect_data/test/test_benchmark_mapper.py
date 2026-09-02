@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: (c) 2025 Tenstorrent AI ULC
 #
 # SPDX-License-Identifier: Apache-2.0
+import copy
+
 import pytest
 from unittest.mock import MagicMock
 from benchmark import (
@@ -219,6 +221,69 @@ def test_format_model_name_none(mapper):
     benchmark = {"model_name": None}
     result = mapper._format_model_name(benchmark)
     assert result is None
+
+
+def test_format_model_name_prefers_model_repo(mapper):
+    benchmark = {"model_repo": "Qwen/Qwen3-32B", "model_name": "Qwen3-32B"}
+    result = mapper._format_model_name(benchmark)
+    assert result == "Qwen/Qwen3-32B"
+
+
+def test_format_model_name_prefers_full_legacy_name_over_bare_repo(mapper):
+    benchmark = {
+        "model_repo": "Qwen3-32B",
+        "model_name": "Qwen/Qwen3-32B",
+    }
+    result = mapper._format_model_name(benchmark)
+    assert result == "Qwen/Qwen3-32B"
+
+
+def test_format_model_name_falls_back_to_model_name_full(mapper):
+    benchmark = {"model_name": "meta-llama/Llama-3.3-70B-Instruct"}
+    result = mapper._format_model_name(benchmark)
+    assert result == "meta-llama/Llama-3.3-70B-Instruct"
+
+
+def test_format_model_name_falls_back_to_hf_model_repo(mapper):
+    benchmark = {"model_name": "Qwen3-32B"}
+    model_spec = {"hf_model_repo": "Qwen/Qwen3-32B"}
+    result = mapper._format_model_name(benchmark, model_spec)
+    assert result == "Qwen/Qwen3-32B"
+
+
+def test_format_model_name_falls_back_to_model_field(mapper):
+    data = {"model": "meta-llama/Llama-3.3-70B-Instruct"}
+    result = mapper._format_model_name(data)
+    assert result == "meta-llama/Llama-3.3-70B-Instruct"
+
+
+def test_format_model_name_recovers_nested_runtime_model_spec(mapper):
+    # Un-flattened exabox/Blaze spec: hf_model_repo is nested under
+    # runtime_model_spec. The bare model_name must still resolve to the full id.
+    benchmark = {"model_name": "Kimi-K2.7-Code"}
+    model_spec = {
+        "runtime_config": {},
+        "runtime_model_spec": {"hf_model_repo": "moonshotai/Kimi-K2.7-Code"},
+    }
+    result = mapper._format_model_name(benchmark, model_spec)
+    assert result == "moonshotai/Kimi-K2.7-Code"
+
+
+def test_format_model_name_prefers_flat_hf_repo_over_nested(mapper):
+    # A flattened spec (top-level hf_model_repo) wins over any nested copy.
+    benchmark = {"model_name": "Kimi-K2.7-Code"}
+    model_spec = {
+        "hf_model_repo": "moonshotai/Kimi-K2.7-Code",
+        "runtime_model_spec": {"hf_model_repo": "wrong/nested"},
+    }
+    result = mapper._format_model_name(benchmark, model_spec)
+    assert result == "moonshotai/Kimi-K2.7-Code"
+
+
+def test_format_model_name_bare_no_spec_stays_bare(mapper):
+    benchmark = {"model_name": "yolox_nano"}
+    result = mapper._format_model_name(benchmark)
+    assert result == "yolox_nano"
 
 
 def test_benchmarks_model_type_with_model_spec(mapper, pipeline):
@@ -564,15 +629,22 @@ def test_vllm_run_type(vllm_mapper, vllm_pipeline):
     assert result[0].run_type == "vllm_benchmark"
 
 
-def test_vllm_model_name_strips_prefix(vllm_mapper, vllm_pipeline):
+def test_vllm_model_name_keeps_full_id(vllm_mapper, vllm_pipeline):
     result = vllm_mapper.map_benchmark_data(vllm_pipeline, 1, SAMPLE_VLLM_BENCH_OUTPUT)
-    assert result[0].ml_model_name == "DeepSeek-R1-0528"
+    assert result[0].ml_model_name == "deepseek-ai/DeepSeek-R1-0528"
 
 
 def test_vllm_model_name_no_prefix(vllm_mapper, vllm_pipeline):
     data = {**SAMPLE_VLLM_BENCH_OUTPUT, "model_id": "MyLocalModel"}
     result = vllm_mapper.map_benchmark_data(vllm_pipeline, 1, data)
     assert result[0].ml_model_name == "MyLocalModel"
+
+
+def test_vllm_local_model_is_not_replaced_by_model_spec(vllm_mapper, vllm_pipeline):
+    data = {**SAMPLE_VLLM_BENCH_OUTPUT, "model_id": "MyLocalAdapter"}
+    model_spec = {"hf_model_repo": "org/BaseModel"}
+    result = vllm_mapper.map_benchmark_data(vllm_pipeline, 1, data, model_spec)
+    assert result[0].ml_model_name == "MyLocalAdapter"
 
 
 def test_vllm_batch_size_is_max_concurrency(vllm_mapper, vllm_pipeline):
@@ -645,7 +717,7 @@ def test_vllm_missing_metrics_still_works(vllm_mapper, vllm_pipeline):
     }
     result = vllm_mapper.map_benchmark_data(vllm_pipeline, 1, minimal)
     assert len(result) == 1
-    assert result[0].ml_model_name == "model"
+    assert result[0].ml_model_name == "test/model"
     assert len(result[0].measurements) == 2
 
 
@@ -837,9 +909,18 @@ def test_guidellm_run_type(guidellm_mapper, guidellm_pipeline):
     assert result[0].run_type == "guidellm_benchmark"
 
 
-def test_guidellm_model_name_strips_prefix(guidellm_mapper, guidellm_pipeline):
+def test_guidellm_model_name_keeps_full_id(guidellm_mapper, guidellm_pipeline):
     result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, SAMPLE_GUIDELLM_OUTPUT)
-    assert result[0].ml_model_name == "DeepSeek-R1-0528"
+    assert result[0].ml_model_name == "deepseek-ai/DeepSeek-R1-0528"
+
+
+def test_guidellm_local_model_is_not_replaced_by_model_spec(guidellm_mapper, guidellm_pipeline):
+    data = copy.deepcopy(SAMPLE_GUIDELLM_OUTPUT)
+    data["benchmarks"][0]["config"]["backend"]["model"] = "MyLocalAdapter"
+    model_spec = {"hf_model_repo": "org/BaseModel"}
+    result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, data, model_spec)
+    assert result[0].ml_model_name == "MyLocalAdapter"
+    assert result[0].config_params["config"]["backend"]["model"] == "MyLocalAdapter"
 
 
 def test_guidellm_batch_size_from_max_concurrency(guidellm_mapper, guidellm_pipeline):
@@ -943,7 +1024,7 @@ def test_guidellm_handles_missing_blocks(guidellm_mapper, guidellm_pipeline):
     }
     result = guidellm_mapper.map_benchmark_data(guidellm_pipeline, 1, minimal)
     assert len(result) == 1
-    assert result[0].ml_model_name == "model"
+    assert result[0].ml_model_name == "test/model"
     assert result[0].batch_size == 4
     assert result[0].input_sequence_length == 100
     assert result[0].output_sequence_length == 200
@@ -1367,3 +1448,36 @@ def test_sections_model_name_consistent_across_run_types(mapper, pipeline):
     assert {"eval", "benchmark", "acceptance_criteria"} <= run_types  # all three present
     names = {r.ml_model_name for r in result}
     assert names == {"Qwen/Qwen3-32B"}, f"expected one full (unstripped) name, got {names}"
+
+
+def test_sections_model_repo_preferred_over_bare_model_name(mapper, pipeline):
+    """New-style reports carry model_repo (full) + model_name (bare). The collector
+    must prefer model_repo so every run type uses the full HF id."""
+    report_data = {
+        "metadata": {"model_name": "Qwen3-32B", "model_repo": "Qwen/Qwen3-32B", "device": "6u"},
+        "sections": [
+            {"kind": "evals", "data": {"task_name": "r1_aime24", "accuracy_check": 2}},
+            {"kind": "vllm", "data": {"mean_ttft_ms": 100.0}},
+        ],
+        "acceptance_criteria": True,
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+    run_types = {r.run_type for r in result}
+    assert {"eval", "benchmark", "acceptance_criteria"} <= run_types
+    names = {r.ml_model_name for r in result}
+    assert names == {"Qwen/Qwen3-32B"}, f"expected full name from model_repo, got {names}"
+
+
+def test_bare_model_name_resolved_via_hf_model_repo_in_spec(mapper, pipeline):
+    """When both model_name and model are bare but model_spec_data carries
+    hf_model_repo, the full id is recovered from the spec."""
+    model_spec_data = {"hf_model_repo": "Qwen/Qwen3-32B", "model_type": "LLM"}
+    report_data = {
+        "metadata": {"model_name": "Qwen3-32B", "device": "6u"},
+        "benchmarks": [{"model_name": "Qwen3-32B", "mean_ttft_ms": 100.0}],
+        "evals": [{"model": "Qwen3-32B", "score": 90.0}],
+        "acceptance_criteria": True,
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report_data, model_spec_data)
+    names = {r.ml_model_name for r in result}
+    assert names == {"Qwen/Qwen3-32B"}, f"expected spec fallback to full, got {names}"
