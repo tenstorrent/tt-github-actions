@@ -255,7 +255,7 @@ class ForgeBenchmarkDataMapper(_BenchmarkDataMapper):
 
 
 def _prefer_full_model_name(candidate, model_spec_data=None):
-    """Return a full HF ``org/name`` id.
+    """Prefer returning a full HF ``org/name`` id when available.
 
     ``candidate`` if it already carries an ``org/`` prefix; otherwise the spec's
     ``hf_model_repo`` (from *model_spec_data*) when that is full; otherwise
