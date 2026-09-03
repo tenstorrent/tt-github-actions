@@ -65,23 +65,30 @@ def create_cicd_json_for_data_analysis(
 
     for raw_job in raw_jobs:
         tests = []
+        # None (NULL in the tags column) unless a report carries non-empty job tags
+        job_tags = None
         github_job_id = raw_job["github_job_id"]
         job_name = raw_job.get("name", "")
         logger.info(f"Processing raw GitHub job {github_job_id} with name '{job_name}'")
         if github_job_id in github_job_id_to_test_reports:
             for test_report_path in github_job_id_to_test_reports[github_job_id]:
                 logger.info(f"Processing test report {test_report_path}")
-                tests_in_report = parse_file(
+                report = parse_file(
                     test_report_path,
                     project=project,
                     github_job_id=github_job_id,
                 )
-                logger.info(f"Found {len(tests_in_report)} tests in report {test_report_path}")
-                tests.extend(tests_in_report)
+                logger.info(f"Found {len(report.tests)} tests in report {test_report_path}")
+                tests.extend(report.tests)
+                if report.job_tags:
+                    logger.info(f"Found job tags in report {test_report_path}")
+                    if job_tags is None:
+                        job_tags = {}
+                    job_tags.update(report.job_tags)
             logger.info(f"Found {len(tests)} tests total for job {github_job_id}")
         raw_job["job_start_ts"] = alter_time(raw_job["job_start_ts"])
         try:
-            jobs.append(pydantic_models.Job(**raw_job, tests=tests))
+            jobs.append(pydantic_models.Job(**raw_job, tests=tests, tags=job_tags))
         except ValidationError as e:
             failure_happened()
             logger.error(f"Failed to create job: {e}")

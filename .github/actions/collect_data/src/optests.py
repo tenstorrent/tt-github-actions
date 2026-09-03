@@ -96,8 +96,8 @@ def create_optest_reports(pipeline, workflow_outputs_dir):
                 logger.info(f"No suitable parser found for {test_report}")
                 continue
             try:
-                parsed_tests = parser.parse(test_report, project=pipeline.project, github_job_id=github_job_id)
-                tests.extend(parsed_tests)
+                parsed = parser.parse(test_report, project=pipeline.project, github_job_id=github_job_id)
+                tests.extend(parsed.tests)
             except Exception as e:
                 logger.error(f"Failed to parse {test_report} with {type(parser)}: {e}")
         reports.append((github_job_id, tests))
