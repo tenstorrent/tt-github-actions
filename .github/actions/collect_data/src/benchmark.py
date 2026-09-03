@@ -254,6 +254,32 @@ class ForgeBenchmarkDataMapper(_BenchmarkDataMapper):
             return None
 
 
+def _prefer_full_model_name(candidate, model_spec_data=None):
+    """Prefer returning a full HF ``org/name`` id when available.
+
+    ``candidate`` if it already carries an ``org/`` prefix; otherwise the spec's
+    ``hf_model_repo`` (from *model_spec_data*) when that is full; otherwise
+    ``candidate`` unchanged (so genuinely prefix-less ids, e.g. the Forge CNN
+    models, stay as-is).
+    """
+    if candidate and "/" in candidate:
+        return candidate
+    if model_spec_data:
+        # Prefer a flat top-level hf_model_repo (single-host path, and the
+        # exabox path once it flattens the spec). Fall back to the nested
+        # runtime_model_spec.hf_model_repo so we still recover the full id from
+        # an un-flattened runtime_model_spec_*.json (older/other-branch
+        # producers, or historical re-ingestion).
+        hf_repo = model_spec_data.get("hf_model_repo")
+        if not (hf_repo and "/" in hf_repo):
+            nested = model_spec_data.get("runtime_model_spec")
+            if isinstance(nested, dict):
+                hf_repo = nested.get("hf_model_repo")
+        if hf_repo and "/" in hf_repo:
+            return hf_repo
+    return candidate
+
+
 class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
     def map_benchmark_data(self, pipeline, job_id, report_data, model_spec_data=None) -> CompleteBenchmarkRun | None:
         """
@@ -300,15 +326,20 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             logger.error(f"Validation error: {e}")
             return None
 
-    def _format_model_name(self, benchmark):
+    def _format_model_name(self, data, model_spec_data=None):
+        """Resolve the DB identity name (full HF ``org/name``).
+
+        Prefers any full identity carried by ``model_repo``, ``model_name`` or
+        ``model`` (in that order), then the spec's ``hf_model_repo``. A bare
+        report value is used only when no full identity is available. This is
+        only the value stored in ``ml_model_name``; report payload fields retain
+        their original meanings.
         """
-        Return the model name unchanged, preserving any HuggingFace ``org/``
-        prefix (e.g. ``Qwen/Qwen3-32B``, ``meta-llama/Llama-3.1-8B-Instruct``).
-        The full model id is kept on purpose so the dashboard displays it as-is;
-        benchmark and benchmark_summary runs use this unmodified name to avoid
-        duplicate rows caused by inconsistent stripping.
-        """
-        return benchmark.get("model_name")
+        candidates = [data.get("model_repo"), data.get("model_name"), data.get("model")]
+        full_name = next((name for name in candidates if name and "/" in name), None)
+        if full_name:
+            return full_name
+        return _prefer_full_model_name(next((name for name in candidates if name), None), model_spec_data)
 
     def _process_benchmarks(self, pipeline, job, report_data, metadata=None, model_spec_data=None):
         """
@@ -326,6 +357,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 {
                     "model": meta.get("model_name"),
                     "model_name": meta.get("model_name"),
+                    "model_repo": meta.get("model_repo"),
                     "device": meta.get("device"),
                     **data,
                 }
@@ -376,7 +408,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 ],
             )
 
-            model_name = self._format_model_name(benchmark)
+            model_name = self._format_model_name(benchmark, model_spec_data)
 
             results.append(
                 self._create_complete_benchmark_run(
@@ -418,6 +450,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 {
                     "model": meta.get("model_name"),
                     "model_name": meta.get("model_name"),
+                    "model_repo": meta.get("model_repo"),
                     "device": meta.get("device"),
                     "task_type": block.get("task_type"),
                     **payload,
@@ -495,7 +528,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 )
                 measurements.extend(target_measurements)
 
-            model_name = self._format_model_name(benchmark)
+            model_name = self._format_model_name(benchmark, model_spec_data)
 
             # Extract device (should now be included in benchmarks_summary)
             device = benchmark.get("device", "unknown")
@@ -562,7 +595,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 run_type="acceptance_criteria",
                 measurements=measurements,
                 device_info=metadata.get("device"),
-                model_name=metadata.get("model_name"),
+                model_name=self._format_model_name(metadata, model_spec_data),
                 model_type=(model_spec_data.get("model_type") if model_spec_data else None),
                 config_params=config_params or None,
                 docker_image=(model_spec_data or {}).get("docker_image") or job.docker_image,
@@ -584,6 +617,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             evals.append(
                 {
                     "model": meta.get("model_name"),
+                    "model_repo": meta.get("model_repo"),
                     "device": meta.get("device"),
                     "task_name": data.get("task_name") or block.get("title"),
                     "task_type": block.get("task_type"),
@@ -663,7 +697,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     run_type="eval",
                     measurements=measurements,
                     device_info=eval_entry.get("device"),
-                    model_name=eval_entry.get("model"),
+                    model_name=self._format_model_name(eval_entry, model_spec_data),
                     model_type=(model_spec_data.get("model_type") if model_spec_data else None),
                     input_seq_length=None,
                     output_seq_length=None,
@@ -713,7 +747,7 @@ class VllmBenchmarkDataMapper(_BenchmarkDataMapper):
 
         try:
             model_id = report_data.get("model_id", "unknown")
-            model_name = model_id.split("/", 1)[-1] if "/" in model_id else model_id
+            model_name = _prefer_full_model_name(model_id)
 
             measurements = self._create_measurements(job, "vllm_bench_serve", report_data, self.MEASUREMENT_KEYS)
 
@@ -818,7 +852,7 @@ class GuideLLMBenchmarkDataMapper(_BenchmarkDataMapper):
             results = []
             for benchmark in report_data.get("benchmarks") or []:
                 model_id = self._safe_get(benchmark, "config.backend.model") or ""
-                model_name = model_id.split("/", 1)[-1] if "/" in model_id else model_id
+                model_name = _prefer_full_model_name(model_id)
 
                 flat_metrics = {}
                 flat_metrics.update(self._flatten_numeric(benchmark.get("metrics") or {}, "metrics"))
