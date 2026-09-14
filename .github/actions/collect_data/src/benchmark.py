@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 import math
 import os
 import pathlib
@@ -75,7 +77,7 @@ def _get_model_reports(workflow_outputs_dir, workflow_run_id: int) -> Dict[int, 
 
     for root, _, files in os.walk(artifacts_dir):
         for file in files:
-            if file.endswith(".json"):
+            if file.endswith(".json") and (file.startswith("report_") or file.startswith("model_spec_")):
                 logger.debug(f"Found perf report {file}")
                 file_path = pathlib.Path(root) / file
                 filename = file_path.name
@@ -111,7 +113,11 @@ class _BenchmarkDataMapper(ABC):
         _NON_NUMERIC = frozenset({"N/A", "n/a", "NA", "na", "Undefined", "undefined", ""})
         measurements = []
         for key in keys:
-            if key in data and data[key] is not None and data[key] not in _NON_NUMERIC:
+            if (
+                key in data
+                and data[key] is not None
+                and (not isinstance(data[key], str) or data[key] not in _NON_NUMERIC)
+            ):
                 try:
                     measurement = BenchmarkMeasurement(
                         step_start_ts=job.job_start_ts,
@@ -385,7 +391,6 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         "p90_e2el_ms",
         "p95_e2el_ms",
         "p99_e2el_ms",
-        "std_tpot_ms",
         "std_itl_ms",
         "std_e2el_ms",
         # LLM throughput
@@ -540,8 +545,12 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             )
 
             if from_sections:
-                target_checks = benchmark.get("target_checks", {})
+                target_checks = benchmark.get("target_checks") or {}
+                if not isinstance(target_checks, dict):
+                    target_checks = {}
                 for target_name, target_data in target_checks.items():
+                    if not isinstance(target_data, dict):
+                        continue
                     target_measurements = self._create_measurements(
                         job,
                         f"benchmark_summary_{target_name}",
@@ -665,8 +674,12 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 ],
             )
 
-            target_checks = benchmark.get("target_checks", {})
+            target_checks = benchmark.get("target_checks") or {}
+            if not isinstance(target_checks, dict):
+                target_checks = {}
             for target_name, target_data in target_checks.items():
+                if not isinstance(target_data, dict):
+                    continue
                 target_measurements = self._create_measurements(
                     job,
                     f"benchmark_summary_{target_name}",
