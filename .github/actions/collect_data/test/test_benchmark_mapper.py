@@ -576,7 +576,9 @@ def test_sections_target_checks_whitelist_covers_all_check_families(mapper, pipe
     target_data = {k: 1.0 for k in _TARGET_CHECKS_KEYS}
     report = {
         "metadata": {"model_name": "test", "device": "test"},
-        "sections": [{"kind": "benchmarks", "data": {"model_name": "test", "target_checks": {"functional": target_data}}}],
+        "sections": [
+            {"kind": "benchmarks", "data": {"model_name": "test", "target_checks": {"functional": target_data}}}
+        ],
     }
     result = mapper.map_benchmark_data(pipeline, 1, report)
     got = _measurement_names(result, "benchmark_summary_functional")
@@ -593,14 +595,30 @@ def test_legacy_benchmarks_summary_still_produces_summary_run_type(mapper, pipel
 
 
 _LEGACY_TARGET_CHECKS_KEYS = {
-    "ttft", "ttft_ratio", "ttft_check",
-    "ttft_ms", "ttft_ms_ratio", "ttft_ms_check",
-    "tput_user", "tput_user_ratio", "tput_user_check",
-    "tput", "tput_ratio", "tput_check",
-    "avg_gen_time", "avg_gen_time_ratio", "avg_gen_time_check",
-    "latency", "latency_ratio", "latency_check",
-    "e2el_ms", "e2el_ms_ratio", "e2el_ms_check",
-    "tput_prefill", "tput_prefill_ratio", "tput_prefill_check",
+    "ttft",
+    "ttft_ratio",
+    "ttft_check",
+    "ttft_ms",
+    "ttft_ms_ratio",
+    "ttft_ms_check",
+    "tput_user",
+    "tput_user_ratio",
+    "tput_user_check",
+    "tput",
+    "tput_ratio",
+    "tput_check",
+    "avg_gen_time",
+    "avg_gen_time_ratio",
+    "avg_gen_time_check",
+    "latency",
+    "latency_ratio",
+    "latency_check",
+    "e2el_ms",
+    "e2el_ms_ratio",
+    "e2el_ms_check",
+    "tput_prefill",
+    "tput_prefill_ratio",
+    "tput_prefill_check",
     "rtr_check",
 }
 
@@ -638,15 +656,17 @@ def test_sections_benchmarks_config_params(mapper, pipeline):
     """kind:"benchmarks" sections should capture benchmark_tool and requested dimensions."""
     report = {
         "metadata": {"model_name": "test", "device": "test"},
-        "sections": [{
-            "kind": "benchmarks",
-            "targets": {"tool": "vllm"},
-            "data": {
-                "num_requests": 10,
-                "requested_concurrency": 32,
-                "status": "FUNCTIONAL",
-            },
-        }],
+        "sections": [
+            {
+                "kind": "benchmarks",
+                "targets": {"tool": "vllm"},
+                "data": {
+                    "num_requests": 10,
+                    "requested_concurrency": 32,
+                    "status": "FUNCTIONAL",
+                },
+            }
+        ],
     }
     result = mapper.map_benchmark_data(pipeline, 1, report)
     benchmark_runs = [r for r in result if r.run_type == "benchmark"]

@@ -578,9 +578,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                         config_params[f"observed_{key}"] = observed
 
                 if not measurements and any(
-                    key not in self._DIMENSION_KEYS
-                    and isinstance(value, (int, float))
-                    and not isinstance(value, bool)
+                    key not in self._DIMENSION_KEYS and isinstance(value, (int, float)) and not isinstance(value, bool)
                     for key, value in benchmark.items()
                 ):
                     failure_happened()
@@ -590,9 +588,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     )
 
                 input_seq = (
-                    benchmark.get("isl")
-                    if benchmark.get("isl") is not None
-                    else benchmark.get("input_sequence_length")
+                    benchmark.get("isl") if benchmark.get("isl") is not None else benchmark.get("input_sequence_length")
                 )
                 output_seq = (
                     benchmark.get("osl")
