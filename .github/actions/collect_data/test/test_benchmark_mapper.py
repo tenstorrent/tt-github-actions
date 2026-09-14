@@ -206,20 +206,24 @@ def test_no_job_found(mapper, pipeline):
     assert result is None
 
 
-def test_model_report_discovery_ignores_nested_raw_benchmark_files(tmp_path):
+def test_model_report_discovery_filters_by_prefix(tmp_path):
     report_dir = tmp_path / "123" / "artifacts" / "report_artifact"
     report_dir.mkdir(parents=True)
     canonical_report = report_dir / "report_1.json"
     model_spec = report_dir / "model_spec_1.json"
+    forge_report = report_dir / "benchmark_forge-fe_e2e_mnist_1.json"
+    forge_report_alt = report_dir / "forge-benchmark-e2e-mnist_1.json"
     canonical_report.write_text("{}")
     model_spec.write_text("{}")
+    forge_report.write_text("{}")
+    forge_report_alt.write_text("{}")
     (report_dir / "benchmark_model_isl-128_osl-128_maxcon-1_n-8.json").write_text("{}")
-    (report_dir / "report_data_model.json").write_text("{}")
+    (report_dir / "random_data.json").write_text("{}")
 
     reports = _get_model_reports(tmp_path, 123)
 
     assert set(reports) == {1}
-    assert set(reports[1]) == {canonical_report, model_spec}
+    assert set(reports[1]) == {canonical_report, model_spec, forge_report, forge_report_alt}
 
 
 def test_format_model_name(mapper):

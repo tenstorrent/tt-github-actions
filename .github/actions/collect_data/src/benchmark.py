@@ -64,6 +64,14 @@ def get_benchmark_filename(report) -> str:
     return f"benchmark_{report.github_pipeline_id}_{ts}.jsonl"
 
 
+_REPORT_FILE_PREFIXES = (
+    "report_",
+    "model_spec_",
+    "benchmark_forge",
+    "forge-benchmark",
+)
+
+
 def _get_model_reports(workflow_outputs_dir, workflow_run_id: int) -> Dict[int, List[pathlib.Path]]:
     """
     This function searches for perf reports in the artifacts directory
@@ -77,7 +85,7 @@ def _get_model_reports(workflow_outputs_dir, workflow_run_id: int) -> Dict[int, 
 
     for root, _, files in os.walk(artifacts_dir):
         for file in files:
-            if file.endswith(".json") and not file.startswith("benchmark_model_"):
+            if file.endswith(".json") and file.startswith(_REPORT_FILE_PREFIXES):
                 logger.debug(f"Found perf report {file}")
                 file_path = pathlib.Path(root) / file
                 filename = file_path.name
