@@ -108,9 +108,10 @@ class _BenchmarkDataMapper(ABC):
         """
         Creates BenchmarkMeasurement objects for the specified keys in the data.
         """
+        _NON_NUMERIC = frozenset({"N/A", "n/a", "NA", "na", "Undefined", "undefined", ""})
         measurements = []
         for key in keys:
-            if key in data and data[key] is not None:
+            if key in data and data[key] is not None and data[key] not in _NON_NUMERIC:
                 try:
                     measurement = BenchmarkMeasurement(
                         step_start_ts=job.job_start_ts,
