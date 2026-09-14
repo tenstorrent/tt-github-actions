@@ -8,6 +8,7 @@ report_failure = False
 
 
 def failure_happened():
+    global report_failure
     report_failure = True
 
 
