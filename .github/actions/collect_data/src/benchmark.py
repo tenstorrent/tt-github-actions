@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 import math
 import os
 import pathlib
@@ -62,6 +64,14 @@ def get_benchmark_filename(report) -> str:
     return f"benchmark_{report.github_pipeline_id}_{ts}.jsonl"
 
 
+_REPORT_FILE_PREFIXES = (
+    "report_",
+    "model_spec_",
+    "benchmark_forge",
+    "forge-benchmark",
+)
+
+
 def _get_model_reports(workflow_outputs_dir, workflow_run_id: int) -> Dict[int, List[pathlib.Path]]:
     """
     This function searches for perf reports in the artifacts directory
@@ -75,7 +85,7 @@ def _get_model_reports(workflow_outputs_dir, workflow_run_id: int) -> Dict[int, 
 
     for root, _, files in os.walk(artifacts_dir):
         for file in files:
-            if file.endswith(".json"):
+            if file.endswith(".json") and file.startswith(_REPORT_FILE_PREFIXES):
                 logger.debug(f"Found perf report {file}")
                 file_path = pathlib.Path(root) / file
                 filename = file_path.name
@@ -108,9 +118,14 @@ class _BenchmarkDataMapper(ABC):
         """
         Creates BenchmarkMeasurement objects for the specified keys in the data.
         """
+        _NON_NUMERIC = frozenset({"N/A", "n/a", "NA", "na", "Undefined", "undefined", ""})
         measurements = []
         for key in keys:
-            if key in data and data[key] is not None:
+            if (
+                key in data
+                and data[key] is not None
+                and (not isinstance(data[key], str) or data[key] not in _NON_NUMERIC)
+            ):
                 try:
                     measurement = BenchmarkMeasurement(
                         step_start_ts=job.job_start_ts,
@@ -126,12 +141,14 @@ class _BenchmarkDataMapper(ABC):
                     )
                     measurements.append(measurement)
                 except ValidationError as e:
+                    failure_happened()
                     logger.error(
                         f"Validation error while creating BenchmarkMeasurement for key '{key}' "
                         f"with value {data.get(key)!r}: {e}",
                         exc_info=True,
                     )
                 except Exception as e:
+                    failure_happened()
                     logger.error(
                         f"Unexpected error while creating BenchmarkMeasurement for key '{key}' "
                         f"with value {data.get(key)!r}: {e}",
@@ -255,7 +272,7 @@ class ForgeBenchmarkDataMapper(_BenchmarkDataMapper):
 
 
 def _prefer_full_model_name(candidate, model_spec_data=None):
-    """Prefer returning a full HF ``org/name`` id when available.
+    """Return a full HF ``org/name`` id.
 
     ``candidate`` if it already carries an ``org/`` prefix; otherwise the spec's
     ``hf_model_repo`` (from *model_spec_data*) when that is full; otherwise
@@ -341,30 +358,191 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             return full_name
         return _prefer_full_model_name(next((name for name in candidates if name), None), model_spec_data)
 
+    _BENCHMARK_METRICS = [
+        # LLM core
+        "mean_ttft_ms",
+        "std_ttft_ms",
+        "mean_tpot_ms",
+        "std_tpot_ms",
+        "mean_tps",
+        "std_tps",
+        "mean_e2el_ms",
+        "num_requests",
+        "request_throughput",
+        "total_token_throughput",
+        "total_input_tokens",
+        "total_output_tokens",
+        "num_prompts",
+        # LLM percentiles
+        "p50_ttft",
+        "p90_ttft",
+        "p95_ttft",
+        "p99_ttft",
+        "p50_ttft_ms",
+        "p90_ttft_ms",
+        "p95_ttft_ms",
+        "p99_ttft_ms",
+        "median_ttft_ms",
+        "median_tpot_ms",
+        "median_itl_ms",
+        "median_e2el_ms",
+        "p50_tpot_ms",
+        "p90_tpot_ms",
+        "p95_tpot_ms",
+        "p99_tpot_ms",
+        "mean_itl_ms",
+        "p50_itl_ms",
+        "p90_itl_ms",
+        "p95_itl_ms",
+        "p99_itl_ms",
+        "p50_e2el_ms",
+        "p90_e2el_ms",
+        "p95_e2el_ms",
+        "p99_e2el_ms",
+        "std_itl_ms",
+        "std_e2el_ms",
+        # LLM throughput
+        "tps_decode_throughput",
+        "tps_prefill_throughput",
+        "tps_input_throughput",
+        "tps_output_throughput",
+        "tps_total_throughput",
+        "ttft",
+        "tput_user",
+        "tput",
+        "avg_gen_time",
+        "output_blocks_per_second",
+        "mean_block_latency_ms",
+        "goodput_pct",
+        "error_request_count",
+        # Image / video / diffusion
+        "mean_latency_ms",
+        "p50_latency_ms",
+        "p90_latency_ms",
+        "p95_latency_ms",
+        "throughput_rps",
+        "inference_steps_per_second",
+        "num_inference_steps",
+        "performance_check",
+        "latency",
+        # Audio (Whisper / speecht5)
+        "rtr",
+        "wer",
+        "latency_p90",
+        "latency_p95",
+        # Embedding
+        "embedding_dimension",
+        "e2el_ms",
+        "e2el",
+        "tput_prefill",
+        "req_tput",
+        "successful_requests",
+        "failed_requests",
+    ]
+
+    _TARGET_CHECK_METRICS = [
+        # LLM
+        "ttft",
+        "ttft_ratio",
+        "ttft_check",
+        # Media / image (ttft reported in ms)
+        "ttft_ms",
+        "ttft_ms_ratio",
+        "ttft_ms_check",
+        "tput_user",
+        "tput_user_ratio",
+        "tput_user_check",
+        "tput",
+        "tput_ratio",
+        "tput_check",
+        "tpot",
+        "tpot_ratio",
+        "tpot_check",
+        "e2el",
+        "e2el_ratio",
+        "e2el_check",
+        "tput_total",
+        "tput_total_ratio",
+        "tput_total_check",
+        "goodput",
+        "goodput_ratio",
+        "goodput_check",
+        "avg_gen_time",
+        "avg_gen_time_ratio",
+        "avg_gen_time_check",
+        # Media / image / video / whisper
+        "latency",
+        "latency_ratio",
+        "latency_check",
+        # Embedding
+        "e2el_ms",
+        "e2el_ms_ratio",
+        "e2el_ms_check",
+        "tput_prefill",
+        "tput_prefill_ratio",
+        "tput_prefill_check",
+        # Audio (speecht5_tts)
+        "rtr_check",
+    ]
+
+    _DIMENSION_KEYS = {
+        "isl",
+        "osl",
+        "max_concurrency",
+        "concurrency",
+        "input_sequence_length",
+        "output_sequence_length",
+        "requested_concurrency",
+        "requested_input_sequence_length",
+        "requested_output_sequence_length",
+        "output_block_size",
+        "observed_concurrency",
+        "observed_input_sequence_length",
+        "observed_output_sequence_length",
+        "output_blocks_per_request",
+        "target_check",
+    }
+
     def _process_benchmarks(self, pipeline, job, report_data, metadata=None, model_spec_data=None):
         """
         Processes benchmark entries and creates CompleteBenchmarkRun objects for each entry.
+        Handles kind:"vllm" sections, kind:"benchmarks" sections, and legacy benchmarks lists.
         """
         meta = metadata or {}
         benchmarks = list(report_data.get("benchmarks", []))
+
         for block in report_data.get("sections") or []:
-            if not isinstance(block, dict) or block.get("kind") != "vllm":
+            if not isinstance(block, dict):
+                continue
+            kind = block.get("kind")
+            if kind not in ("vllm", "benchmarks"):
                 continue
             data = block.get("data")
             if not isinstance(data, dict):
                 data = {}
-            benchmarks.append(
-                {
-                    "model": meta.get("model_name"),
-                    "model_name": meta.get("model_name"),
-                    "model_repo": meta.get("model_repo"),
-                    "device": meta.get("device"),
-                    **data,
-                }
-            )
+            if kind == "benchmarks":
+                payload = data.get("Benchmarks", data)
+                if not isinstance(payload, dict):
+                    payload = data
+            else:
+                payload = data
+            entry = {
+                "model": meta.get("model_name"),
+                "model_name": meta.get("model_name"),
+                "model_repo": meta.get("model_repo"),
+                "device": meta.get("device"),
+                **payload,
+            }
+            if kind == "benchmarks":
+                entry["task_type"] = block.get("task_type")
+                targets = block.get("targets")
+                entry["benchmark_tool"] = targets.get("tool") if isinstance(targets, dict) else None
+                entry["_from_sections"] = True
+            benchmarks.append(entry)
 
         results = []
         for benchmark in benchmarks:
+            from_sections = benchmark.pop("_from_sections", False)
             if metadata:
                 logger.debug(f"Processing benchmark with metadata included...")
                 benchmark = {**benchmark, **metadata}  # metadata values take precedence
@@ -372,43 +550,101 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 job,
                 "benchmark",
                 benchmark,
-                [
-                    # LLM
-                    "mean_ttft_ms",
-                    "std_ttft_ms",
-                    "mean_tpot_ms",
-                    "std_tpot_ms",
-                    "mean_tps",
-                    "std_tps",
-                    "tps_decode_throughput",
-                    "tps_prefill_throughput",
-                    "mean_e2el_ms",
-                    "request_throughput",
-                    "num_requests",
-                    "p50_ttft",
-                    "p99_ttft",
-                    "total_input_tokens",
-                    "total_output_tokens",
-                    "total_token_throughput",
-                    "num_prompts",
-                    # Image / video / diffusion
-                    "mean_latency_ms",
-                    "p50_latency_ms",
-                    "p90_latency_ms",
-                    "p95_latency_ms",
-                    "throughput_rps",
-                    "inference_steps_per_second",
-                    "num_inference_steps",
-                    "performance_check",
-                    # Audio (Whisper / speecht5)
-                    "rtr",
-                    "wer",
-                    # Embedding
-                    "embedding_dimension",
-                ],
+                self._BENCHMARK_METRICS,
             )
 
+            if from_sections:
+                target_checks = benchmark.get("target_checks") or {}
+                if not isinstance(target_checks, dict):
+                    target_checks = {}
+                for target_name, target_data in target_checks.items():
+                    if not isinstance(target_data, dict):
+                        continue
+                    target_measurements = self._create_measurements(
+                        job,
+                        f"benchmark_summary_{target_name}",
+                        target_data,
+                        self._TARGET_CHECK_METRICS,
+                    )
+                    measurements.extend(target_measurements)
+
             model_name = self._format_model_name(benchmark, model_spec_data)
+
+            if from_sections:
+                config_params = dict(model_spec_data) if model_spec_data else {}
+                benchmark_tool = benchmark.get("benchmark_tool")
+                if benchmark_tool:
+                    config_params["benchmark_tool"] = benchmark_tool
+                for key in (
+                    "requested_concurrency",
+                    "requested_input_sequence_length",
+                    "requested_output_sequence_length",
+                    "status",
+                    "priority",
+                    "metric_semantics",
+                    "output_block_size",
+                    "output_blocks_per_request",
+                    "primary_throughput_metric",
+                    "primary_latency_metric",
+                ):
+                    if benchmark.get(key) is not None:
+                        config_params[key] = benchmark[key]
+
+                for key in ("concurrency", "input_sequence_length", "output_sequence_length"):
+                    observed = benchmark.get(f"observed_{key}", benchmark.get(key))
+                    if observed is not None:
+                        config_params[f"observed_{key}"] = observed
+
+                _known_benchmark_keys = set(self._BENCHMARK_METRICS) | self._DIMENSION_KEYS
+                unmapped_benchmark = {
+                    k
+                    for k, v in benchmark.items()
+                    if isinstance(v, (int, float)) and not isinstance(v, bool) and k not in _known_benchmark_keys
+                }
+                _target_metric_set = set(self._TARGET_CHECK_METRICS)
+                unmapped_target = set()
+                for _tc_name, _tc_data in target_checks.items():
+                    if not isinstance(_tc_data, dict):
+                        continue
+                    unmapped_target |= {
+                        k
+                        for k, v in _tc_data.items()
+                        if isinstance(v, (int, float)) and not isinstance(v, bool) and k not in _target_metric_set
+                    }
+                unmapped = unmapped_benchmark | unmapped_target
+
+                if not measurements and unmapped:
+                    failure_happened()
+                    logger.error(
+                        f"Benchmark for job {job.github_job_id} contains numeric "
+                        f"results but no mapped measurements; unmapped keys: {sorted(unmapped)}"
+                    )
+                elif unmapped:
+                    logger.warning(
+                        f"Benchmark for job {job.github_job_id} has unmapped numeric "
+                        f"keys (possible metric drift): {sorted(unmapped)}"
+                    )
+
+                input_seq = (
+                    benchmark.get("isl") if benchmark.get("isl") is not None else benchmark.get("input_sequence_length")
+                )
+                output_seq = (
+                    benchmark.get("osl")
+                    if benchmark.get("osl") is not None
+                    else benchmark.get("output_sequence_length")
+                )
+                batch = (
+                    benchmark.get("max_concurrency")
+                    if benchmark.get("max_concurrency") is not None
+                    else benchmark.get("concurrency")
+                )
+                device = benchmark.get("device", "unknown")
+            else:
+                config_params = model_spec_data
+                input_seq = benchmark.get("input_sequence_length")
+                output_seq = benchmark.get("output_sequence_length")
+                batch = benchmark.get("max_con") or benchmark.get("concurrency")
+                device = benchmark.get("device")
 
             results.append(
                 self._create_complete_benchmark_run(
@@ -417,14 +653,14 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     data=benchmark,
                     run_type="benchmark",
                     measurements=measurements,
-                    device_info=benchmark.get("device"),
+                    device_info=device,
                     model_name=model_name,
                     model_type=(model_spec_data.get("model_type") if model_spec_data else None),
-                    input_seq_length=benchmark.get("input_sequence_length"),
-                    output_seq_length=benchmark.get("output_sequence_length"),
-                    dataset_name=benchmark.get("model_id", None),
-                    batch_size=benchmark.get("max_con") or benchmark.get("concurrency"),
-                    config_params=model_spec_data,
+                    input_seq_length=input_seq,
+                    output_seq_length=output_seq,
+                    dataset_name=model_name if from_sections else benchmark.get("model_id", None),
+                    batch_size=batch,
+                    config_params=config_params if not from_sections else (config_params or None),
                     docker_image=(model_spec_data or {}).get("docker_image") or job.docker_image,
                 )
             )
@@ -432,30 +668,10 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
 
     def _process_benchmarks_summary(self, pipeline, job, report_data, metadata=None, model_spec_data=None):
         """
-        Processes benchmark summary entries and creates CompleteBenchmarkRun objects for each entry.
+        Processes legacy benchmarks_summary list entries only.
+        Sections with kind:"benchmarks" are now handled by _process_benchmarks.
         """
-        meta = metadata or {}
         benchmarks_summary = list(report_data.get("benchmarks_summary", []))
-        for block in report_data.get("sections") or []:
-            if not isinstance(block, dict) or block.get("kind") != "benchmarks":
-                continue
-            data = block.get("data")
-            if not isinstance(data, dict):
-                data = {}
-            # media/image benchmark blocks nest the payload under "Benchmarks"
-            payload = data.get("Benchmarks", data)
-            if not isinstance(payload, dict):
-                payload = data
-            benchmarks_summary.append(
-                {
-                    "model": meta.get("model_name"),
-                    "model_name": meta.get("model_name"),
-                    "model_repo": meta.get("model_repo"),
-                    "device": meta.get("device"),
-                    "task_type": block.get("task_type"),
-                    **payload,
-                }
-            )
 
         results = []
         for benchmark in benchmarks_summary:
@@ -487,8 +703,12 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 ],
             )
 
-            target_checks = benchmark.get("target_checks", {})
+            target_checks = benchmark.get("target_checks") or {}
+            if not isinstance(target_checks, dict):
+                target_checks = {}
             for target_name, target_data in target_checks.items():
+                if not isinstance(target_data, dict):
+                    continue
                 target_measurements = self._create_measurements(
                     job,
                     f"benchmark_summary_{target_name}",
