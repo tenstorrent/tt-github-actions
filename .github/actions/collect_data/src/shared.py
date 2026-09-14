@@ -12,8 +12,12 @@ def failure_happened():
     report_failure = True
 
 
-def is_failure():
+def reset_failure():
+    global report_failure
+    report_failure = False
 
+
+def is_failure():
     return report_failure
 
 

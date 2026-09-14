@@ -67,6 +67,7 @@ def get_benchmark_filename(report) -> str:
 _REPORT_FILE_PREFIXES = (
     "report_",
     "model_spec_",
+    "runtime_model_spec_",
     "benchmark_forge",
     "forge-benchmark",
 )

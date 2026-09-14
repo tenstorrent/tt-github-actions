@@ -11,6 +11,7 @@ from benchmark import (
     GuideLLMBenchmarkDataMapper,
     CompleteBenchmarkRun,
     _get_model_reports,
+    _REPORT_FILE_PREFIXES,
 )
 
 
@@ -211,10 +212,12 @@ def test_model_report_discovery_filters_by_prefix(tmp_path):
     report_dir.mkdir(parents=True)
     canonical_report = report_dir / "report_1.json"
     model_spec = report_dir / "model_spec_1.json"
+    runtime_model_spec = report_dir / "runtime_model_spec_1.json"
     forge_report = report_dir / "benchmark_forge-fe_e2e_mnist_1.json"
     forge_report_alt = report_dir / "forge-benchmark-e2e-mnist_1.json"
     canonical_report.write_text("{}")
     model_spec.write_text("{}")
+    runtime_model_spec.write_text("{}")
     forge_report.write_text("{}")
     forge_report_alt.write_text("{}")
     (report_dir / "benchmark_model_isl-128_osl-128_maxcon-1_1.json").write_text("{}")
@@ -223,7 +226,44 @@ def test_model_report_discovery_filters_by_prefix(tmp_path):
     reports = _get_model_reports(tmp_path, 123)
 
     assert set(reports) == {1}
-    assert set(reports[1]) == {canonical_report, model_spec, forge_report, forge_report_alt}
+    assert set(reports[1]) == {canonical_report, model_spec, runtime_model_spec, forge_report, forge_report_alt}
+
+
+def test_report_file_prefixes_cover_all_known_conventions():
+    """Verify that _REPORT_FILE_PREFIXES covers every filename convention
+    produced by upstream workflows (tt-shield, tt-forge).
+
+    If a new naming convention is added upstream, add it here so the
+    whitelist stays in sync.
+    """
+    known_filenames = [
+        # tt-shield: workflow_run-tests-with-inference-server.yml line 444
+        "report_40574880532.json",
+        # tt-shield: workflow_run-tests-with-inference-server.yml line 445
+        "model_spec_40574880532.json",
+        # tt-inference-server: legacy runtime_model_spec (normally flattened
+        # to model_spec_ by the workflow, but kept for safety)
+        "runtime_model_spec_40574880532.json",
+        # tt-forge: benchmark_forge prefix
+        "benchmark_forge-fe_e2e_mnist_linear_32_32_40651588679.json",
+        # tt-forge: forge-benchmark prefix
+        "forge-benchmark-e2e-mnist_35942438708.json",
+    ]
+    for fname in known_filenames:
+        assert fname.startswith(
+            _REPORT_FILE_PREFIXES
+        ), f"{fname} is not matched by _REPORT_FILE_PREFIXES — add its prefix"
+
+    # These must NOT be accepted
+    rejected = [
+        "benchmark_model_isl-128_osl-128_maxcon-1_1.json",
+        "random_data_1.json",
+        "vllm_output_1.json",
+    ]
+    for fname in rejected:
+        assert not fname.startswith(
+            _REPORT_FILE_PREFIXES
+        ), f"{fname} should be rejected but matches _REPORT_FILE_PREFIXES"
 
 
 def test_format_model_name(mapper):
