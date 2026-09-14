@@ -420,7 +420,11 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         # Embedding
         "embedding_dimension",
         "e2el_ms",
+        "e2el",
         "tput_prefill",
+        "req_tput",
+        "successful_requests",
+        "failed_requests",
     ]
 
     _TARGET_CHECK_METRICS = [
