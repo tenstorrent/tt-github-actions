@@ -217,8 +217,8 @@ def test_model_report_discovery_filters_by_prefix(tmp_path):
     model_spec.write_text("{}")
     forge_report.write_text("{}")
     forge_report_alt.write_text("{}")
-    (report_dir / "benchmark_model_isl-128_osl-128_maxcon-1_n-8.json").write_text("{}")
-    (report_dir / "random_data.json").write_text("{}")
+    (report_dir / "benchmark_model_isl-128_osl-128_maxcon-1_1.json").write_text("{}")
+    (report_dir / "random_data_1.json").write_text("{}")
 
     reports = _get_model_reports(tmp_path, 123)
 

@@ -535,7 +535,8 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             }
             if kind == "benchmarks":
                 entry["task_type"] = block.get("task_type")
-                entry["benchmark_tool"] = (block.get("targets") or {}).get("tool")
+                targets = block.get("targets")
+                entry["benchmark_tool"] = targets.get("tool") if isinstance(targets, dict) else None
                 entry["_from_sections"] = True
             benchmarks.append(entry)
 
@@ -594,14 +595,34 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     if observed is not None:
                         config_params[f"observed_{key}"] = observed
 
-                if not measurements and any(
-                    key not in self._DIMENSION_KEYS and isinstance(value, (int, float)) and not isinstance(value, bool)
-                    for key, value in benchmark.items()
-                ):
+                _known_benchmark_keys = set(self._BENCHMARK_METRICS) | self._DIMENSION_KEYS
+                unmapped_benchmark = {
+                    k
+                    for k, v in benchmark.items()
+                    if isinstance(v, (int, float)) and not isinstance(v, bool) and k not in _known_benchmark_keys
+                }
+                _target_metric_set = set(self._TARGET_CHECK_METRICS)
+                unmapped_target = set()
+                for _tc_name, _tc_data in target_checks.items():
+                    if not isinstance(_tc_data, dict):
+                        continue
+                    unmapped_target |= {
+                        k
+                        for k, v in _tc_data.items()
+                        if isinstance(v, (int, float)) and not isinstance(v, bool) and k not in _target_metric_set
+                    }
+                unmapped = unmapped_benchmark | unmapped_target
+
+                if not measurements and unmapped:
                     failure_happened()
                     logger.error(
                         f"Benchmark for job {job.github_job_id} contains numeric "
-                        "results but no mapped measurements; preserving the empty record"
+                        f"results but no mapped measurements; unmapped keys: {sorted(unmapped)}"
+                    )
+                elif unmapped:
+                    logger.warning(
+                        f"Benchmark for job {job.github_job_id} has unmapped numeric "
+                        f"keys (possible metric drift): {sorted(unmapped)}"
                     )
 
                 input_seq = (
