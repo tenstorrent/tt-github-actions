@@ -77,7 +77,7 @@ def _get_model_reports(workflow_outputs_dir, workflow_run_id: int) -> Dict[int, 
 
     for root, _, files in os.walk(artifacts_dir):
         for file in files:
-            if file.endswith(".json") and (file.startswith("report_") or file.startswith("model_spec_")):
+            if file.endswith(".json") and not file.startswith("benchmark_model_"):
                 logger.debug(f"Found perf report {file}")
                 file_path = pathlib.Path(root) / file
                 filename = file_path.name
