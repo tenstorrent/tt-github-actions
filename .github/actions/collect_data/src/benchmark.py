@@ -417,6 +417,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         "goodput_pct",
         "error_request_count",
         # Image / video / diffusion
+        "ttft_ms",
         "mean_latency_ms",
         "p50_latency_ms",
         "p90_latency_ms",
@@ -427,6 +428,10 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         "performance_check",
         "latency",
         # Audio (Whisper / speecht5)
+        "t/s/u",
+        "ttft_p50",
+        "ttft_p90",
+        "ttft_p95",
         "rtr",
         "wer",
         "latency_p90",
@@ -483,6 +488,8 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         "tput_prefill_ratio",
         "tput_prefill_check",
         # Audio (speecht5_tts)
+        "rtr",
+        "rtr_ratio",
         "rtr_check",
     ]
 
@@ -491,6 +498,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         "osl",
         "max_concurrency",
         "concurrency",
+        "num_concurrent_requests",
         "input_sequence_length",
         "output_sequence_length",
         "requested_concurrency",
@@ -527,19 +535,29 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     payload = data
             else:
                 payload = data
-            entry = {
-                "model": meta.get("model_name"),
-                "model_name": meta.get("model_name"),
-                "model_repo": meta.get("model_repo"),
-                "device": meta.get("device"),
-                **payload,
-            }
-            if kind == "benchmarks":
-                entry["task_type"] = block.get("task_type")
-                targets = block.get("targets")
-                entry["benchmark_tool"] = targets.get("tool") if isinstance(targets, dict) else None
-                entry["_from_sections"] = True
-            benchmarks.append(entry)
+            records = payload.get("records") if kind == "benchmarks" else None
+            if isinstance(records, list):
+                # Whisper's section-level checks grade only the 60s sweep.
+                # Keep them once on the section, never copy them to each row.
+                section_payload = {key: value for key, value in payload.items() if key != "records"}
+                payloads = [section_payload] if section_payload else []
+                payloads.extend(record for record in records if isinstance(record, dict))
+            else:
+                payloads = [payload]
+            for row in payloads:
+                entry = {
+                    "model": meta.get("model_name"),
+                    "model_name": meta.get("model_name"),
+                    "model_repo": meta.get("model_repo"),
+                    "device": meta.get("device"),
+                    **row,
+                }
+                if kind == "benchmarks":
+                    entry["task_type"] = block.get("task_type")
+                    targets = block.get("targets")
+                    entry["benchmark_tool"] = targets.get("tool") if isinstance(targets, dict) else None
+                    entry["_from_sections"] = True
+                benchmarks.append(entry)
 
         results = []
         for benchmark in benchmarks:
@@ -587,6 +605,8 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "output_blocks_per_request",
                     "primary_throughput_metric",
                     "primary_latency_metric",
+                    "streaming_enabled",
+                    "preprocessing_enabled",
                 ):
                     if benchmark.get(key) is not None:
                         config_params[key] = benchmark[key]
@@ -639,6 +659,8 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     if benchmark.get("max_concurrency") is not None
                     else benchmark.get("concurrency")
                 )
+                if batch is None:
+                    batch = benchmark.get("num_concurrent_requests")
                 device = benchmark.get("device", "unknown")
             else:
                 config_params = model_spec_data
@@ -659,7 +681,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     model_type=(model_spec_data.get("model_type") if model_spec_data else None),
                     input_seq_length=input_seq,
                     output_seq_length=output_seq,
-                    dataset_name=model_name if from_sections else benchmark.get("model_id", None),
+                    dataset_name=(benchmark.get("name") or model_name) if from_sections else benchmark.get("model_id"),
                     batch_size=batch,
                     config_params=config_params if not from_sections else (config_params or None),
                     docker_image=(model_spec_data or {}).get("docker_image") or job.docker_image,

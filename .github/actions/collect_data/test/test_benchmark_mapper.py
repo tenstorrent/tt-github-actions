@@ -1477,6 +1477,137 @@ def test_sections_benchmarks_block_produces_summary_checks(mapper, pipeline):
         assert "tput_user_check" in checks
 
 
+def test_image_measured_ttft_and_concurrency_are_preserved(mapper, pipeline):
+    report = {
+        "metadata": {"model_name": "SDXL", "device": "P150"},
+        "sections": [
+            {
+                "kind": "benchmarks",
+                "task_type": "image",
+                "data": {
+                    "Benchmarks": {
+                        "num_requests": 8,
+                        "num_concurrent_requests": 4,
+                        "ttft_ms": 2500.0,
+                        "target_checks": {"target": {"ttft_ms": 3000.0, "ttft_ms_check": 2}},
+                    }
+                },
+            }
+        ],
+    }
+    run = mapper.map_benchmark_data(pipeline, 1, report)[0]
+    values = {(m.step_name, m.name): m.value for m in run.measurements}
+    assert run.batch_size == 4
+    assert values["benchmark", "ttft_ms"] == 2500.0
+    assert values["benchmark_summary_target", "ttft_ms"] == 3000.0
+    assert "num_concurrent_requests" not in {m.name for m in run.measurements}
+
+
+@pytest.mark.parametrize("wrapped", [False, True])
+def test_tts_percentiles_keep_seconds_and_rtr_targets(mapper, pipeline, wrapped):
+    data = {
+        "num_requests": 4,
+        "ttft": 0.25,
+        "ttft_p50": 0.2,
+        "ttft_p90": 0.4,
+        "ttft_p95": 0.6,
+        "rtr": 8.0,
+        "target_checks": {"target": {"rtr": 4.0, "rtr_ratio": 2.0, "rtr_check": 2}},
+    }
+    report = {
+        "metadata": {"model_name": "speecht5", "device": "P150"},
+        "sections": [
+            {"kind": "benchmarks", "task_type": "text_to_speech", "data": {"Benchmarks": data} if wrapped else data}
+        ],
+    }
+    run = mapper.map_benchmark_data(pipeline, 1, report)[0]
+    values = {(m.step_name, m.name): m.value for m in run.measurements}
+    for name in ("ttft", "ttft_p50", "ttft_p90", "ttft_p95", "rtr"):
+        assert values["benchmark", name] == data[name]
+    for name, value in data["target_checks"]["target"].items():
+        assert values["benchmark_summary_target", name] == value
+
+
+def test_whisper_sweep_keeps_both_rows_and_section_checks_once(mapper, pipeline, monkeypatch):
+    import shared
+
+    monkeypatch.setattr(shared, "report_failure", False)
+    report = {
+        "metadata": {"model_name": "openai/whisper-large-v3", "device": "P150"},
+        "sections": [
+            {
+                "kind": "benchmarks",
+                "task_type": "audio",
+                "data": {
+                    "records": [
+                        {
+                            "name": "Benchmarks 30s",
+                            "num_requests": 2,
+                            "ttft": 0.2,
+                            "rtr": 8.1,
+                            "t/s/u": 7.0,
+                            "streaming_enabled": True,
+                            "preprocessing_enabled": False,
+                        },
+                        {
+                            "name": "Benchmarks 60s",
+                            "num_requests": 2,
+                            "ttft": 0.4,
+                            "rtr": 7.9,
+                            "t/s/u": 6.5,
+                            "streaming_enabled": True,
+                            "preprocessing_enabled": False,
+                        },
+                    ],
+                    "target_checks": {"target": {"ttft": 0.5, "ttft_ratio": 0.8, "ttft_check": 2}},
+                },
+            }
+        ],
+    }
+    original = copy.deepcopy(report)
+    runs = mapper.map_benchmark_data(pipeline, 1, report)
+    assert len(runs) == 3  # two measured rows plus the section-level grading
+    rows = {run.dataset_name: run for run in runs}
+    for record in report["sections"][0]["data"]["records"]:
+        run = rows[record["name"]]
+        assert {m.step_name for m in run.measurements} == {"benchmark"}
+        assert {m.name: m.value for m in run.measurements} == {
+            key: record[key] for key in ("num_requests", "ttft", "rtr", "t/s/u")
+        }
+        assert run.config_params["streaming_enabled"] is True
+        assert run.config_params["preprocessing_enabled"] is False
+    checks = [m for run in runs for m in run.measurements if m.name == "ttft_check"]
+    assert len(checks) == 1 and checks[0].value == 2
+    assert report == original
+    assert not shared.is_failure()
+
+
+def test_media_records_skip_malformed_rows_and_keep_row_checks(mapper, pipeline):
+    report = {
+        "metadata": {"model_name": "m", "device": "P150"},
+        "sections": [
+            {
+                "kind": "benchmarks",
+                "data": {
+                    "records": [
+                        None,
+                        "bad",
+                        42,
+                        {"name": "sample", "ttft": 0.5, "target_checks": {"target": {"ttft_check": 3}}},
+                    ]
+                },
+            }
+        ],
+    }
+    runs = mapper.map_benchmark_data(pipeline, 1, report)
+    assert len(runs) == 1
+    assert runs[0].dataset_name == "sample"
+    assert {(m.step_name, m.name): m.value for m in runs[0].measurements} == {
+        ("benchmark", "ttft"): 0.5,
+        ("benchmark_summary_target", "ttft_check"): 3,
+    }
+
+
 def test_sections_canonical_vllm_block_preserves_metrics_operating_point_and_tool(mapper, pipeline):
     report_data = {
         "metadata": {
