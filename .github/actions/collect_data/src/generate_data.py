@@ -10,7 +10,7 @@ from utils import get_github_runner_environment
 from cicd import create_cicd_json_for_data_analysis, get_cicd_json_filename
 from benchmark import create_json_from_report, get_benchmark_filename
 from optests import create_optest_reports, get_optest_filename
-from shared import is_failure
+from shared import is_failure, reset_failure
 
 
 def create_pipeline_json(
@@ -75,8 +75,7 @@ def create_optest_json(pipeline, workflow_outputs_dir):
 
 if __name__ == "__main__":
 
-    global report_failure
-    report_failure = False
+    reset_failure()
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--run_id", type=str, required=True, help="Run ID of the workflow")
@@ -130,4 +129,7 @@ if __name__ == "__main__":
     )
 
     if is_failure():
-        raise Exception("Failed to generate some reports")
+        logger.error(
+            "Partial failures occurred during report generation. "
+            "Generated reports are still uploaded; check earlier log lines for details."
+        )

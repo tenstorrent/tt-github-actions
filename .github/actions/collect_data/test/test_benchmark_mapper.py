@@ -10,6 +10,8 @@ from benchmark import (
     VllmBenchmarkDataMapper,
     GuideLLMBenchmarkDataMapper,
     CompleteBenchmarkRun,
+    _get_model_reports,
+    _REPORT_FILE_PREFIXES,
 )
 
 
@@ -205,6 +207,65 @@ def test_no_job_found(mapper, pipeline):
     assert result is None
 
 
+def test_model_report_discovery_filters_by_prefix(tmp_path):
+    report_dir = tmp_path / "123" / "artifacts" / "report_artifact"
+    report_dir.mkdir(parents=True)
+    canonical_report = report_dir / "report_1.json"
+    model_spec = report_dir / "model_spec_1.json"
+    runtime_model_spec = report_dir / "runtime_model_spec_1.json"
+    forge_report = report_dir / "benchmark_forge-fe_e2e_mnist_1.json"
+    forge_report_alt = report_dir / "forge-benchmark-e2e-mnist_1.json"
+    canonical_report.write_text("{}")
+    model_spec.write_text("{}")
+    runtime_model_spec.write_text("{}")
+    forge_report.write_text("{}")
+    forge_report_alt.write_text("{}")
+    (report_dir / "benchmark_model_isl-128_osl-128_maxcon-1_1.json").write_text("{}")
+    (report_dir / "random_data_1.json").write_text("{}")
+
+    reports = _get_model_reports(tmp_path, 123)
+
+    assert set(reports) == {1}
+    assert set(reports[1]) == {canonical_report, model_spec, runtime_model_spec, forge_report, forge_report_alt}
+
+
+def test_report_file_prefixes_cover_all_known_conventions():
+    """Verify that _REPORT_FILE_PREFIXES covers every filename convention
+    produced by upstream workflows (tt-shield, tt-forge).
+
+    If a new naming convention is added upstream, add it here so the
+    whitelist stays in sync.
+    """
+    known_filenames = [
+        # tt-shield: workflow_run-tests-with-inference-server.yml line 444
+        "report_40574880532.json",
+        # tt-shield: workflow_run-tests-with-inference-server.yml line 445
+        "model_spec_40574880532.json",
+        # tt-inference-server: legacy runtime_model_spec (normally flattened
+        # to model_spec_ by the workflow, but kept for safety)
+        "runtime_model_spec_40574880532.json",
+        # tt-forge: benchmark_forge prefix
+        "benchmark_forge-fe_e2e_mnist_linear_32_32_40651588679.json",
+        # tt-forge: forge-benchmark prefix
+        "forge-benchmark-e2e-mnist_35942438708.json",
+    ]
+    for fname in known_filenames:
+        assert fname.startswith(
+            _REPORT_FILE_PREFIXES
+        ), f"{fname} is not matched by _REPORT_FILE_PREFIXES — add its prefix"
+
+    # These must NOT be accepted
+    rejected = [
+        "benchmark_model_isl-128_osl-128_maxcon-1_1.json",
+        "random_data_1.json",
+        "vllm_output_1.json",
+    ]
+    for fname in rejected:
+        assert not fname.startswith(
+            _REPORT_FILE_PREFIXES
+        ), f"{fname} should be rejected but matches _REPORT_FILE_PREFIXES"
+
+
 def test_format_model_name(mapper):
     benchmark = {"model_name": "Llama-3.2-1B"}
     result = mapper._format_model_name(benchmark)
@@ -366,6 +427,38 @@ _BENCHMARK_SUMMARY_OUTER_KEYS = {
     "tput_user",
     "tput",
     "avg_gen_time",
+    "mean_ttft_ms",
+    "median_ttft_ms",
+    "p50_ttft",
+    "p90_ttft",
+    "p95_ttft",
+    "p99_ttft",
+    "p99_ttft_ms",
+    "mean_tpot_ms",
+    "median_tpot_ms",
+    "p50_tpot_ms",
+    "p90_tpot_ms",
+    "p95_tpot_ms",
+    "p99_tpot_ms",
+    "mean_itl_ms",
+    "median_itl_ms",
+    "p50_itl_ms",
+    "p90_itl_ms",
+    "p95_itl_ms",
+    "p99_itl_ms",
+    "mean_e2el_ms",
+    "median_e2el_ms",
+    "p50_e2el_ms",
+    "p90_e2el_ms",
+    "p95_e2el_ms",
+    "p99_e2el_ms",
+    "request_throughput",
+    "tps_input_throughput",
+    "tps_output_throughput",
+    "tps_total_throughput",
+    "total_token_throughput",
+    "goodput_pct",
+    "error_request_count",
     "num_requests",
     # Image / video
     "latency",
@@ -395,6 +488,18 @@ _TARGET_CHECKS_KEYS = {
     "tput",
     "tput_ratio",
     "tput_check",
+    "tpot",
+    "tpot_ratio",
+    "tpot_check",
+    "e2el",
+    "e2el_ratio",
+    "e2el_check",
+    "tput_total",
+    "tput_total_ratio",
+    "tput_total_check",
+    "goodput",
+    "goodput_ratio",
+    "goodput_check",
     "avg_gen_time",
     "avg_gen_time_ratio",
     "avg_gen_time_check",
@@ -481,31 +586,139 @@ def test_benchmarks_whitelist_covers_all_model_families(mapper, pipeline):
     assert not missing, f"benchmarks[*] whitelist missing keys: {sorted(missing)}"
 
 
-def test_benchmarks_summary_outer_whitelist_covers_all_model_families(mapper, pipeline):
-    """benchmarks_summary[*] (outer, sibling of target_checks) must ingest the
-    scalar throughput / latency metrics each model family emits there."""
-    bs = {k: 1.0 for k in _BENCHMARK_SUMMARY_OUTER_KEYS}
-    bs.update({"model_name": "test", "device": "test"})
-    result = mapper.map_benchmark_data(pipeline, 1, {"benchmarks_summary": [bs]})
-    got = _measurement_names(result, "benchmark_summary")
+def test_sections_benchmarks_whitelist_covers_all_model_families(mapper, pipeline):
+    """kind:"benchmarks" sections routed through the detailed mapper must ingest
+    the scalar throughput / latency metrics each model family emits."""
+    data = {k: 1.0 for k in _BENCHMARK_SUMMARY_OUTER_KEYS}
+    report = {
+        "metadata": {"model_name": "test", "device": "test"},
+        "sections": [{"kind": "benchmarks", "data": data}],
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report)
+    got = _measurement_names(result, "benchmark")
     missing = _BENCHMARK_SUMMARY_OUTER_KEYS - got
-    assert not missing, f"benchmarks_summary[*] whitelist missing keys: {sorted(missing)}"
+    assert not missing, f"sections[kind:benchmarks] whitelist missing keys: {sorted(missing)}"
 
 
-def test_target_checks_whitelist_covers_all_check_families(mapper, pipeline):
-    """benchmarks_summary[*].target_checks.<tier> must ingest every <base>,
+def test_sections_benchmarks_run_type_is_benchmark(mapper, pipeline):
+    """kind:"benchmarks" sections must produce run_type=benchmark, not benchmark_summary."""
+    report = {
+        "metadata": {"model_name": "test", "device": "test"},
+        "sections": [{"kind": "benchmarks", "data": {"num_requests": 10}}],
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report)
+    benchmark_runs = [r for r in result if r.run_type == "benchmark"]
+    assert len(benchmark_runs) == 1
+    summary_runs = [r for r in result if r.run_type == "benchmark_summary"]
+    assert len(summary_runs) == 0
+
+
+def test_sections_target_checks_whitelist_covers_all_check_families(mapper, pipeline):
+    """kind:"benchmarks" sections with target_checks must ingest every <base>,
     <base>_ratio and <base>_check the producer emits across all model
-    families. This is the whitelist that previously dropped whisper's
-    latency_check — regression target for the original bug."""
+    families. Step names stay benchmark_summary_<tier>."""
     target_data = {k: 1.0 for k in _TARGET_CHECKS_KEYS}
+    report = {
+        "metadata": {"model_name": "test", "device": "test"},
+        "sections": [
+            {"kind": "benchmarks", "data": {"model_name": "test", "target_checks": {"functional": target_data}}}
+        ],
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report)
+    got = _measurement_names(result, "benchmark_summary_functional")
+    missing = _TARGET_CHECKS_KEYS - got
+    assert not missing, f"target_checks whitelist missing keys: {sorted(missing)}"
+
+
+def test_legacy_benchmarks_summary_still_produces_summary_run_type(mapper, pipeline):
+    """The legacy benchmarks_summary top-level list still uses run_type=benchmark_summary."""
+    bs = {"model_name": "test", "device": "test", "ttft": 1.0, "num_requests": 10}
+    result = mapper.map_benchmark_data(pipeline, 1, {"benchmarks_summary": [bs]})
+    summary_runs = [r for r in result if r.run_type == "benchmark_summary"]
+    assert len(summary_runs) == 1
+
+
+_LEGACY_TARGET_CHECKS_KEYS = {
+    "ttft",
+    "ttft_ratio",
+    "ttft_check",
+    "ttft_ms",
+    "ttft_ms_ratio",
+    "ttft_ms_check",
+    "tput_user",
+    "tput_user_ratio",
+    "tput_user_check",
+    "tput",
+    "tput_ratio",
+    "tput_check",
+    "avg_gen_time",
+    "avg_gen_time_ratio",
+    "avg_gen_time_check",
+    "latency",
+    "latency_ratio",
+    "latency_check",
+    "e2el_ms",
+    "e2el_ms_ratio",
+    "e2el_ms_check",
+    "tput_prefill",
+    "tput_prefill_ratio",
+    "tput_prefill_check",
+    "rtr_check",
+}
+
+
+def test_legacy_target_checks_via_benchmarks_summary(mapper, pipeline):
+    """Legacy benchmarks_summary path still processes target_checks with the
+    original allowlist."""
+    target_data = {k: 1.0 for k in _LEGACY_TARGET_CHECKS_KEYS}
     result = mapper.map_benchmark_data(
         pipeline,
         1,
         {"benchmarks_summary": [{"model_name": "test", "target_checks": {"functional": target_data}}]},
     )
     got = _measurement_names(result, "benchmark_summary_functional")
-    missing = _TARGET_CHECKS_KEYS - got
-    assert not missing, f"target_checks whitelist missing keys: {sorted(missing)}"
+    missing = _LEGACY_TARGET_CHECKS_KEYS - got
+    assert not missing, f"legacy target_checks whitelist missing keys: {sorted(missing)}"
+
+
+def test_sections_benchmarks_media_nesting(mapper, pipeline):
+    """Media/image blocks nest metrics under data.Benchmarks — the detailed mapper
+    must unwrap it."""
+    report = {
+        "metadata": {"model_name": "test", "device": "test"},
+        "sections": [{"kind": "benchmarks", "data": {"Benchmarks": {"latency": 42.5, "num_requests": 5}}}],
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report)
+    benchmark_runs = [r for r in result if r.run_type == "benchmark"]
+    assert len(benchmark_runs) == 1
+    names = {m.name for m in benchmark_runs[0].measurements}
+    assert "latency" in names
+    assert "num_requests" in names
+
+
+def test_sections_benchmarks_config_params(mapper, pipeline):
+    """kind:"benchmarks" sections should capture benchmark_tool and requested dimensions."""
+    report = {
+        "metadata": {"model_name": "test", "device": "test"},
+        "sections": [
+            {
+                "kind": "benchmarks",
+                "targets": {"tool": "vllm"},
+                "data": {
+                    "num_requests": 10,
+                    "requested_concurrency": 32,
+                    "status": "FUNCTIONAL",
+                },
+            }
+        ],
+    }
+    result = mapper.map_benchmark_data(pipeline, 1, report)
+    benchmark_runs = [r for r in result if r.run_type == "benchmark"]
+    assert len(benchmark_runs) == 1
+    params = benchmark_runs[0].config_params
+    assert params["benchmark_tool"] == "vllm"
+    assert params["requested_concurrency"] == 32
+    assert params["status"] == "FUNCTIONAL"
 
 
 def test_evals_whitelist_covers_all_eval_metrics(mapper, pipeline):
@@ -1256,11 +1469,193 @@ def test_sections_benchmarks_block_produces_summary_checks(mapper, pipeline):
         ],
     }
     result = mapper.map_benchmark_data(pipeline, 1, report_data)
-    assert len([r for r in result if r.run_type == "benchmark_summary"]) == 1
+    assert len([r for r in result if r.run_type == "benchmark"]) == 1
+    assert len([r for r in result if r.run_type == "benchmark_summary"]) == 0
     for tier in ("functional", "complete", "target"):
         checks = _measurement_names(result, f"benchmark_summary_{tier}")
-        assert "ttft_ms_check" in checks  # captured via the widened allowlist
+        assert "ttft_ms_check" in checks
         assert "tput_user_check" in checks
+
+
+def test_image_measured_ttft_and_concurrency_are_preserved(mapper, pipeline):
+    report = {
+        "metadata": {"model_name": "SDXL", "device": "P150"},
+        "sections": [
+            {
+                "kind": "benchmarks",
+                "task_type": "image",
+                "data": {
+                    "Benchmarks": {
+                        "num_requests": 8,
+                        "num_concurrent_requests": 4,
+                        "ttft_ms": 2500.0,
+                        "target_checks": {"target": {"ttft_ms": 3000.0, "ttft_ms_check": 2}},
+                    }
+                },
+            }
+        ],
+    }
+    run = mapper.map_benchmark_data(pipeline, 1, report)[0]
+    values = {(m.step_name, m.name): m.value for m in run.measurements}
+    assert run.batch_size == 4
+    assert values["benchmark", "ttft_ms"] == 2500.0
+    assert values["benchmark_summary_target", "ttft_ms"] == 3000.0
+    assert "num_concurrent_requests" not in {m.name for m in run.measurements}
+
+
+@pytest.mark.parametrize("wrapped", [False, True])
+def test_tts_percentiles_keep_seconds_and_rtr_targets(mapper, pipeline, wrapped):
+    data = {
+        "num_requests": 4,
+        "ttft": 0.25,
+        "ttft_p50": 0.2,
+        "ttft_p90": 0.4,
+        "ttft_p95": 0.6,
+        "rtr": 8.0,
+        "target_checks": {"target": {"rtr": 4.0, "rtr_ratio": 2.0, "rtr_check": 2}},
+    }
+    report = {
+        "metadata": {"model_name": "speecht5", "device": "P150"},
+        "sections": [
+            {"kind": "benchmarks", "task_type": "text_to_speech", "data": {"Benchmarks": data} if wrapped else data}
+        ],
+    }
+    run = mapper.map_benchmark_data(pipeline, 1, report)[0]
+    values = {(m.step_name, m.name): m.value for m in run.measurements}
+    for name in ("ttft", "ttft_p50", "ttft_p90", "ttft_p95", "rtr"):
+        assert values["benchmark", name] == data[name]
+    for name, value in data["target_checks"]["target"].items():
+        assert values["benchmark_summary_target", name] == value
+
+
+def test_whisper_sweep_keeps_both_rows_and_section_checks_once(mapper, pipeline, monkeypatch):
+    import shared
+
+    monkeypatch.setattr(shared, "report_failure", False)
+    report = {
+        "metadata": {"model_name": "openai/whisper-large-v3", "device": "P150"},
+        "sections": [
+            {
+                "kind": "benchmarks",
+                "task_type": "audio",
+                "data": {
+                    "records": [
+                        {
+                            "name": "Benchmarks 30s",
+                            "num_requests": 2,
+                            "ttft": 0.2,
+                            "rtr": 8.1,
+                            "t/s/u": 7.0,
+                            "streaming_enabled": True,
+                            "preprocessing_enabled": False,
+                        },
+                        {
+                            "name": "Benchmarks 60s",
+                            "num_requests": 2,
+                            "ttft": 0.4,
+                            "rtr": 7.9,
+                            "t/s/u": 6.5,
+                            "streaming_enabled": True,
+                            "preprocessing_enabled": False,
+                        },
+                    ],
+                    "target_checks": {"target": {"ttft": 0.5, "ttft_ratio": 0.8, "ttft_check": 2}},
+                },
+            }
+        ],
+    }
+    original = copy.deepcopy(report)
+    runs = mapper.map_benchmark_data(pipeline, 1, report)
+    assert len(runs) == 3  # two measured rows plus the section-level grading
+    rows = {run.dataset_name: run for run in runs}
+    for record in report["sections"][0]["data"]["records"]:
+        run = rows[record["name"]]
+        assert {m.step_name for m in run.measurements} == {"benchmark"}
+        assert {m.name: m.value for m in run.measurements} == {
+            key: record[key] for key in ("num_requests", "ttft", "rtr", "t/s/u")
+        }
+        assert run.config_params["streaming_enabled"] is True
+        assert run.config_params["preprocessing_enabled"] is False
+    checks = [m for run in runs for m in run.measurements if m.name == "ttft_check"]
+    assert len(checks) == 1 and checks[0].value == 2
+    assert report == original
+    assert not shared.is_failure()
+
+
+def test_media_records_skip_malformed_rows_and_keep_row_checks(mapper, pipeline):
+    report = {
+        "metadata": {"model_name": "m", "device": "P150"},
+        "sections": [
+            {
+                "kind": "benchmarks",
+                "data": {
+                    "records": [
+                        None,
+                        "bad",
+                        42,
+                        {"name": "sample", "ttft": 0.5, "target_checks": {"target": {"ttft_check": 3}}},
+                    ]
+                },
+            }
+        ],
+    }
+    runs = mapper.map_benchmark_data(pipeline, 1, report)
+    assert len(runs) == 1
+    assert runs[0].dataset_name == "sample"
+    assert {(m.step_name, m.name): m.value for m in runs[0].measurements} == {
+        ("benchmark", "ttft"): 0.5,
+        ("benchmark_summary_target", "ttft_check"): 3,
+    }
+
+
+def test_sections_canonical_vllm_block_preserves_metrics_operating_point_and_tool(mapper, pipeline):
+    report_data = {
+        "metadata": {
+            "model_name": "Kimi-K2.7-Code",
+            "model_repo": "moonshotai/Kimi-K2.7-Code",
+            "device": "SUPER_CLUSTER",
+        },
+        "sections": [
+            {
+                "kind": "benchmarks",
+                "targets": {"tool": "vllm"},
+                "data": {
+                    "concurrency": 32,
+                    "input_sequence_length": 128,
+                    "output_sequence_length": 1024,
+                    "num_requests": 128,
+                    "error_request_count": 0,
+                    "mean_ttft_ms": 375.06,
+                    "p50_ttft": 347.13,
+                    "p99_ttft": 850.10,
+                    "mean_tpot_ms": 6.42,
+                    "request_throughput": 26.49,
+                    "tps_output_throughput": 3391.05,
+                },
+            }
+        ],
+    }
+
+    result = mapper.map_benchmark_data(pipeline, 1, report_data)
+
+    assert len(result) == 1
+    run = result[0]
+    assert run.run_type == "benchmark"
+    assert run.ml_model_name == "moonshotai/Kimi-K2.7-Code"
+    assert run.batch_size == 32
+    assert run.input_sequence_length == 128
+    assert run.output_sequence_length == 1024
+    assert run.config_params["benchmark_tool"] == "vllm"
+    assert {
+        "num_requests",
+        "error_request_count",
+        "mean_ttft_ms",
+        "p50_ttft",
+        "p99_ttft",
+        "mean_tpot_ms",
+        "request_throughput",
+        "tps_output_throughput",
+    } <= _measurement_names(result, "benchmark")
 
 
 def test_sections_vllm_block_produces_benchmark_run(mapper, pipeline):
@@ -1348,7 +1743,7 @@ def test_sections_end_to_end_flux(mapper, pipeline):
     result = mapper.map_benchmark_data(pipeline, 1, report_data)
     run_types = {r.run_type for r in result}
     assert "eval" in run_types
-    assert "benchmark_summary" in run_types
+    assert "benchmark" in run_types
     assert "acceptance_criteria" in run_types  # top-level, unaffected by schema
     assert "accuracy_check" in _measurement_names(result, "eval")
 
@@ -1481,3 +1876,88 @@ def test_bare_model_name_resolved_via_hf_model_repo_in_spec(mapper, pipeline):
     result = mapper.map_benchmark_data(pipeline, 1, report_data, model_spec_data)
     names = {r.ml_model_name for r in result}
     assert names == {"Qwen/Qwen3-32B"}, f"expected spec fallback to full, got {names}"
+
+
+@pytest.mark.parametrize(
+    "metric",
+    [
+        "tps_decode_throughput",
+        "tps_prefill_throughput",
+        "std_ttft_ms",
+        "output_blocks_per_second",
+        "mean_block_latency_ms",
+    ],
+)
+def test_canonical_tool_metrics_survive_mapping(mapper, pipeline, metric):
+    report = {
+        "metadata": {"model_name": "test-model", "device": "N300"},
+        "sections": [{"kind": "benchmarks", "targets": {"tool": "vllm"}, "data": {metric: 12.5}}],
+    }
+    runs = mapper.map_benchmark_data(pipeline, 1, report)
+    assert {m.name: m.value for m in runs[0].measurements}[metric] == 12.5
+
+
+def test_requested_and_observed_dimensions_remain_distinct(mapper, pipeline):
+    report = {
+        "metadata": {"model_name": "test-model", "device": "N300"},
+        "sections": [
+            {
+                "kind": "benchmarks",
+                "targets": {"tool": "vllm"},
+                "data": {
+                    "num_requests": 2,
+                    "input_sequence_length": 127,
+                    "output_sequence_length": 32.5,
+                    "requested_input_sequence_length": 128,
+                    "requested_output_sequence_length": 64,
+                    "requested_concurrency": 4,
+                    "concurrency": 3,
+                },
+            }
+        ],
+    }
+    run = mapper.map_benchmark_data(pipeline, 1, report)[0]
+    assert run.input_sequence_length == 127
+    assert run.output_sequence_length == 32  # existing integer warehouse column
+    assert run.config_params["observed_output_sequence_length"] == 32.5
+    assert run.config_params["requested_output_sequence_length"] == 64
+    assert run.config_params["requested_concurrency"] == 4
+
+
+def test_invalid_measurement_marks_partial_failure(mapper, pipeline, monkeypatch):
+    import shared
+
+    monkeypatch.setattr(shared, "report_failure", False)
+    report = {
+        "metadata": {"model_name": "test-model", "device": "N300"},
+        "sections": [{"kind": "benchmarks", "data": {"num_requests": "broken", "mean_ttft_ms": 10}}],
+    }
+    runs = mapper.map_benchmark_data(pipeline, 1, report)
+    assert shared.is_failure()
+    assert any(m.name == "mean_ttft_ms" for m in runs[0].measurements)
+
+
+def test_unknown_numeric_summary_metric_keeps_empty_history_and_flags_loss(mapper, pipeline, monkeypatch):
+    import shared
+
+    monkeypatch.setattr(shared, "report_failure", False)
+    runs = mapper.map_benchmark_data(
+        pipeline,
+        1,
+        {
+            "metadata": {"model_name": "test-model", "device": "N300"},
+            "sections": [{"kind": "benchmarks", "data": {"new_latency_metric": 12}}],
+        },
+    )
+    assert len(runs) == 1 and not runs[0].measurements
+    assert shared.is_failure()
+
+
+def test_intentional_placeholder_is_not_a_collection_error(mapper, pipeline, monkeypatch):
+    import shared
+
+    monkeypatch.setattr(shared, "report_failure", False)
+    report = {key: [{"model": "example", "device": "N300"}] for key in ["benchmarks", "benchmarks_summary", "evals"]}
+    runs = mapper.map_benchmark_data(pipeline, 1, report)
+    assert len(runs) == 3 and all(not r.measurements for r in runs)
+    assert not shared.is_failure()
