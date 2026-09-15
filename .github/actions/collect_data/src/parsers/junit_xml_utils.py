@@ -49,10 +49,12 @@ def get_at_most_one_single_child_element_(element, tag_name):
     return potential_expected_blocks[0] if len(potential_expected_blocks) else None
 
 
-def get_pytest_testcase_properties(testcase_element):
-    properties_block = get_at_most_one_single_child_element_(testcase_element, "properties")
+def get_properties_(element):
+    """Properties of an element as a dict, or None if it has no <properties> block."""
+    properties_block = get_at_most_one_single_child_element_(element, "properties")
 
-    assert properties_block is not None
+    if properties_block is None:
+        return None
 
     def get_property_as_dict_(property_):
         assert property_.tag == "property"
@@ -60,6 +62,18 @@ def get_pytest_testcase_properties(testcase_element):
         return dict([(property_.attrib["name"], property_.attrib["value"])])
 
     return reduce(merge, map(get_property_as_dict_, properties_block), {})
+
+
+def get_pytest_testcase_properties(testcase_element):
+    properties = get_properties_(testcase_element)
+
+    assert properties is not None
+
+    return properties
+
+
+def get_pytest_testsuite_properties(testsuite_element):
+    return get_properties_(testsuite_element) or {}
 
 
 def get_optional_child_element_exists_(parent_element, tag_name):

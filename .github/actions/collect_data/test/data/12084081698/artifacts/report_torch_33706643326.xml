@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <testsuites>
     <testsuite name="pytest" errors="0" failures="0" skipped="213" tests="250" time="46.321" timestamp="2024-11-29T14:51:54.464026+00:00" hostname="f775ec012985">
+        <properties>
+            <property name="tags" value="{&quot;query_params&quot;: {&quot;source&quot;: {&quot;test_id&quot;: null, &quot;id_files&quot;: null}, &quot;filters&quot;: {&quot;id_files_ignore&quot;: [&quot;ids/blacklist.txt&quot;], &quot;operators&quot;: null, &quot;exclude_operators&quot;: false, &quot;sample&quot;: 0.1, &quot;test_plan&quot;: [&quot;GEN&quot;, &quot;BASIC&quot;]}}, &quot;frontend&quot;: {&quot;frontend&quot;: &quot;tt-xla&quot;, &quot;frontend_version&quot;: &quot;1.5.0.dev20260818002307&quot;}}"/>
+        </properties>
         <testcase classname="tests.torch.test_basic" name="test_abs" time="2.283" />
         <testcase classname="tests.torch.test_basic" name="test_add" time="0.638" />
         <testcase classname="tests.torch.test_basic" name="test_concat_dim0" time="0.434" />
