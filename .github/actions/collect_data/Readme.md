@@ -98,3 +98,21 @@ You can also trigger data workflow manually for some commit to test
 ```
 gh workflow run "[internal] Produce analytic data" --ref vmilosevic/data_collection -f test_workflow_run_id=11253719387
 ```
+
+## Shield report sections and metric drift
+
+`ShieldBenchmarkDataMapper._SECTION_METRIC_STEPS` declares which report section
+kinds produce benchmark or eval measurements. It includes `agentic_traces`, whose
+metrics retain their original names and units. Replay labels identify datasets;
+scenario, trace source, workload settings, and status are stored in `config_params`.
+Fractional observed lengths such as `mean_isl` remain measurements.
+
+`_CONFIG_FIELDS_BY_STEP` lists report fields stored as configuration rather than
+measurements, including `num_clients` and `subprocess_rc`. Report-level nested
+metadata is stored as `report_metadata` to preserve the model spec's `metadata`.
+
+The tt-shield drift checker reads these literal declarations and the metric lists
+without importing this module. Add a new section route here when its payload uses
+the supported benchmark or eval shapes. A new shape needs a parser and regression
+test as well. Unrecognized kinds remain unsupported and should trigger drift alerts.
+Changes apply to future collection; historical reports need explicit reprocessing.

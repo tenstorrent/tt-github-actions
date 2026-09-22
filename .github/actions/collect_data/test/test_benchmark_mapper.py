@@ -1961,3 +1961,119 @@ def test_intentional_placeholder_is_not_a_collection_error(mapper, pipeline, mon
     runs = mapper.map_benchmark_data(pipeline, 1, report)
     assert len(runs) == 3 and all(not r.measurements for r in runs)
     assert not shared.is_failure()
+
+
+def test_agentic_replay_preserves_all_numeric_results_and_configuration(mapper, pipeline):
+    import json
+    from pathlib import Path
+
+    report = json.loads((Path(__file__).parent / "data/agentic_trace_replay.json").read_text())
+    original = copy.deepcopy(report)
+    spec = {"hf_model_repo": "moonshotai/Kimi-K2.7-Code", "model_type": "LLM", "metadata": {"spec": True}}
+    rows = mapper.map_benchmark_data(pipeline, 1, report, spec)
+    benchmarks = [r for r in rows if r.run_type == "benchmark"]
+    assert len(benchmarks) == 1
+    row = benchmarks[0]
+    data = report["sections"][0]["data"]
+    assert row.ml_model_name == "moonshotai/Kimi-K2.7-Code"
+    assert row.dataset_name == data["label"]
+    assert row.batch_size == 32
+    assert row.input_sequence_length is None  # mean_isl is fractional, not a requested length
+    assert row.config_params["benchmark_tool"] == "aiperf"
+    assert row.config_params["report_section_kind"] == "agentic_traces"
+    assert row.config_params["scenario"] == data["scenario"]
+    assert row.config_params["metadata"] == {"spec": True}
+    assert row.config_params["report_metadata"] == data["metadata"]
+    metrics = {m.name: m.value for m in row.measurements}
+    assert len(metrics) == len(row.measurements)
+    assert metrics["mean_ttft_ms"] == 13511.305970523252
+    assert metrics["mean_tpot_ms"] == 9.037311583491599
+    assert metrics["mean_isl"] == 106051.41853462697
+    configuration = {
+        "benchmark_duration",
+        "warmup_requests_per_lane",
+        "warmup_grace_period",
+        "num_dataset_entries",
+        "slice_duration",
+        "max_context_length",
+        "random_seed",
+        "failed_request_threshold",
+        "trajectory_start_min_ratio",
+        "trajectory_start_max_ratio",
+        "dataset_num_entries",
+        "was_cancelled",
+        "submission_valid",
+    }
+    for key, value in data.items():
+        if key in configuration:
+            assert row.config_params[key] == value
+            assert key not in metrics
+        elif (
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and key not in {"concurrency", "max_concurrency"}
+        ):
+            assert metrics[key] == value, key
+    assert report == original
+    assert spec == {"hf_model_repo": "moonshotai/Kimi-K2.7-Code", "model_type": "LLM", "metadata": {"spec": True}}
+    assert len([r for r in rows if r.run_type == "acceptance_criteria"]) == 1
+
+
+@pytest.mark.parametrize("sectioned", [False, True])
+def test_missing_eval_metrics_and_exit_status_are_preserved(mapper, pipeline, sectioned):
+    data = {
+        "score": 1,
+        "mean_seconds_per_task": 2.4370533917525776,
+        "num_generated": 2,
+        "wer": 0.12,
+        "subprocess_rc": 0,
+    }
+    report = {"sections": [{"kind": "evals", "data": data}]} if sectioned else {"evals": [data]}
+    report["metadata"] = {"model_name": "test/model"}
+    row = mapper.map_benchmark_data(pipeline, 1, report)[0]
+    assert {m.name: m.value for m in row.measurements} == {k: v for k, v in data.items() if k != "subprocess_rc"}
+    assert row.config_params["subprocess_rc"] == 0
+
+
+def test_nested_video_and_embedding_fields_are_preserved(mapper, pipeline):
+    report = {
+        "sections": [
+            {
+                "kind": "benchmarks",
+                "data": {
+                    "Benchmarks": {
+                        "num_successful": 2,
+                        "num_clients": 1,
+                        "concurrency": 32,
+                    }
+                },
+            }
+        ]
+    }
+    report["metadata"] = {"model_name": "test/model"}
+    row = mapper.map_benchmark_data(pipeline, 1, report)[0]
+    assert {m.name: m.value for m in row.measurements} == {"num_successful": 2}
+    assert row.config_params["num_clients"] == 1
+    assert row.batch_size == 32
+
+
+@pytest.mark.parametrize("payload", [{"score": 1, "wer": 0.12}, [{"score": 1, "wer": 0.12}, None]])
+def test_nested_eval_summary_preserves_metrics(mapper, pipeline, payload):
+    report = {"sections": [{"kind": "evals", "title": "Audio eval", "data": {"evals_summary": payload}}]}
+    report["metadata"] = {"model_name": "test/model"}
+    rows = mapper.map_benchmark_data(pipeline, 1, report)
+    assert len(rows) == 1
+    assert {m.name: m.value for m in rows[0].measurements} == {"score": 1, "wer": 0.12}
+    assert rows[0].dataset_name == "Audio eval"
+
+
+def test_new_benchmark_kind_uses_declared_routing(mapper, pipeline, monkeypatch):
+    monkeypatch.setitem(mapper._SECTION_METRIC_STEPS, "future_replay", "benchmark")
+    report = {
+        "metadata": {"model_name": "test/model"},
+        "sections": [{"kind": "future_replay", "data": {"Benchmarks": {"mean_ttft_ms": 12.5}}}],
+    }
+    row = mapper.map_benchmark_data(pipeline, 1, report)[0]
+    assert row.run_type == "benchmark"
+    assert row.config_params["report_section_kind"] == "future_replay"
+    assert {m.name: m.value for m in row.measurements} == {"mean_ttft_ms": 12.5}
