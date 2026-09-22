@@ -2154,6 +2154,44 @@ def test_nested_eval_summary_preserves_metrics(mapper, pipeline, payload):
     assert rows[0].dataset_name == "Audio eval"
 
 
+@pytest.mark.parametrize("as_list", [False, True])
+@pytest.mark.parametrize("identity", [{}, {"task_name": None}, {"task_name": ""}, {"task_name": "child_task"}])
+def test_nested_eval_summary_preserves_task_identity(mapper, pipeline, as_list, identity):
+    entry = {"wer": 0.12, **identity}
+    report = {
+        "metadata": {"model_name": "test/model"},
+        "sections": [
+            {
+                "kind": "evals",
+                "title": "Audio eval",
+                "data": {"task_name": "librispeech", "evals_summary": [entry] if as_list else entry},
+            }
+        ],
+    }
+    original = copy.deepcopy(report)
+    rows = mapper.map_benchmark_data(pipeline, 1, report)
+    assert len(rows) == 1
+    assert rows[0].dataset_name == (identity.get("task_name") or "librispeech")
+    assert {m.name: m.value for m in rows[0].measurements} == {"wer": 0.12}
+    assert report == original
+
+
+@pytest.mark.parametrize("task_name", [None, ""])
+def test_empty_eval_task_name_falls_back_to_section_title(mapper, pipeline, task_name):
+    report = {
+        "metadata": {"model_name": "test/model"},
+        "sections": [
+            {
+                "kind": "evals",
+                "title": "Audio eval",
+                "data": {"task_name": task_name, "evals_summary": {"task_name": task_name, "wer": 0.12}},
+            }
+        ],
+    }
+    row = mapper.map_benchmark_data(pipeline, 1, report)[0]
+    assert row.dataset_name == "Audio eval"
+
+
 def test_new_benchmark_kind_uses_declared_routing(mapper, pipeline, monkeypatch):
     monkeypatch.setitem(mapper._SECTION_METRIC_STEPS, "future_replay", "benchmark")
     report = {

@@ -1006,9 +1006,9 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                         "model": meta.get("model_name"),
                         "model_repo": meta.get("model_repo"),
                         "device": meta.get("device"),
-                        "task_name": entry.get("task_name") or block.get("title"),
                         "task_type": block.get("task_type"),
                         **entry,
+                        "task_name": entry.get("task_name") or data.get("task_name") or block.get("title"),
                     }
                 )
 
