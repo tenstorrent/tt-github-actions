@@ -359,6 +359,75 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             return full_name
         return _prefer_full_model_name(next((name for name in candidates if name), None), model_spec_data)
 
+    # Report routing and stored configuration are read statically by tt-shield's
+    # drift checker. Keep these declarations literal and use them for ingestion.
+    _SECTION_METRIC_STEPS = {
+        "vllm": "benchmark",
+        "benchmarks": "benchmark",
+        "agentic_traces": "benchmark",
+        "evals": "eval",
+    }
+    _CONFIG_FIELDS_BY_STEP = {
+        "benchmark": [
+            "requested_concurrency",
+            "requested_input_sequence_length",
+            "requested_output_sequence_length",
+            "status",
+            "priority",
+            "metric_semantics",
+            "output_block_size",
+            "output_blocks_per_request",
+            "primary_throughput_metric",
+            "primary_latency_metric",
+            "streaming_enabled",
+            "preprocessing_enabled",
+            "num_clients",
+            "date",
+            "backend",
+            "task_type",
+            "trace_source",
+            "label",
+            "mode",
+            "tokenizer_id",
+            "scenario",
+            "public_dataset",
+            "benchmark_duration",
+            "warmup_requests_per_lane",
+            "warmup_grace_period",
+            "num_dataset_entries",
+            "slice_duration",
+            "max_context_length",
+            "random_seed",
+            "failed_request_threshold",
+            "trajectory_start_min_ratio",
+            "trajectory_start_max_ratio",
+            "dataset_loader",
+            "dataset_hf_name",
+            "dataset_num_entries",
+            "was_cancelled",
+            "submission_valid",
+            "submission_status",
+            "error_summary",
+            "aiperf_version",
+            "aiperf_schema_version",
+            "benchmark_id",
+            "run_started_at",
+            "run_ended_at",
+            "inferencex_git_ref",
+            "task",
+            "resident",
+            "cache_mode",
+            "history_mode",
+            "max_tokens",
+            "max_tokens_mode",
+            "swo_session_id",
+            "swo_source_label",
+            "swo_bench_version",
+            "metadata",
+        ],
+        "eval": ["subprocess_rc"],
+    }
+
     _BENCHMARK_METRICS = [
         # LLM core
         "mean_ttft_ms",
@@ -369,6 +438,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         "std_tps",
         "mean_e2el_ms",
         "num_requests",
+        "num_successful",
         "request_throughput",
         "total_token_throughput",
         "total_input_tokens",
@@ -416,6 +486,74 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         "mean_block_latency_ms",
         "goodput_pct",
         "error_request_count",
+        # Agentic trace replay (AIPerf / SwarmOne): preserve producer names and units.
+        "min_ttft_ms",
+        "max_ttft_ms",
+        "mean_ttst_ms",
+        "mean_ttfot_ms",
+        "mean_effective_latency_ms",
+        "median_effective_latency_ms",
+        "p99_effective_latency_ms",
+        "output_token_throughput",
+        "output_token_throughput_per_user",
+        "median_output_token_throughput_per_user",
+        "e2e_output_token_throughput_per_user",
+        "input_token_throughput",
+        "effective_prefill_throughput",
+        "active_prefill_throughput",
+        "effective_decode_throughput",
+        "active_decode_throughput",
+        "effective_concurrency",
+        "effective_prefill_concurrency",
+        "effective_decode_concurrency",
+        "mean_tokens_in_flight",
+        "max_tokens_in_flight",
+        "completed",
+        "completed_with_errors",
+        "error_rate_pct",
+        "mean_isl",
+        "mean_osl",
+        "measured_benchmark_duration",
+        "context_overflow_count",
+        "osl_mismatch_count",
+        "osl_mismatch_diff_pct",
+        "theoretical_prefix_cache_hit_pct",
+        "credit_drop_count",
+        "mean_credit_to_start_latency_ms",
+        "connection_reuse_rate",
+        "mean_http_req_waiting_ms",
+        "p50_adj_ttft_ms",
+        "p90_adj_ttft_ms",
+        "p50_adj_e2el_ms",
+        "p90_adj_e2el_ms",
+        "p50_adj_tpot_ms",
+        "p90_adj_tpot_ms",
+        "branch_children_spawned",
+        "branch_children_completed",
+        "branch_children_errored",
+        "branch_children_truncated",
+        "branch_children_delayed",
+        "branch_parents_suspended",
+        "branch_parents_resumed",
+        "branch_parents_failed_due_to_child_error",
+        "branch_joins_suppressed",
+        "measured_prefix_cache_hit_pct",
+        "prefix_cache_hit_tokens_measured",
+        "prefix_cache_prompt_tokens_measured",
+        "error_rate",
+        "min_e2el_ms",
+        "max_e2el_ms",
+        "p90_output_token_throughput_per_user",
+        "min_output_token_throughput_per_user",
+        "prefill_tok_per_sec_mean",
+        "prefill_tok_per_sec_p50",
+        "prefill_tok_per_sec_p90",
+        "active_throughput_tok_per_s",
+        "concurrency_peak",
+        "concurrency_mean",
+        "ready_starved_events",
+        "pace_idle_ms",
+        "tool_idle_ms",
         # Image / video / diffusion
         "ttft_ms",
         "mean_latency_ms",
@@ -510,12 +648,13 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         "observed_output_sequence_length",
         "output_blocks_per_request",
         "target_check",
+        "report_blocks",
     }
 
     def _process_benchmarks(self, pipeline, job, report_data, metadata=None, model_spec_data=None):
         """
         Processes benchmark entries and creates CompleteBenchmarkRun objects for each entry.
-        Handles kind:"vllm" sections, kind:"benchmarks" sections, and legacy benchmarks lists.
+        Handles declared benchmark section kinds and legacy benchmarks lists.
         """
         meta = metadata or {}
         benchmarks = list(report_data.get("benchmarks", []))
@@ -524,18 +663,18 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             if not isinstance(block, dict):
                 continue
             kind = block.get("kind")
-            if kind not in ("vllm", "benchmarks"):
+            if self._SECTION_METRIC_STEPS.get(kind) != "benchmark":
                 continue
             data = block.get("data")
             if not isinstance(data, dict):
                 data = {}
-            if kind == "benchmarks":
+            if kind != "vllm":
                 payload = data.get("Benchmarks", data)
                 if not isinstance(payload, dict):
                     payload = data
             else:
                 payload = data
-            records = payload.get("records") if kind == "benchmarks" else None
+            records = payload.get("records") if kind != "vllm" else None
             if isinstance(records, list):
                 # Whisper's section-level checks grade only the 60s sweep.
                 # Keep them once on the section, never copy them to each row.
@@ -552,16 +691,20 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "device": meta.get("device"),
                     **row,
                 }
-                if kind == "benchmarks":
-                    entry["task_type"] = block.get("task_type")
+                if kind != "vllm":
+                    entry["_section_kind"] = kind
+                    entry["task_type"] = block.get("task_type") or row.get("task_type")
                     targets = block.get("targets")
-                    entry["benchmark_tool"] = targets.get("tool") if isinstance(targets, dict) else None
+                    entry["benchmark_tool"] = (targets.get("tool") if isinstance(targets, dict) else None) or row.get(
+                        "backend"
+                    )
                     entry["_from_sections"] = True
                 benchmarks.append(entry)
 
         results = []
         for benchmark in benchmarks:
             from_sections = benchmark.pop("_from_sections", False)
+            section_kind = benchmark.pop("_section_kind", None)
             if metadata:
                 logger.debug(f"Processing benchmark with metadata included...")
                 benchmark = {**benchmark, **metadata}  # metadata values take precedence
@@ -594,29 +737,21 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 benchmark_tool = benchmark.get("benchmark_tool")
                 if benchmark_tool:
                     config_params["benchmark_tool"] = benchmark_tool
-                for key in (
-                    "requested_concurrency",
-                    "requested_input_sequence_length",
-                    "requested_output_sequence_length",
-                    "status",
-                    "priority",
-                    "metric_semantics",
-                    "output_block_size",
-                    "output_blocks_per_request",
-                    "primary_throughput_metric",
-                    "primary_latency_metric",
-                    "streaming_enabled",
-                    "preprocessing_enabled",
-                ):
+                config_params["report_section_kind"] = section_kind
+                for key in self._CONFIG_FIELDS_BY_STEP["benchmark"]:
                     if benchmark.get(key) is not None:
-                        config_params[key] = benchmark[key]
+                        # Keep report metadata separate from the model spec's metadata.
+                        dest = "report_metadata" if key == "metadata" else key
+                        config_params[dest] = benchmark[key]
 
                 for key in ("concurrency", "input_sequence_length", "output_sequence_length"):
                     observed = benchmark.get(f"observed_{key}", benchmark.get(key))
                     if observed is not None:
                         config_params[f"observed_{key}"] = observed
 
-                _known_benchmark_keys = set(self._BENCHMARK_METRICS) | self._DIMENSION_KEYS
+                _known_benchmark_keys = (
+                    set(self._BENCHMARK_METRICS) | self._DIMENSION_KEYS | set(self._CONFIG_FIELDS_BY_STEP["benchmark"])
+                )
                 unmapped_benchmark = {
                     k
                     for k, v in benchmark.items()
@@ -681,7 +816,11 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     model_type=(model_spec_data.get("model_type") if model_spec_data else None),
                     input_seq_length=input_seq,
                     output_seq_length=output_seq,
-                    dataset_name=(benchmark.get("name") or model_name) if from_sections else benchmark.get("model_id"),
+                    dataset_name=(
+                        benchmark.get("name") or benchmark.get("label") or benchmark.get("scenario") or model_name
+                    )
+                    if from_sections
+                    else benchmark.get("model_id"),
                     batch_size=batch,
                     config_params=config_params if not from_sections else (config_params or None),
                     docker_image=(model_spec_data or {}).get("docker_image") or job.docker_image,
@@ -852,21 +991,26 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         meta = metadata or {}
         evals = list(report_data.get("evals", []))
         for block in report_data.get("sections") or []:
-            if not isinstance(block, dict) or block.get("kind") != "evals":
+            if not isinstance(block, dict) or self._SECTION_METRIC_STEPS.get(block.get("kind")) != "eval":
                 continue
             data = block.get("data")
             if not isinstance(data, dict):
                 data = {}
-            evals.append(
-                {
-                    "model": meta.get("model_name"),
-                    "model_repo": meta.get("model_repo"),
-                    "device": meta.get("device"),
-                    "task_name": data.get("task_name") or block.get("title"),
-                    "task_type": block.get("task_type"),
-                    **data,
-                }
-            )
+            payload = data.get("evals_summary") or data
+            entries = payload if isinstance(payload, list) else [payload]
+            for entry in entries:
+                if not isinstance(entry, dict):
+                    continue
+                evals.append(
+                    {
+                        "model": meta.get("model_name"),
+                        "model_repo": meta.get("model_repo"),
+                        "device": meta.get("device"),
+                        "task_type": block.get("task_type"),
+                        **entry,
+                        "task_name": entry.get("task_name") or data.get("task_name") or block.get("title"),
+                    }
+                )
 
         results = []
         for eval_entry in evals:
@@ -883,6 +1027,9 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                 [
                     # General eval scores
                     "score",
+                    "mean_seconds_per_task",
+                    "num_generated",
+                    "wer",
                     "published_score",
                     "gpu_reference_score",
                     "accuracy_check",
@@ -932,6 +1079,10 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "main_score",
                 ],
             )
+            config_params = dict(model_spec_data or {})
+            for key in self._CONFIG_FIELDS_BY_STEP["eval"]:
+                if eval_entry.get(key) is not None:
+                    config_params[key] = eval_entry[key]
             results.append(
                 self._create_complete_benchmark_run(
                     pipeline=pipeline,
@@ -946,7 +1097,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     output_seq_length=None,
                     dataset_name=eval_entry.get("task_name"),
                     batch_size=None,
-                    config_params=model_spec_data,
+                    config_params=config_params or None,
                     docker_image=(model_spec_data or {}).get("docker_image") or job.docker_image,
                 )
             )

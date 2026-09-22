@@ -1961,3 +1961,244 @@ def test_intentional_placeholder_is_not_a_collection_error(mapper, pipeline, mon
     runs = mapper.map_benchmark_data(pipeline, 1, report)
     assert len(runs) == 3 and all(not r.measurements for r in runs)
     assert not shared.is_failure()
+
+
+def test_agentic_replay_preserves_all_numeric_results_and_configuration(mapper, pipeline):
+    import json
+    from pathlib import Path
+
+    report = json.loads((Path(__file__).parent / "data/agentic_trace_replay.json").read_text())
+    original = copy.deepcopy(report)
+    spec = {"hf_model_repo": "moonshotai/Kimi-K2.7-Code", "model_type": "LLM", "metadata": {"spec": True}}
+    rows = mapper.map_benchmark_data(pipeline, 1, report, spec)
+    benchmarks = [r for r in rows if r.run_type == "benchmark"]
+    assert len(benchmarks) == 1
+    row = benchmarks[0]
+    data = report["sections"][0]["data"]
+    assert row.ml_model_name == "moonshotai/Kimi-K2.7-Code"
+    assert row.dataset_name == data["label"]
+    assert row.batch_size == 32
+    assert row.input_sequence_length is None  # mean_isl is fractional, not a requested length
+    assert row.config_params["benchmark_tool"] == "aiperf"
+    assert row.config_params["report_section_kind"] == "agentic_traces"
+    assert row.config_params["scenario"] == data["scenario"]
+    assert row.config_params["metadata"] == {"spec": True}
+    assert row.config_params["report_metadata"] == data["metadata"]
+    metrics = {m.name: m.value for m in row.measurements}
+    assert len(metrics) == len(row.measurements)
+    assert metrics["mean_ttft_ms"] == 13511.305970523252
+    assert metrics["mean_tpot_ms"] == 9.037311583491599
+    assert metrics["mean_isl"] == 106051.41853462697
+    configuration = {
+        "benchmark_duration",
+        "warmup_requests_per_lane",
+        "warmup_grace_period",
+        "num_dataset_entries",
+        "slice_duration",
+        "max_context_length",
+        "random_seed",
+        "failed_request_threshold",
+        "trajectory_start_min_ratio",
+        "trajectory_start_max_ratio",
+        "dataset_num_entries",
+        "was_cancelled",
+        "submission_valid",
+    }
+    for key, value in data.items():
+        if key in configuration:
+            assert row.config_params[key] == value
+            assert key not in metrics
+        elif (
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and key not in {"concurrency", "max_concurrency"}
+        ):
+            assert metrics[key] == value, key
+    assert report == original
+    assert spec == {"hf_model_repo": "moonshotai/Kimi-K2.7-Code", "model_type": "LLM", "metadata": {"spec": True}}
+    assert len([r for r in rows if r.run_type == "acceptance_criteria"]) == 1
+
+
+@pytest.mark.parametrize("include_duty_cycle", [False, True])
+def test_swarmone_replay_preserves_metrics_and_settings(mapper, pipeline, include_duty_cycle):
+    import json
+    from pathlib import Path
+
+    report = json.loads((Path(__file__).parent / "data/swarmone_trace_replay.json").read_text())
+    data = report["sections"][0]["data"]
+    duty_cycle = {
+        "active_throughput_tok_per_s",
+        "concurrency_peak",
+        "concurrency_mean",
+        "ready_starved_events",
+        "pace_idle_ms",
+        "tool_idle_ms",
+    }
+    if not include_duty_cycle:
+        for key in duty_cycle:
+            del data[key]
+    original = copy.deepcopy(report)
+    rows = mapper.map_benchmark_data(pipeline, 1, report)
+    assert len(rows) == 1
+    row = rows[0]
+    metrics = {m.name: m.value for m in row.measurements}
+    assert len(metrics) == len(row.measurements)
+    assert row.ml_model_name == "moonshotai/Kimi-K2.7-Code"
+    assert row.dataset_name == data["label"]
+    assert row.batch_size == 1
+    assert row.config_params["benchmark_tool"] == "swo-bench"
+    assert row.config_params["trace_source"] == "swarmone"
+    assert row.config_params["report_section_kind"] == "agentic_traces"
+    for key in (
+        "task",
+        "resident",
+        "cache_mode",
+        "history_mode",
+        "max_tokens",
+        "max_tokens_mode",
+        "max_context_length",
+        "swo_session_id",
+        "swo_source_label",
+        "swo_bench_version",
+    ):
+        assert row.config_params[key] == data[key]
+        assert key not in metrics
+    for key, value in data.items():
+        if (
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and key
+            not in {
+                "concurrency",
+                "max_concurrency",
+                "resident",
+                "max_tokens",
+                "max_context_length",
+            }
+        ):
+            assert metrics[key] == value, key
+    assert metrics["mean_ttft_ms"] == 2553.08
+    assert metrics["prefill_tok_per_sec_p50"] == 276.16
+    assert metrics["error_request_count"] == 0
+    assert len(metrics) == (38 if include_duty_cycle else 32)
+    assert duty_cycle.intersection(metrics) == (duty_cycle if include_duty_cycle else set())
+    # The producer deliberately omits TPOT: its raw ITL is not comparable to AIPerf TPOT.
+    assert "mean_tpot_ms" not in metrics
+    assert "median_tpot_ms" not in metrics
+    assert report == original
+
+
+def test_agentic_replay_sources_remain_separate_in_one_report(mapper, pipeline):
+    import json
+    from pathlib import Path
+
+    fixtures = Path(__file__).parent / "data"
+    report = json.loads((fixtures / "agentic_trace_replay.json").read_text())
+    report["sections"].extend(json.loads((fixtures / "swarmone_trace_replay.json").read_text())["sections"])
+    rows = [r for r in mapper.map_benchmark_data(pipeline, 1, report) if r.run_type == "benchmark"]
+    assert len(rows) == 2
+    assert {r.config_params["benchmark_tool"] for r in rows} == {"aiperf", "swo-bench"}
+    assert len({r.dataset_name for r in rows}) == 2
+    assert [r.batch_size for r in rows] == [32, 1]
+    assert [{m.name: m.value for m in r.measurements}["mean_ttft_ms"] for r in rows] == [
+        13511.305970523252,
+        2553.08,
+    ]
+
+
+@pytest.mark.parametrize("sectioned", [False, True])
+def test_missing_eval_metrics_and_exit_status_are_preserved(mapper, pipeline, sectioned):
+    data = {
+        "score": 1,
+        "mean_seconds_per_task": 2.4370533917525776,
+        "num_generated": 2,
+        "wer": 0.12,
+        "subprocess_rc": 0,
+    }
+    report = {"sections": [{"kind": "evals", "data": data}]} if sectioned else {"evals": [data]}
+    report["metadata"] = {"model_name": "test/model"}
+    row = mapper.map_benchmark_data(pipeline, 1, report)[0]
+    assert {m.name: m.value for m in row.measurements} == {k: v for k, v in data.items() if k != "subprocess_rc"}
+    assert row.config_params["subprocess_rc"] == 0
+
+
+def test_nested_video_and_embedding_fields_are_preserved(mapper, pipeline):
+    report = {
+        "sections": [
+            {
+                "kind": "benchmarks",
+                "data": {
+                    "Benchmarks": {
+                        "num_successful": 2,
+                        "num_clients": 1,
+                        "concurrency": 32,
+                    }
+                },
+            }
+        ]
+    }
+    report["metadata"] = {"model_name": "test/model"}
+    row = mapper.map_benchmark_data(pipeline, 1, report)[0]
+    assert {m.name: m.value for m in row.measurements} == {"num_successful": 2}
+    assert row.config_params["num_clients"] == 1
+    assert row.batch_size == 32
+
+
+@pytest.mark.parametrize("payload", [{"score": 1, "wer": 0.12}, [{"score": 1, "wer": 0.12}, None]])
+def test_nested_eval_summary_preserves_metrics(mapper, pipeline, payload):
+    report = {"sections": [{"kind": "evals", "title": "Audio eval", "data": {"evals_summary": payload}}]}
+    report["metadata"] = {"model_name": "test/model"}
+    rows = mapper.map_benchmark_data(pipeline, 1, report)
+    assert len(rows) == 1
+    assert {m.name: m.value for m in rows[0].measurements} == {"score": 1, "wer": 0.12}
+    assert rows[0].dataset_name == "Audio eval"
+
+
+@pytest.mark.parametrize("as_list", [False, True])
+@pytest.mark.parametrize("identity", [{}, {"task_name": None}, {"task_name": ""}, {"task_name": "child_task"}])
+def test_nested_eval_summary_preserves_task_identity(mapper, pipeline, as_list, identity):
+    entry = {"wer": 0.12, **identity}
+    report = {
+        "metadata": {"model_name": "test/model"},
+        "sections": [
+            {
+                "kind": "evals",
+                "title": "Audio eval",
+                "data": {"task_name": "librispeech", "evals_summary": [entry] if as_list else entry},
+            }
+        ],
+    }
+    original = copy.deepcopy(report)
+    rows = mapper.map_benchmark_data(pipeline, 1, report)
+    assert len(rows) == 1
+    assert rows[0].dataset_name == (identity.get("task_name") or "librispeech")
+    assert {m.name: m.value for m in rows[0].measurements} == {"wer": 0.12}
+    assert report == original
+
+
+@pytest.mark.parametrize("task_name", [None, ""])
+def test_empty_eval_task_name_falls_back_to_section_title(mapper, pipeline, task_name):
+    report = {
+        "metadata": {"model_name": "test/model"},
+        "sections": [
+            {
+                "kind": "evals",
+                "title": "Audio eval",
+                "data": {"task_name": task_name, "evals_summary": {"task_name": task_name, "wer": 0.12}},
+            }
+        ],
+    }
+    row = mapper.map_benchmark_data(pipeline, 1, report)[0]
+    assert row.dataset_name == "Audio eval"
+
+
+def test_new_benchmark_kind_uses_declared_routing(mapper, pipeline, monkeypatch):
+    monkeypatch.setitem(mapper._SECTION_METRIC_STEPS, "future_replay", "benchmark")
+    report = {
+        "metadata": {"model_name": "test/model"},
+        "sections": [{"kind": "future_replay", "data": {"Benchmarks": {"mean_ttft_ms": 12.5}}}],
+    }
+    row = mapper.map_benchmark_data(pipeline, 1, report)[0]
+    assert row.run_type == "benchmark"
+    assert row.config_params["report_section_kind"] == "future_replay"
+    assert {m.name: m.value for m in row.measurements} == {"mean_ttft_ms": 12.5}

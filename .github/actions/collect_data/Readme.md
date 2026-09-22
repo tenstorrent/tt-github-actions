@@ -98,3 +98,32 @@ You can also trigger data workflow manually for some commit to test
 ```
 gh workflow run "[internal] Produce analytic data" --ref vmilosevic/data_collection -f test_workflow_run_id=11253719387
 ```
+
+## Shield report sections and metric drift
+
+`ShieldBenchmarkDataMapper._SECTION_METRIC_STEPS` declares which report section
+kinds produce benchmark or eval measurements. It includes `agentic_traces`, whose
+metrics retain their original names and units. Replay labels identify datasets;
+scenario, trace source, workload settings, and status are stored in `config_params`.
+Fractional observed lengths such as `mean_isl` remain measurements.
+
+Both AIPerf and SwarmOne (`swo-bench`) use this route. SwarmOne measurements include
+prefill rates, latency bounds, per-user decode rates, and optional duty-cycle fields.
+Replay settings and SwarmOne session/version fields are stored in `config_params`.
+SwarmOne's producer omits TPOT because its raw ITL is not comparable to AIPerf TPOT.
+The collector does not create measurements for absent fields.
+
+The SwarmOne regression fixture comes from the producer's `swo-bench` 3.x test
+sample, processed through its driver and report parser, with synthetic duty-cycle
+values. It is not a downloaded CI report. The producer code was verified against
+[tt-inference-server main at 88235a5](https://github.com/tenstorrent/tt-inference-server/blob/88235a5c93e05b138addd32c84afc37cf304b8e9/llm_module/drivers/swo_bench_agentic_traces.py#L268).
+
+`_CONFIG_FIELDS_BY_STEP` lists report fields stored as configuration rather than
+measurements, including `num_clients` and `subprocess_rc`. Report-level nested
+metadata is stored as `report_metadata` to preserve the model spec's `metadata`.
+
+The tt-shield drift checker reads these literal declarations and the metric lists
+without importing this module. Add a new section route here when its payload uses
+the supported benchmark or eval shapes. A new shape needs a parser and regression
+test as well. Unrecognized kinds remain unsupported and should trigger drift alerts.
+Changes apply to future collection; historical reports need explicit reprocessing.
