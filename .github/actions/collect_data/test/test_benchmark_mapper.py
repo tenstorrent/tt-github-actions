@@ -2019,6 +2019,93 @@ def test_agentic_replay_preserves_all_numeric_results_and_configuration(mapper, 
     assert len([r for r in rows if r.run_type == "acceptance_criteria"]) == 1
 
 
+@pytest.mark.parametrize("include_duty_cycle", [False, True])
+def test_swarmone_replay_preserves_metrics_and_settings(mapper, pipeline, include_duty_cycle):
+    import json
+    from pathlib import Path
+
+    report = json.loads((Path(__file__).parent / "data/swarmone_trace_replay.json").read_text())
+    data = report["sections"][0]["data"]
+    duty_cycle = {
+        "active_throughput_tok_per_s",
+        "concurrency_peak",
+        "concurrency_mean",
+        "ready_starved_events",
+        "pace_idle_ms",
+        "tool_idle_ms",
+    }
+    if not include_duty_cycle:
+        for key in duty_cycle:
+            del data[key]
+    original = copy.deepcopy(report)
+    rows = mapper.map_benchmark_data(pipeline, 1, report)
+    assert len(rows) == 1
+    row = rows[0]
+    metrics = {m.name: m.value for m in row.measurements}
+    assert len(metrics) == len(row.measurements)
+    assert row.ml_model_name == "moonshotai/Kimi-K2.7-Code"
+    assert row.dataset_name == data["label"]
+    assert row.batch_size == 1
+    assert row.config_params["benchmark_tool"] == "swo-bench"
+    assert row.config_params["trace_source"] == "swarmone"
+    assert row.config_params["report_section_kind"] == "agentic_traces"
+    for key in (
+        "task",
+        "resident",
+        "cache_mode",
+        "history_mode",
+        "max_tokens",
+        "max_tokens_mode",
+        "max_context_length",
+        "swo_session_id",
+        "swo_source_label",
+        "swo_bench_version",
+    ):
+        assert row.config_params[key] == data[key]
+        assert key not in metrics
+    for key, value in data.items():
+        if (
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and key
+            not in {
+                "concurrency",
+                "max_concurrency",
+                "resident",
+                "max_tokens",
+                "max_context_length",
+            }
+        ):
+            assert metrics[key] == value, key
+    assert metrics["mean_ttft_ms"] == 2553.08
+    assert metrics["prefill_tok_per_sec_p50"] == 276.16
+    assert metrics["error_request_count"] == 0
+    assert len(metrics) == (38 if include_duty_cycle else 32)
+    assert duty_cycle.intersection(metrics) == (duty_cycle if include_duty_cycle else set())
+    # The producer deliberately omits TPOT: its raw ITL is not comparable to AIPerf TPOT.
+    assert "mean_tpot_ms" not in metrics
+    assert "median_tpot_ms" not in metrics
+    assert report == original
+
+
+def test_agentic_replay_sources_remain_separate_in_one_report(mapper, pipeline):
+    import json
+    from pathlib import Path
+
+    fixtures = Path(__file__).parent / "data"
+    report = json.loads((fixtures / "agentic_trace_replay.json").read_text())
+    report["sections"].extend(json.loads((fixtures / "swarmone_trace_replay.json").read_text())["sections"])
+    rows = [r for r in mapper.map_benchmark_data(pipeline, 1, report) if r.run_type == "benchmark"]
+    assert len(rows) == 2
+    assert {r.config_params["benchmark_tool"] for r in rows} == {"aiperf", "swo-bench"}
+    assert len({r.dataset_name for r in rows}) == 2
+    assert [r.batch_size for r in rows] == [32, 1]
+    assert [{m.name: m.value for m in r.measurements}["mean_ttft_ms"] for r in rows] == [
+        13511.305970523252,
+        2553.08,
+    ]
+
+
 @pytest.mark.parametrize("sectioned", [False, True])
 def test_missing_eval_metrics_and_exit_status_are_preserved(mapper, pipeline, sectioned):
     data = {

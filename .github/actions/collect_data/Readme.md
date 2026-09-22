@@ -107,6 +107,17 @@ metrics retain their original names and units. Replay labels identify datasets;
 scenario, trace source, workload settings, and status are stored in `config_params`.
 Fractional observed lengths such as `mean_isl` remain measurements.
 
+Both AIPerf and SwarmOne (`swo-bench`) use this route. SwarmOne measurements include
+prefill rates, latency bounds, per-user decode rates, and optional duty-cycle fields.
+Replay settings and SwarmOne session/version fields are stored in `config_params`.
+SwarmOne's producer omits TPOT because its raw ITL is not comparable to AIPerf TPOT.
+The collector does not create measurements for absent fields.
+
+The SwarmOne regression fixture comes from the producer's `swo-bench` 3.x test
+sample, processed through its driver and report parser, with synthetic duty-cycle
+values. It is not a downloaded CI report. The producer code was verified against
+[tt-inference-server main at 88235a5](https://github.com/tenstorrent/tt-inference-server/blob/88235a5c93e05b138addd32c84afc37cf304b8e9/llm_module/drivers/swo_bench_agentic_traces.py#L268).
+
 `_CONFIG_FIELDS_BY_STEP` lists report fields stored as configuration rather than
 measurements, including `num_clients` and `subprocess_rc`. Report-level nested
 metadata is stored as `report_metadata` to preserve the model spec's `metadata`.
