@@ -2019,6 +2019,39 @@ def test_agentic_replay_preserves_all_numeric_results_and_configuration(mapper, 
     assert len([r for r in rows if r.run_type == "acceptance_criteria"]) == 1
 
 
+def test_agentic_replay_drift_fields_are_mapped(mapper, pipeline):
+    import json
+    from pathlib import Path
+
+    report = json.loads((Path(__file__).parent / "data/agentic_trace_replay.json").read_text())
+    new_metrics = {
+        "mean_e2e_norm_intvty": 11.4,
+        "p75_e2e_norm_intvty": 12.1,
+        "p90_e2e_norm_intvty": 11.17,
+        "p95_e2e_norm_intvty": 10.8,
+        "p95_isl": 180000,
+        "p95_osl": 2048,
+        "p99_adj_ttft_ms": 30500.5,
+        "p99_adj_e2el_ms": 95000.25,
+        "p99_adj_tpot_ms": 14.2,
+        "prefix_cache_computed_tokens_measured": 120000,
+        "prefix_cache_local_hit_tokens_measured": 900000,
+        "prefix_cache_external_hit_tokens_measured": 0,
+    }
+    new_settings = {"repetition": 2, "trace_idle_gap_cap_seconds": 30}
+    report["sections"][0]["data"].update(new_metrics)
+    report["sections"][0]["data"].update(new_settings)
+    spec = {"hf_model_repo": "moonshotai/Kimi-K2.7-Code", "model_type": "LLM"}
+    rows = mapper.map_benchmark_data(pipeline, 1, report, spec)
+    row = next(r for r in rows if r.run_type == "benchmark")
+    metrics = {m.name: m.value for m in row.measurements}
+    for key, value in new_metrics.items():
+        assert metrics[key] == value, key
+    for key, value in new_settings.items():
+        assert row.config_params[key] == value
+        assert key not in metrics
+
+
 @pytest.mark.parametrize("include_duty_cycle", [False, True])
 def test_swarmone_replay_preserves_metrics_and_settings(mapper, pipeline, include_duty_cycle):
     import json
