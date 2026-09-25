@@ -1,0 +1,172 @@
+{
+  "metadata": {
+    "model_name": "MiniMax-H3",
+    "model_repo": "MiniMaxAI/MiniMax-H3",
+    "device": "BLACKHOLE_GALAXY"
+  },
+  "sections": [
+    {
+      "kind": "evals",
+      "data": {
+        "task_name": "minimax_h3_video_quality",
+        "base_url": "http://127.0.0.1:8000",
+        "model": "MiniMax-H3",
+        "evaluation_type": "calibration",
+        "samples_per_prompt": 1,
+        "frame_sample_count": 8,
+        "clip_enabled": false,
+        "output_dir": "/home/ubuntu/actions-runner/_work/tt-shield/tt-shield/tt-inference-server/workflow_logs/reports_output/release/MiniMaxAI__MiniMax-H3_blackhole_galaxy_release/minimax_h3_video_quality",
+        "summary": {
+          "requested_count": 1,
+          "generation_success_count": 1,
+          "generation_success_ratio": 1.0,
+          "analyzed_video_count": 1,
+          "valid_video_count": 1,
+          "invalid_video_count": 0,
+          "frozen_video_count": 0,
+          "black_video_count": 0,
+          "flat_video_count": 0,
+          "average_clip": null,
+          "minimum_clip": null,
+          "average_motion": 27.251387732369558,
+          "average_progression_margin": null
+        },
+        "category_results": [
+          {
+            "category": "t2v",
+            "samples": 1,
+            "valid_videos": 1,
+            "average_clip": null
+          }
+        ],
+        "quality_reference": {
+          "generation_success_ratio_min": 1.0,
+          "max_invalid_videos": 0,
+          "max_frozen_videos": 0
+        },
+        "quality_reference_checks": [
+          {
+            "metric": "generation_success_ratio",
+            "actual": 1.0,
+            "operator": ">=",
+            "threshold": 1.0,
+            "passed": true
+          },
+          {
+            "metric": "invalid_video_count",
+            "actual": 0,
+            "operator": "<=",
+            "threshold": 0,
+            "passed": true
+          },
+          {
+            "metric": "frozen_video_count",
+            "actual": 0,
+            "operator": "<=",
+            "threshold": 0,
+            "passed": true
+          }
+        ],
+        "accuracy_check": 2,
+        "quality_status": "pass",
+        "success": true,
+        "detailed_results": [
+          {
+            "prompt_id": "t2v",
+            "category": "t2v",
+            "sample_index": 1,
+            "prompt": "A small corgi wearing a bright yellow raincoat and round red glasses starts beside a red ball in a bright room. The camera smoothly tracks from left to right as the corgi nudges the ball, follows it across the floor, and stops with the ball beside a blue box near a sunlit window. Keep the same corgi, raincoat, and glasses throughout the shot.",
+            "task_id": "8540e079-c870-47a0-a2d7-4af1b85d4f95",
+            "generation_success": true,
+            "analysis_success": true,
+            "observed_statuses": [
+              "queued",
+              "in_progress",
+              "completed"
+            ],
+            "task": {
+              "id": "8540e079-c870-47a0-a2d7-4af1b85d4f95",
+              "job_type": "video",
+              "status": "completed",
+              "created_at": 1790288309,
+              "model": "MiniMaxAI/MiniMax-H3",
+              "request_parameters": {
+                "prompt": "A small corgi wearing a bright yellow raincoat and round red glasses starts beside a red ball in a bright room. The camera smoothly tracks from left to right as the corgi nudges the ball, follows it across the floor, and stops with the ball beside a blue box near a sunlit window. Keep the same corgi, raincoat, and glasses throughout the shot.",
+                "negative_prompt": null,
+                "num_inference_steps": 50,
+                "seed": 0,
+                "aspect_ratio": "16:9",
+                "duration_seconds": 5
+              },
+              "completed_at": 1790288394
+            },
+            "video_path": "/home/ubuntu/actions-runner/_work/tt-shield/tt-shield/tt-inference-server/workflow_logs/reports_output/release/MiniMaxAI__MiniMax-H3_blackhole_galaxy_release/minimax_h3_video_quality/t2v_1_8540e079-c870-47a0-a2d7-4af1b85d4f95.mp4",
+            "bytes_downloaded": 2643443,
+            "download_content_type": "video/mp4",
+            "metrics": {
+              "probe": {
+                "valid": true,
+                "width": 1344,
+                "height": 768,
+                "duration_seconds": 5.17,
+                "duration_error_seconds": 0.16999999999999993,
+                "aspect_ratio": 1.75,
+                "aspect_ratio_error": 0.015624999999999944,
+                "codec": "h264",
+                "frame_rate": "24.0",
+                "frame_count": 124
+              },
+              "structural": {
+                "sampled_frame_count": 8,
+                "total_decoded_frames": 124,
+                "sampled_indices": [
+                  0,
+                  18,
+                  35,
+                  53,
+                  70,
+                  88,
+                  105,
+                  123
+                ],
+                "average_brightness": 148.4829216003418,
+                "minimum_brightness": 140.6898193359375,
+                "average_pixel_variance": 4652.35498046875,
+                "black_frame_fraction": 0.0,
+                "flat_frame_fraction": 0.0,
+                "mean_frame_delta": 27.251387732369558,
+                "median_frame_delta": 32.73847579956055,
+                "p90_frame_delta": 40.25599517822266,
+                "frame_delta_stddev": 12.952991048077163,
+                "motion_coefficient_of_variation": 0.475314915162703,
+                "sudden_change_count": 0,
+                "frozen_pair_fraction": 0.0,
+                "is_black": false,
+                "is_flat": false,
+                "is_frozen": false
+              },
+              "clip": null,
+              "valid_video": true
+            }
+          }
+        ],
+        "status": "pass",
+        "attempts": 1,
+        "logs": "",
+        "elapsed_seconds": 92.12643487902824,
+        "test_name": "MiniMaxH3VideoQualityTest",
+        "description": ""
+      },
+      "title": "MiniMax-H3 Video Quality",
+      "task_type": "video",
+      "id": "MiniMaxAI__MiniMax-H3_BLACKHOLE_GALAXY",
+      "targets": {
+        "samples_per_prompt": 1,
+        "sample_count": 8,
+        "enable_clip": false,
+        "poll_timeout": 1800,
+        "download_timeout": 600
+      }
+    }
+  ]
+}

@@ -427,7 +427,16 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             "swo_bench_version",
             "metadata",
         ],
-        "eval": ["subprocess_rc"],
+        "eval": [
+            "subprocess_rc",
+            "attempts",
+            "samples_per_prompt",
+            "frame_sample_count",
+            "category_results",
+            "quality_reference",
+            "quality_reference_checks",
+            "detailed_results",
+        ],
     }
 
     _BENCHMARK_METRICS = [
@@ -1034,10 +1043,15 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     **eval_entry,
                     **metadata,
                 }  # metadata values take precedence
+            # Video quality evals nest run-level counts under `summary`; keep the
+            # prefix so names match the report path the drift checker reports.
+            measured_entry = dict(eval_entry)
+            if isinstance(eval_entry.get("summary"), dict):
+                measured_entry.update({f"summary.{k}": v for k, v in eval_entry["summary"].items()})
             measurements = self._create_measurements(
                 job,
                 "eval",
-                eval_entry,
+                measured_entry,
                 [
                     # General eval scores
                     "score",
@@ -1091,6 +1105,21 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "pearson",
                     "spearman",
                     "main_score",
+                    # Video quality (structural checks over generated videos)
+                    "elapsed_seconds",
+                    "summary.requested_count",
+                    "summary.generation_success_count",
+                    "summary.generation_success_ratio",
+                    "summary.analyzed_video_count",
+                    "summary.valid_video_count",
+                    "summary.invalid_video_count",
+                    "summary.frozen_video_count",
+                    "summary.black_video_count",
+                    "summary.flat_video_count",
+                    "summary.average_motion",
+                    "summary.average_clip",
+                    "summary.minimum_clip",
+                    "summary.average_progression_margin",
                 ],
             )
             config_params = dict(model_spec_data or {})

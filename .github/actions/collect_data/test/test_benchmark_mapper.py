@@ -2177,6 +2177,36 @@ def test_nested_video_and_embedding_fields_are_preserved(mapper, pipeline):
     assert row.batch_size == 32
 
 
+def test_video_quality_eval_maps_summary_and_stores_details_as_config(mapper, pipeline):
+    import json
+    from pathlib import Path
+
+    report = json.loads((Path(__file__).parent / "data/video_quality_eval.json").read_text())
+    data = report["sections"][0]["data"]
+    rows = mapper.map_benchmark_data(pipeline, 1, report, {"hf_model_repo": "MiniMaxAI/MiniMax-H3"})
+    row = next(r for r in rows if r.run_type == "eval")
+    metrics = {m.name: m.value for m in row.measurements}
+    assert row.dataset_name == "minimax_h3_video_quality"
+    for key, value in data["summary"].items():
+        if value is None:
+            assert f"summary.{key}" not in metrics
+        else:
+            assert metrics[f"summary.{key}"] == value, key
+    assert metrics["elapsed_seconds"] == data["elapsed_seconds"]
+    assert metrics["accuracy_check"] == 2
+    for key in (
+        "attempts",
+        "samples_per_prompt",
+        "frame_sample_count",
+        "category_results",
+        "quality_reference",
+        "quality_reference_checks",
+        "detailed_results",
+    ):
+        assert row.config_params[key] == data[key]
+        assert key not in metrics
+
+
 @pytest.mark.parametrize("payload", [{"score": 1, "wer": 0.12}, [{"score": 1, "wer": 0.12}, None]])
 def test_nested_eval_summary_preserves_metrics(mapper, pipeline, payload):
     report = {"sections": [{"kind": "evals", "title": "Audio eval", "data": {"evals_summary": payload}}]}
