@@ -432,10 +432,11 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             "attempts",
             "samples_per_prompt",
             "frame_sample_count",
+            "clip_enabled",
             "category_results",
             "quality_reference",
             "quality_reference_checks",
-            "detailed_results",
+            "detailed_results"
         ],
     }
 
