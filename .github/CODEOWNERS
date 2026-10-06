@@ -2,3 +2,6 @@
 * @tenstorrent/shared-common-maintainer
 
 .github/actions/ai_summary/ @ppetrovicTT @tenstorrent/shared-common-maintainer
+
+# Shield / Models Infrastructure team co-owns data collection
+.github/actions/collect_data/ @tenstorrent/shield-infra @tenstorrent/shared-common-maintainer
