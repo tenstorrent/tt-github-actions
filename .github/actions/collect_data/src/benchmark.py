@@ -435,6 +435,8 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             "repetition",
             "trace_idle_gap_cap_seconds",
             "output_len",
+            "acceptance_source",
+            "placeholder_prompts",
             "swo_session_id",
             "swo_source_label",
             "swo_bench_version",
