@@ -497,6 +497,9 @@ _TARGET_CHECKS_KEYS = {
     "tput_total",
     "tput_total_ratio",
     "tput_total_check",
+    "tput_input",
+    "tput_input_ratio",
+    "tput_input_check",
     "goodput",
     "goodput_ratio",
     "goodput_check",
@@ -2265,3 +2268,74 @@ def test_new_benchmark_kind_uses_declared_routing(mapper, pipeline, monkeypatch)
     assert row.run_type == "benchmark"
     assert row.config_params["report_section_kind"] == "future_replay"
     assert {m.name: m.value for m in row.measurements} == {"mean_ttft_ms": 12.5}
+
+
+def _spec_decode_record(public_dataset, max_concurrency, acceptance_rate):
+    # Shape emitted by tt-inference-server's AIPerfSpecDecodeParser.
+    return {
+        "kind": "aiperf_spec_decode",
+        "model": "moonshotai/Kimi-K2.7-Code",
+        "device": "",
+        "timestamp": "2026-10-07 21:00:00",
+        "public_dataset": public_dataset,
+        "output_len": None,
+        "max_concurrency": max_concurrency,
+        "completed": 80,
+        "acceptance_rate": acceptance_rate,
+        "mean_accepted_length": 2.4,
+        "mean_ttft_ms": 210.5,
+        "p95_ttft_ms": 420.0,
+        "mean_tpot_ms": 18.2,
+        "p95_tpot_ms": 25.1,
+        "mean_e2el_ms": 9100.0,
+        "p95_e2el_ms": 15000.0,
+        "p99_e2el_ms": 17000.0,
+        "output_throughput": 512.3,
+        "total_token_throughput": 1400.7,
+    }
+
+
+@pytest.mark.parametrize("merged", [False, True])
+def test_spec_decode_section_is_ingested(mapper, pipeline, merged, monkeypatch):
+    import shared
+    from loguru import logger
+
+    monkeypatch.setattr(shared, "report_failure", False)
+    warnings = []
+    sink = logger.add(warnings.append, level="WARNING")
+    records = [
+        _spec_decode_record("speed_bench_coding", 1, 0.61),
+        _spec_decode_record("speed_bench_throughput_8k", 32, 0.0),
+    ]
+    data = {"records": records} if merged else records[0]
+    report = {
+        "metadata": {"model_name": "Kimi-K2.7-Code", "device": "galaxy"},
+        "sections": [{"kind": "aiperf_spec_decode", "title": "Speculative Decoding Benchmark Results", "data": data}],
+    }
+    original = copy.deepcopy(report)
+    try:
+        rows = [r for r in mapper.map_benchmark_data(pipeline, 1, report) if r.run_type == "benchmark"]
+    finally:
+        logger.remove(sink)
+    assert not [w for w in warnings if "unmapped" in w], warnings
+    expected = records if merged else records[:1]
+    assert len(rows) == len(expected)
+    for row, record in zip(rows, expected):
+        assert row.config_params["report_section_kind"] == "aiperf_spec_decode"
+        assert row.config_params["public_dataset"] == record["public_dataset"]
+        assert row.dataset_name == record["public_dataset"]
+        assert row.batch_size == record["max_concurrency"]
+        metrics = {m.name: m.value for m in row.measurements}
+        for key, value in record.items():
+            if isinstance(value, (int, float)) and key != "max_concurrency":
+                assert metrics[key] == value, key
+    assert report == original
+    assert not shared.is_failure()
+
+
+def test_spec_decode_output_len_is_configuration(mapper, pipeline):
+    record = {**_spec_decode_record("speed_bench_coding", 1, 0.61), "output_len": 1024}
+    report = {"metadata": {"model_name": "test/model"}, "sections": [{"kind": "aiperf_spec_decode", "data": record}]}
+    row = mapper.map_benchmark_data(pipeline, 1, report)[0]
+    assert row.config_params["output_len"] == 1024
+    assert "output_len" not in {m.name for m in row.measurements}

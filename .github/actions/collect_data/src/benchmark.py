@@ -365,6 +365,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         "vllm": "benchmark",
         "benchmarks": "benchmark",
         "agentic_traces": "benchmark",
+        "aiperf_spec_decode": "benchmark",
         "evals": "eval",
     }
     _CONFIG_FIELDS_BY_STEP = {
@@ -422,6 +423,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             "max_tokens_mode",
             "repetition",
             "trace_idle_gap_cap_seconds",
+            "output_len",
             "swo_session_id",
             "swo_source_label",
             "swo_bench_version",
@@ -578,6 +580,10 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         "ready_starved_events",
         "pace_idle_ms",
         "tool_idle_ms",
+        # Speculative decoding (AIPerf spec-decode sweep)
+        "output_throughput",
+        "acceptance_rate",
+        "mean_accepted_length",
         # Image / video / diffusion
         "ttft_ms",
         "mean_latency_ms",
@@ -632,6 +638,9 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         "tput_total",
         "tput_total_ratio",
         "tput_total_check",
+        "tput_input",
+        "tput_input_ratio",
+        "tput_input_check",
         "goodput",
         "goodput_ratio",
         "goodput_check",
@@ -841,7 +850,11 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     input_seq_length=input_seq,
                     output_seq_length=output_seq,
                     dataset_name=(
-                        benchmark.get("name") or benchmark.get("label") or benchmark.get("scenario") or model_name
+                        benchmark.get("name")
+                        or benchmark.get("label")
+                        or benchmark.get("scenario")
+                        or benchmark.get("public_dataset")
+                        or model_name
                     )
                     if from_sections
                     else benchmark.get("model_id"),
