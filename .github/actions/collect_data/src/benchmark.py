@@ -436,7 +436,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             "category_results",
             "quality_reference",
             "quality_reference_checks",
-            "detailed_results"
+            "detailed_results",
         ],
     }
 
