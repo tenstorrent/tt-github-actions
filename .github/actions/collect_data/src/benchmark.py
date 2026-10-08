@@ -368,12 +368,16 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         "aiperf_spec_decode": "benchmark",
         "evals": "eval",
     }
-    # Sections whose rows get their own run_type instead of "benchmark". They reuse
-    # LLM metric names (mean_ttft_ms, ...) for a different workload, so consumers
-    # filtering on run_type = 'benchmark' must not mix them with token sweeps.
+    # run_type stored for each section kind; must list every kind above. Agentic
+    # replay and spec-decode reuse LLM metric names (mean_ttft_ms, ...) for a
+    # different workload, so they get their own run_type instead of "benchmark".
+    # Legacy top-level lists carry no section kind and keep "benchmark" / "eval".
     _SECTION_RUN_TYPES = {
+        "vllm": "benchmark",
+        "benchmarks": "benchmark",
         "agentic_traces": "agentic_traces",
         "aiperf_spec_decode": "aiperf_spec_decode",
+        "evals": "eval",
     }
     _CONFIG_FIELDS_BY_STEP = {
         "benchmark": [
@@ -730,9 +734,9 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "model_repo": meta.get("model_repo"),
                     "device": meta.get("device"),
                     **row,
+                    "_section_kind": kind,
                 }
                 if kind != "vllm":
-                    entry["_section_kind"] = kind
                     entry["task_type"] = block.get("task_type") or row.get("task_type")
                     targets = block.get("targets")
                     entry["benchmark_tool"] = (targets.get("tool") if isinstance(targets, dict) else None) or row.get(
@@ -849,7 +853,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     pipeline=pipeline,
                     job=job,
                     data=benchmark,
-                    run_type=self._SECTION_RUN_TYPES.get(section_kind, "benchmark"),
+                    run_type=self._SECTION_RUN_TYPES[section_kind] if section_kind else "benchmark",
                     measurements=measurements,
                     device_info=device,
                     model_name=model_name,
@@ -1053,11 +1057,13 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                         "task_type": block.get("task_type"),
                         **entry,
                         "task_name": entry.get("task_name") or data.get("task_name") or block.get("title"),
+                        "_section_kind": block.get("kind"),
                     }
                 )
 
         results = []
         for eval_entry in evals:
+            section_kind = eval_entry.pop("_section_kind", None)
             if metadata:
                 logger.debug(f"Processing evals with metadata included...")
                 eval_entry = {
@@ -1152,7 +1158,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     pipeline=pipeline,
                     job=job,
                     data=eval_entry,
-                    run_type="eval",
+                    run_type=self._SECTION_RUN_TYPES[section_kind] if section_kind else "eval",
                     measurements=measurements,
                     device_info=eval_entry.get("device"),
                     model_name=self._format_model_name(eval_entry, model_spec_data),

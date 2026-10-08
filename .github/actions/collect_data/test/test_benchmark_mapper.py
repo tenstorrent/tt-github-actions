@@ -2260,12 +2260,13 @@ def test_empty_eval_task_name_falls_back_to_section_title(mapper, pipeline, task
 
 def test_new_benchmark_kind_uses_declared_routing(mapper, pipeline, monkeypatch):
     monkeypatch.setitem(mapper._SECTION_METRIC_STEPS, "future_replay", "benchmark")
+    monkeypatch.setitem(mapper._SECTION_RUN_TYPES, "future_replay", "future_replay")
     report = {
         "metadata": {"model_name": "test/model"},
         "sections": [{"kind": "future_replay", "data": {"Benchmarks": {"mean_ttft_ms": 12.5}}}],
     }
     row = mapper.map_benchmark_data(pipeline, 1, report)[0]
-    assert row.run_type == "benchmark"
+    assert row.run_type == "future_replay"
     assert row.config_params["report_section_kind"] == "future_replay"
     assert {m.name: m.value for m in row.measurements} == {"mean_ttft_ms": 12.5}
 
@@ -2362,3 +2363,22 @@ def test_section_kinds_map_to_run_types(mapper, pipeline):
             assert {m.step_name for m in row.measurements} == {"benchmark"}
         if row.run_type in ("agentic_traces", "aiperf_spec_decode"):
             assert row.config_params["report_section_kind"] == row.run_type
+
+
+def test_every_section_kind_declares_a_run_type(mapper):
+    # A kind routed in _SECTION_METRIC_STEPS but missing here would fail at ingest
+    # time; a stale entry here would be dead routing.
+    assert mapper._SECTION_RUN_TYPES.keys() == mapper._SECTION_METRIC_STEPS.keys()
+
+
+def test_legacy_lists_keep_hardcoded_run_types(mapper, pipeline):
+    report = {
+        "metadata": {"model_name": "test/model"},
+        "benchmarks": [{"mean_ttft_ms": 1.0}],
+        "benchmarks_summary": [{"ttft": 1.0}],
+        "evals": [{"task_name": "mmlu", "score": 0.7}],
+    }
+    original = copy.deepcopy(report)
+    rows = mapper.map_benchmark_data(pipeline, 1, report)
+    assert sorted(r.run_type for r in rows) == ["benchmark", "benchmark_summary", "eval"]
+    assert report == original
