@@ -4,7 +4,7 @@ on:
   workflow_call:
     secrets:
       AUTOLABEL_COMMUNITY_ISSUES:
-        description: 'Token for checking organization membership and managing labels'
+        description: 'Token used only to check organization membership (needs read:org). Labels are applied with the built-in github.token so they are attributed to github-actions[bot].'
         required: true
 
 env:
@@ -137,7 +137,8 @@ jobs:
       - name: Ensure community label exists
         if: steps.check_membership.outputs.is_member == 'false'
         env:
-          GITHUB_TOKEN: ${{ secrets.AUTOLABEL_COMMUNITY_ISSUES }}
+          # Built-in token: the label is created by github-actions[bot], not by the PAT's owner.
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -e
 
@@ -201,7 +202,8 @@ jobs:
       - name: Apply community label
         if: steps.check_membership.outputs.is_member == 'false'
         env:
-          GITHUB_TOKEN: ${{ secrets.AUTOLABEL_COMMUNITY_ISSUES }}
+          # Built-in token: the label event is attributed to github-actions[bot], not to the PAT's owner.
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -e
 
