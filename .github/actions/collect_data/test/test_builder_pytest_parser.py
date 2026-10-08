@@ -16,5 +16,5 @@ def test_builder_pytest_parser(filename: str, expected: dict[str, Any]):
     filepath = os.path.join(REPORTS_PATH, filename)
     parser = BuilderPytestParser()
     assert parser.can_parse(filepath)
-    tests = parser.parse(filepath)
+    tests = parser.parse(filepath).tests
     assert len(tests) == expected["num_tests"]

@@ -60,6 +60,26 @@ def test_create_pipeline_json(run_id, expected):
     assert check_constraint(pipeline)
 
 
+def test_job_tags_from_testsuite_properties():
+    """
+    Job-level tags come from the testsuite-level 'tags' property of pytest reports.
+    """
+    os.environ["GITHUB_EVENT_NAME"] = "test"
+    pipeline, _ = create_pipeline_json(
+        workflow_filename="test/data/12084081698/workflow.json",
+        jobs_filename="test/data/12084081698/workflow_jobs.json",
+        workflow_outputs_dir="test/data",
+    )
+
+    job = next(job for job in pipeline.jobs if job.github_job_id == 33706643326)
+    assert job.tags["frontend"] == {"frontend": "tt-xla", "frontend_version": "1.5.0.dev20260818002307"}
+    assert job.tags["query_params"]["filters"]["exclude_operators"] is False
+    assert job.tags["query_params"]["source"]["test_id"] is None
+
+    # jobs without a tagged report keep tags unset
+    assert all(job.tags is None for job in pipeline.jobs if job.github_job_id != 33706643326)
+
+
 @pytest.mark.parametrize(
     "run_id, expected_file",
     [

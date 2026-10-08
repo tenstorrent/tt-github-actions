@@ -6,7 +6,7 @@ from loguru import logger
 from pydantic_models import Test
 from datetime import datetime, timedelta
 from typing import Optional
-from .parser import Parser
+from .parser import Parser, ParseResult
 from pydantic import ValidationError
 from shared import failure_happened
 
@@ -23,7 +23,7 @@ class PythonUnittestParser(Parser):
         project: Optional[str] = None,
         github_job_id: Optional[int] = None,
     ):
-        return get_tests(filepath)
+        return ParseResult(tests=get_tests(filepath))
 
 
 def get_tests(test_report_path):

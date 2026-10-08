@@ -8,7 +8,7 @@ from functools import partial
 from loguru import logger
 from datetime import datetime
 from pydantic_models import OpTest, TensorDesc
-from .parser import Parser
+from .parser import Parser, ParseResult
 from typing import Optional
 from pydantic import ValidationError
 from shared import failure_happened
@@ -29,7 +29,7 @@ class TTXlaOpByOpParser(Parser):
         project: Optional[str] = None,
         github_job_id: Optional[int] = None,
     ):
-        return _get_tests(filepath, project, github_job_id)
+        return ParseResult(tests=_get_tests(filepath, project, github_job_id))
 
 
 def _all_json_files(filepath):
