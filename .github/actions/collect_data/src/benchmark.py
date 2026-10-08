@@ -365,6 +365,18 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         "vllm": "benchmark",
         "benchmarks": "benchmark",
         "agentic_traces": "benchmark",
+        "aiperf_spec_decode": "benchmark",
+        "evals": "eval",
+    }
+    # run_type stored for each section kind; must list every kind above. Agentic
+    # replay and spec-decode reuse LLM metric names (mean_ttft_ms, ...) for a
+    # different workload, so they get their own run_type instead of "benchmark".
+    # Legacy top-level lists carry no section kind and keep "benchmark" / "eval".
+    _SECTION_RUN_TYPES = {
+        "vllm": "benchmark",
+        "benchmarks": "benchmark",
+        "agentic_traces": "agentic_traces",
+        "aiperf_spec_decode": "aiperf_spec_decode",
         "evals": "eval",
     }
     _CONFIG_FIELDS_BY_STEP = {
@@ -420,12 +432,25 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
             "history_mode",
             "max_tokens",
             "max_tokens_mode",
+            "repetition",
+            "trace_idle_gap_cap_seconds",
+            "output_len",
             "swo_session_id",
             "swo_source_label",
             "swo_bench_version",
             "metadata",
         ],
-        "eval": ["subprocess_rc"],
+        "eval": [
+            "subprocess_rc",
+            "attempts",
+            "samples_per_prompt",
+            "frame_sample_count",
+            "clip_enabled",
+            "category_results",
+            "quality_reference",
+            "quality_reference_checks",
+            "detailed_results",
+        ],
     }
 
     _BENCHMARK_METRICS = [
@@ -513,6 +538,8 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         "error_rate_pct",
         "mean_isl",
         "mean_osl",
+        "p95_isl",
+        "p95_osl",
         "measured_benchmark_duration",
         "context_overflow_count",
         "osl_mismatch_count",
@@ -528,6 +555,13 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         "p90_adj_e2el_ms",
         "p50_adj_tpot_ms",
         "p90_adj_tpot_ms",
+        "p99_adj_ttft_ms",
+        "p99_adj_e2el_ms",
+        "p99_adj_tpot_ms",
+        "mean_e2e_norm_intvty",
+        "p75_e2e_norm_intvty",
+        "p90_e2e_norm_intvty",
+        "p95_e2e_norm_intvty",
         "branch_children_spawned",
         "branch_children_completed",
         "branch_children_errored",
@@ -540,6 +574,9 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         "measured_prefix_cache_hit_pct",
         "prefix_cache_hit_tokens_measured",
         "prefix_cache_prompt_tokens_measured",
+        "prefix_cache_computed_tokens_measured",
+        "prefix_cache_local_hit_tokens_measured",
+        "prefix_cache_external_hit_tokens_measured",
         "error_rate",
         "min_e2el_ms",
         "max_e2el_ms",
@@ -554,6 +591,10 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         "ready_starved_events",
         "pace_idle_ms",
         "tool_idle_ms",
+        # Speculative decoding (AIPerf spec-decode sweep)
+        "output_throughput",
+        "acceptance_rate",
+        "mean_accepted_length",
         # Image / video / diffusion
         "ttft_ms",
         "mean_latency_ms",
@@ -608,6 +649,9 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         "tput_total",
         "tput_total_ratio",
         "tput_total_check",
+        "tput_input",
+        "tput_input_ratio",
+        "tput_input_check",
         "goodput",
         "goodput_ratio",
         "goodput_check",
@@ -690,9 +734,9 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "model_repo": meta.get("model_repo"),
                     "device": meta.get("device"),
                     **row,
+                    "_section_kind": kind,
                 }
                 if kind != "vllm":
-                    entry["_section_kind"] = kind
                     entry["task_type"] = block.get("task_type") or row.get("task_type")
                     targets = block.get("targets")
                     entry["benchmark_tool"] = (targets.get("tool") if isinstance(targets, dict) else None) or row.get(
@@ -809,7 +853,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     pipeline=pipeline,
                     job=job,
                     data=benchmark,
-                    run_type="benchmark",
+                    run_type=self._SECTION_RUN_TYPES[section_kind] if section_kind else "benchmark",
                     measurements=measurements,
                     device_info=device,
                     model_name=model_name,
@@ -817,7 +861,11 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     input_seq_length=input_seq,
                     output_seq_length=output_seq,
                     dataset_name=(
-                        benchmark.get("name") or benchmark.get("label") or benchmark.get("scenario") or model_name
+                        benchmark.get("name")
+                        or benchmark.get("label")
+                        or benchmark.get("scenario")
+                        or benchmark.get("public_dataset")
+                        or model_name
                     )
                     if from_sections
                     else benchmark.get("model_id"),
@@ -1009,21 +1057,28 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                         "task_type": block.get("task_type"),
                         **entry,
                         "task_name": entry.get("task_name") or data.get("task_name") or block.get("title"),
+                        "_section_kind": block.get("kind"),
                     }
                 )
 
         results = []
         for eval_entry in evals:
+            section_kind = eval_entry.pop("_section_kind", None)
             if metadata:
                 logger.debug(f"Processing evals with metadata included...")
                 eval_entry = {
                     **eval_entry,
                     **metadata,
                 }  # metadata values take precedence
+            # Video quality evals nest run-level counts under `summary`; keep the
+            # prefix so names match the report path the drift checker reports.
+            measured_entry = dict(eval_entry)
+            if isinstance(eval_entry.get("summary"), dict):
+                measured_entry.update({f"summary.{k}": v for k, v in eval_entry["summary"].items()})
             measurements = self._create_measurements(
                 job,
                 "eval",
-                eval_entry,
+                measured_entry,
                 [
                     # General eval scores
                     "score",
@@ -1077,6 +1132,21 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "pearson",
                     "spearman",
                     "main_score",
+                    # Video quality (structural checks over generated videos)
+                    "elapsed_seconds",
+                    "summary.requested_count",
+                    "summary.generation_success_count",
+                    "summary.generation_success_ratio",
+                    "summary.analyzed_video_count",
+                    "summary.valid_video_count",
+                    "summary.invalid_video_count",
+                    "summary.frozen_video_count",
+                    "summary.black_video_count",
+                    "summary.flat_video_count",
+                    "summary.average_motion",
+                    "summary.average_clip",
+                    "summary.minimum_clip",
+                    "summary.average_progression_margin",
                 ],
             )
             config_params = dict(model_spec_data or {})
@@ -1088,7 +1158,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     pipeline=pipeline,
                     job=job,
                     data=eval_entry,
-                    run_type="eval",
+                    run_type=self._SECTION_RUN_TYPES[section_kind] if section_kind else "eval",
                     measurements=measurements,
                     device_info=eval_entry.get("device"),
                     model_name=self._format_model_name(eval_entry, model_spec_data),

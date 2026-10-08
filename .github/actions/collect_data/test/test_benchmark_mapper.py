@@ -497,6 +497,9 @@ _TARGET_CHECKS_KEYS = {
     "tput_total",
     "tput_total_ratio",
     "tput_total_check",
+    "tput_input",
+    "tput_input_ratio",
+    "tput_input_check",
     "goodput",
     "goodput_ratio",
     "goodput_check",
@@ -1971,7 +1974,7 @@ def test_agentic_replay_preserves_all_numeric_results_and_configuration(mapper, 
     original = copy.deepcopy(report)
     spec = {"hf_model_repo": "moonshotai/Kimi-K2.7-Code", "model_type": "LLM", "metadata": {"spec": True}}
     rows = mapper.map_benchmark_data(pipeline, 1, report, spec)
-    benchmarks = [r for r in rows if r.run_type == "benchmark"]
+    benchmarks = [r for r in rows if r.run_type == "agentic_traces"]
     assert len(benchmarks) == 1
     row = benchmarks[0]
     data = report["sections"][0]["data"]
@@ -2017,6 +2020,39 @@ def test_agentic_replay_preserves_all_numeric_results_and_configuration(mapper, 
     assert report == original
     assert spec == {"hf_model_repo": "moonshotai/Kimi-K2.7-Code", "model_type": "LLM", "metadata": {"spec": True}}
     assert len([r for r in rows if r.run_type == "acceptance_criteria"]) == 1
+
+
+def test_agentic_replay_drift_fields_are_mapped(mapper, pipeline):
+    import json
+    from pathlib import Path
+
+    report = json.loads((Path(__file__).parent / "data/agentic_trace_replay.json").read_text())
+    new_metrics = {
+        "mean_e2e_norm_intvty": 11.4,
+        "p75_e2e_norm_intvty": 12.1,
+        "p90_e2e_norm_intvty": 11.17,
+        "p95_e2e_norm_intvty": 10.8,
+        "p95_isl": 180000,
+        "p95_osl": 2048,
+        "p99_adj_ttft_ms": 30500.5,
+        "p99_adj_e2el_ms": 95000.25,
+        "p99_adj_tpot_ms": 14.2,
+        "prefix_cache_computed_tokens_measured": 120000,
+        "prefix_cache_local_hit_tokens_measured": 900000,
+        "prefix_cache_external_hit_tokens_measured": 0,
+    }
+    new_settings = {"repetition": 2, "trace_idle_gap_cap_seconds": 30}
+    report["sections"][0]["data"].update(new_metrics)
+    report["sections"][0]["data"].update(new_settings)
+    spec = {"hf_model_repo": "moonshotai/Kimi-K2.7-Code", "model_type": "LLM"}
+    rows = mapper.map_benchmark_data(pipeline, 1, report, spec)
+    row = next(r for r in rows if r.run_type == "agentic_traces")
+    metrics = {m.name: m.value for m in row.measurements}
+    for key, value in new_metrics.items():
+        assert metrics[key] == value, key
+    for key, value in new_settings.items():
+        assert row.config_params[key] == value
+        assert key not in metrics
 
 
 @pytest.mark.parametrize("include_duty_cycle", [False, True])
@@ -2095,7 +2131,7 @@ def test_agentic_replay_sources_remain_separate_in_one_report(mapper, pipeline):
     fixtures = Path(__file__).parent / "data"
     report = json.loads((fixtures / "agentic_trace_replay.json").read_text())
     report["sections"].extend(json.loads((fixtures / "swarmone_trace_replay.json").read_text())["sections"])
-    rows = [r for r in mapper.map_benchmark_data(pipeline, 1, report) if r.run_type == "benchmark"]
+    rows = [r for r in mapper.map_benchmark_data(pipeline, 1, report) if r.run_type == "agentic_traces"]
     assert len(rows) == 2
     assert {r.config_params["benchmark_tool"] for r in rows} == {"aiperf", "swo-bench"}
     assert len({r.dataset_name for r in rows}) == 2
@@ -2142,6 +2178,36 @@ def test_nested_video_and_embedding_fields_are_preserved(mapper, pipeline):
     assert {m.name: m.value for m in row.measurements} == {"num_successful": 2}
     assert row.config_params["num_clients"] == 1
     assert row.batch_size == 32
+
+
+def test_video_quality_eval_maps_summary_and_stores_details_as_config(mapper, pipeline):
+    import json
+    from pathlib import Path
+
+    report = json.loads((Path(__file__).parent / "data/video_quality_eval.json").read_text())
+    data = report["sections"][0]["data"]
+    rows = mapper.map_benchmark_data(pipeline, 1, report, {"hf_model_repo": "MiniMaxAI/MiniMax-H3"})
+    row = next(r for r in rows if r.run_type == "eval")
+    metrics = {m.name: m.value for m in row.measurements}
+    assert row.dataset_name == "minimax_h3_video_quality"
+    for key, value in data["summary"].items():
+        if value is None:
+            assert f"summary.{key}" not in metrics
+        else:
+            assert metrics[f"summary.{key}"] == value, key
+    assert metrics["elapsed_seconds"] == data["elapsed_seconds"]
+    assert metrics["accuracy_check"] == 2
+    for key in (
+        "attempts",
+        "samples_per_prompt",
+        "frame_sample_count",
+        "category_results",
+        "quality_reference",
+        "quality_reference_checks",
+        "detailed_results",
+    ):
+        assert row.config_params[key] == data[key]
+        assert key not in metrics
 
 
 @pytest.mark.parametrize("payload", [{"score": 1, "wer": 0.12}, [{"score": 1, "wer": 0.12}, None]])
@@ -2194,11 +2260,125 @@ def test_empty_eval_task_name_falls_back_to_section_title(mapper, pipeline, task
 
 def test_new_benchmark_kind_uses_declared_routing(mapper, pipeline, monkeypatch):
     monkeypatch.setitem(mapper._SECTION_METRIC_STEPS, "future_replay", "benchmark")
+    monkeypatch.setitem(mapper._SECTION_RUN_TYPES, "future_replay", "future_replay")
     report = {
         "metadata": {"model_name": "test/model"},
         "sections": [{"kind": "future_replay", "data": {"Benchmarks": {"mean_ttft_ms": 12.5}}}],
     }
     row = mapper.map_benchmark_data(pipeline, 1, report)[0]
-    assert row.run_type == "benchmark"
+    assert row.run_type == "future_replay"
     assert row.config_params["report_section_kind"] == "future_replay"
     assert {m.name: m.value for m in row.measurements} == {"mean_ttft_ms": 12.5}
+
+
+def _spec_decode_record(public_dataset, max_concurrency, acceptance_rate):
+    # Shape emitted by tt-inference-server's AIPerfSpecDecodeParser.
+    return {
+        "kind": "aiperf_spec_decode",
+        "model": "moonshotai/Kimi-K2.7-Code",
+        "device": "",
+        "timestamp": "2026-10-07 21:00:00",
+        "public_dataset": public_dataset,
+        "output_len": None,
+        "max_concurrency": max_concurrency,
+        "completed": 80,
+        "acceptance_rate": acceptance_rate,
+        "mean_accepted_length": 2.4,
+        "mean_ttft_ms": 210.5,
+        "p95_ttft_ms": 420.0,
+        "mean_tpot_ms": 18.2,
+        "p95_tpot_ms": 25.1,
+        "mean_e2el_ms": 9100.0,
+        "p95_e2el_ms": 15000.0,
+        "p99_e2el_ms": 17000.0,
+        "output_throughput": 512.3,
+        "total_token_throughput": 1400.7,
+    }
+
+
+@pytest.mark.parametrize("merged", [False, True])
+def test_spec_decode_section_is_ingested(mapper, pipeline, merged, monkeypatch):
+    import shared
+    from loguru import logger
+
+    monkeypatch.setattr(shared, "report_failure", False)
+    warnings = []
+    sink = logger.add(warnings.append, level="WARNING")
+    records = [
+        _spec_decode_record("speed_bench_coding", 1, 0.61),
+        _spec_decode_record("speed_bench_throughput_8k", 32, 0.0),
+    ]
+    data = {"records": records} if merged else records[0]
+    report = {
+        "metadata": {"model_name": "Kimi-K2.7-Code", "device": "galaxy"},
+        "sections": [{"kind": "aiperf_spec_decode", "title": "Speculative Decoding Benchmark Results", "data": data}],
+    }
+    original = copy.deepcopy(report)
+    try:
+        rows = [r for r in mapper.map_benchmark_data(pipeline, 1, report) if r.run_type == "aiperf_spec_decode"]
+    finally:
+        logger.remove(sink)
+    assert not [w for w in warnings if "unmapped" in w], warnings
+    expected = records if merged else records[:1]
+    assert len(rows) == len(expected)
+    for row, record in zip(rows, expected):
+        assert row.config_params["report_section_kind"] == "aiperf_spec_decode"
+        assert row.config_params["public_dataset"] == record["public_dataset"]
+        assert row.dataset_name == record["public_dataset"]
+        assert row.batch_size == record["max_concurrency"]
+        metrics = {m.name: m.value for m in row.measurements}
+        for key, value in record.items():
+            if isinstance(value, (int, float)) and key != "max_concurrency":
+                assert metrics[key] == value, key
+    assert report == original
+    assert not shared.is_failure()
+
+
+def test_spec_decode_output_len_is_configuration(mapper, pipeline):
+    record = {**_spec_decode_record("speed_bench_coding", 1, 0.61), "output_len": 1024}
+    report = {"metadata": {"model_name": "test/model"}, "sections": [{"kind": "aiperf_spec_decode", "data": record}]}
+    row = mapper.map_benchmark_data(pipeline, 1, report)[0]
+    assert row.config_params["output_len"] == 1024
+    assert "output_len" not in {m.name for m in row.measurements}
+
+
+def test_section_kinds_map_to_run_types(mapper, pipeline):
+    """Token sweeps stay "benchmark" and evals "eval"; agentic replay and spec-decode
+    get their own run_type, while their measurements keep step_name "benchmark"."""
+    report = {
+        "metadata": {"model_name": "test/model"},
+        "sections": [
+            {"kind": "vllm", "data": {"mean_ttft_ms": 1.0}},
+            {"kind": "benchmarks", "data": {"Benchmarks": {"mean_ttft_ms": 2.0}}},
+            {"kind": "agentic_traces", "data": {"label": "replay", "mean_ttft_ms": 3.0}},
+            {"kind": "aiperf_spec_decode", "data": _spec_decode_record("speed_bench_coding", 1, 0.6)},
+            {"kind": "evals", "data": {"task_name": "mmlu", "score": 0.7}},
+        ],
+    }
+    rows = mapper.map_benchmark_data(pipeline, 1, report)
+    run_types = sorted(r.run_type for r in rows)
+    assert run_types == ["agentic_traces", "aiperf_spec_decode", "benchmark", "benchmark", "eval"]
+    for row in rows:
+        if row.run_type != "eval":
+            assert {m.step_name for m in row.measurements} == {"benchmark"}
+        if row.run_type in ("agentic_traces", "aiperf_spec_decode"):
+            assert row.config_params["report_section_kind"] == row.run_type
+
+
+def test_every_section_kind_declares_a_run_type(mapper):
+    # A kind routed in _SECTION_METRIC_STEPS but missing here would fail at ingest
+    # time; a stale entry here would be dead routing.
+    assert mapper._SECTION_RUN_TYPES.keys() == mapper._SECTION_METRIC_STEPS.keys()
+
+
+def test_legacy_lists_keep_hardcoded_run_types(mapper, pipeline):
+    report = {
+        "metadata": {"model_name": "test/model"},
+        "benchmarks": [{"mean_ttft_ms": 1.0}],
+        "benchmarks_summary": [{"ttft": 1.0}],
+        "evals": [{"task_name": "mmlu", "score": 0.7}],
+    }
+    original = copy.deepcopy(report)
+    rows = mapper.map_benchmark_data(pipeline, 1, report)
+    assert sorted(r.run_type for r in rows) == ["benchmark", "benchmark_summary", "eval"]
+    assert report == original
