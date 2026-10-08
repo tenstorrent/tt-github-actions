@@ -368,6 +368,13 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
         "aiperf_spec_decode": "benchmark",
         "evals": "eval",
     }
+    # Sections whose rows get their own run_type instead of "benchmark". They reuse
+    # LLM metric names (mean_ttft_ms, ...) for a different workload, so consumers
+    # filtering on run_type = 'benchmark' must not mix them with token sweeps.
+    _SECTION_RUN_TYPES = {
+        "agentic_traces": "agentic_traces",
+        "aiperf_spec_decode": "aiperf_spec_decode",
+    }
     _CONFIG_FIELDS_BY_STEP = {
         "benchmark": [
             "requested_concurrency",
@@ -842,7 +849,7 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     pipeline=pipeline,
                     job=job,
                     data=benchmark,
-                    run_type="benchmark",
+                    run_type=self._SECTION_RUN_TYPES.get(section_kind, "benchmark"),
                     measurements=measurements,
                     device_info=device,
                     model_name=model_name,

@@ -1974,7 +1974,7 @@ def test_agentic_replay_preserves_all_numeric_results_and_configuration(mapper, 
     original = copy.deepcopy(report)
     spec = {"hf_model_repo": "moonshotai/Kimi-K2.7-Code", "model_type": "LLM", "metadata": {"spec": True}}
     rows = mapper.map_benchmark_data(pipeline, 1, report, spec)
-    benchmarks = [r for r in rows if r.run_type == "benchmark"]
+    benchmarks = [r for r in rows if r.run_type == "agentic_traces"]
     assert len(benchmarks) == 1
     row = benchmarks[0]
     data = report["sections"][0]["data"]
@@ -2046,7 +2046,7 @@ def test_agentic_replay_drift_fields_are_mapped(mapper, pipeline):
     report["sections"][0]["data"].update(new_settings)
     spec = {"hf_model_repo": "moonshotai/Kimi-K2.7-Code", "model_type": "LLM"}
     rows = mapper.map_benchmark_data(pipeline, 1, report, spec)
-    row = next(r for r in rows if r.run_type == "benchmark")
+    row = next(r for r in rows if r.run_type == "agentic_traces")
     metrics = {m.name: m.value for m in row.measurements}
     for key, value in new_metrics.items():
         assert metrics[key] == value, key
@@ -2131,7 +2131,7 @@ def test_agentic_replay_sources_remain_separate_in_one_report(mapper, pipeline):
     fixtures = Path(__file__).parent / "data"
     report = json.loads((fixtures / "agentic_trace_replay.json").read_text())
     report["sections"].extend(json.loads((fixtures / "swarmone_trace_replay.json").read_text())["sections"])
-    rows = [r for r in mapper.map_benchmark_data(pipeline, 1, report) if r.run_type == "benchmark"]
+    rows = [r for r in mapper.map_benchmark_data(pipeline, 1, report) if r.run_type == "agentic_traces"]
     assert len(rows) == 2
     assert {r.config_params["benchmark_tool"] for r in rows} == {"aiperf", "swo-bench"}
     assert len({r.dataset_name for r in rows}) == 2
@@ -2314,7 +2314,7 @@ def test_spec_decode_section_is_ingested(mapper, pipeline, merged, monkeypatch):
     }
     original = copy.deepcopy(report)
     try:
-        rows = [r for r in mapper.map_benchmark_data(pipeline, 1, report) if r.run_type == "benchmark"]
+        rows = [r for r in mapper.map_benchmark_data(pipeline, 1, report) if r.run_type == "aiperf_spec_decode"]
     finally:
         logger.remove(sink)
     assert not [w for w in warnings if "unmapped" in w], warnings
@@ -2339,3 +2339,26 @@ def test_spec_decode_output_len_is_configuration(mapper, pipeline):
     row = mapper.map_benchmark_data(pipeline, 1, report)[0]
     assert row.config_params["output_len"] == 1024
     assert "output_len" not in {m.name for m in row.measurements}
+
+
+def test_section_kinds_map_to_run_types(mapper, pipeline):
+    """Token sweeps stay "benchmark" and evals "eval"; agentic replay and spec-decode
+    get their own run_type, while their measurements keep step_name "benchmark"."""
+    report = {
+        "metadata": {"model_name": "test/model"},
+        "sections": [
+            {"kind": "vllm", "data": {"mean_ttft_ms": 1.0}},
+            {"kind": "benchmarks", "data": {"Benchmarks": {"mean_ttft_ms": 2.0}}},
+            {"kind": "agentic_traces", "data": {"label": "replay", "mean_ttft_ms": 3.0}},
+            {"kind": "aiperf_spec_decode", "data": _spec_decode_record("speed_bench_coding", 1, 0.6)},
+            {"kind": "evals", "data": {"task_name": "mmlu", "score": 0.7}},
+        ],
+    }
+    rows = mapper.map_benchmark_data(pipeline, 1, report)
+    run_types = sorted(r.run_type for r in rows)
+    assert run_types == ["agentic_traces", "aiperf_spec_decode", "benchmark", "benchmark", "eval"]
+    for row in rows:
+        if row.run_type != "eval":
+            assert {m.step_name for m in row.measurements} == {"benchmark"}
+        if row.run_type in ("agentic_traces", "aiperf_spec_decode"):
+            assert row.config_params["report_section_kind"] == row.run_type
