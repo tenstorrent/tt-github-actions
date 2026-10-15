@@ -55,7 +55,7 @@ def test_cannot_parse_non_json():
 
 def test_parse_parameter_support_tests(sample_parameter_support_json):
     parser = ParameterSupportTestParser()
-    tests = parser.parse(sample_parameter_support_json)
+    tests = parser.parse(sample_parameter_support_json).tests
 
     assert len(tests) == 3
 
@@ -105,7 +105,7 @@ def test_parse_empty_results():
 
     try:
         parser = ParameterSupportTestParser()
-        tests = parser.parse(temp_path)
+        tests = parser.parse(temp_path).tests
         assert len(tests) == 0
     finally:
         Path(temp_path).unlink()
@@ -137,7 +137,7 @@ def test_metadata_takes_precedence():
 
     try:
         parser = ParameterSupportTestParser()
-        tests = parser.parse(temp_path)
+        tests = parser.parse(temp_path).tests
 
         assert len(tests) == 1
         # Metadata values should override parameter_support_tests values
@@ -180,7 +180,7 @@ def test_metadata_results_does_not_override_actual_results():
 
     try:
         parser = ParameterSupportTestParser()
-        tests = parser.parse(temp_path)
+        tests = parser.parse(temp_path).tests
 
         # Should parse results from parameter_support_tests, not metadata
         assert len(tests) == 2

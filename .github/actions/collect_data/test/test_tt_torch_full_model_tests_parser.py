@@ -16,7 +16,7 @@ def test_tt_torch_full_model_tests_parser(tar, project, github_job_id, expected)
     filepath = f"test/data/tt_torch_models/{tar}"
     parser = PythonPytestParser()
     assert parser.can_parse(filepath)
-    tests = parser.parse(filepath, project=project, github_job_id=github_job_id)
+    tests = parser.parse(filepath, project=project, github_job_id=github_job_id).tests
     assert len(tests) == expected["tests_cnt"]
 
 
@@ -24,7 +24,7 @@ def test_tt_torch_full_model_tests_parser_custom_error_message():
     filepath = f"test/data/tt_torch_models/mnist_custom_error_message.xml"
     parser = PythonPytestParser()
     assert parser.can_parse(filepath)
-    tests = parser.parse(filepath, project="tt-torch", github_job_id=5)
+    tests = parser.parse(filepath, project="tt-torch", github_job_id=5).tests
     assert len(tests) == 3
     # Check that if a custom error message is provided, it is used in a non-xfail/skip case
     assert tests[0].error_message is not None
