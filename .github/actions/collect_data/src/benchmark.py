@@ -1396,7 +1396,96 @@ class GuideLLMBenchmarkDataMapper(_BenchmarkDataMapper):
             return None
 
 
+class BlazeReleaseDataMapper(_BenchmarkDataMapper):
+    """Maps a published Blaze release to one CompleteBenchmarkRun per released leaf.
+
+    tt-shield's "Blaze release published" workflow writes report_blaze-release_<job_id>.json from the release's
+    blaze_release.json (`blaze_release.py db-report`, schema tt-shield/blaze-release-db/1). A run is the leaf: its
+    HF id (a bare name, for a model without an HF org, as given), run_type blaze_release, dated by the publication and the release commit (so a later re-collect or
+    backfill records the same release), with the release and the leaf (version, package, images, deployments,
+    test_job_ids) in config_params. Its measurements count the leaf's deployments and test jobs.
+    """
+
+    SCHEMA = "tt-shield/blaze-release-db/1"
+    RUN_TYPE = "blaze_release"
+    DEVICE_NAME = "SUPER_CLUSTER"
+
+    @staticmethod
+    def _is_model_name(model) -> bool:
+        """An HF id (org/name), or a bare name for a model without an HF org, which is stored as given."""
+        return isinstance(model, str) and bool(model) and all(model.split("/")) and model.count("/") <= 1
+
+    def map_benchmark_data(
+        self, pipeline, job_id, report_data, model_spec_data=None
+    ) -> List[CompleteBenchmarkRun] | None:
+        job = self._get_job(pipeline, job_id)
+        if job is None:
+            return None
+
+        release = report_data.get("release")
+        leaves = report_data.get("leaves")
+        problem = None
+        if report_data.get("schema") != self.SCHEMA:
+            problem = f"schema {report_data.get('schema')!r} is not {self.SCHEMA!r}"
+        elif not isinstance(release, dict):
+            problem = "release is not an object"
+        elif not release.get("published_at"):
+            problem = "release.published_at is missing"
+        elif not isinstance(leaves, list) or not leaves:
+            problem = "the report has no leaves list"
+        if problem:
+            failure_happened()
+            logger.error(f"Blaze release report of job {job_id}: {problem}")
+            return []
+
+        runs = []
+        for index, leaf in enumerate(leaves):
+            if not isinstance(leaf, dict):
+                failure_happened()
+                logger.error(f"Blaze release report of job {job_id}: leaves[{index}] is not an object: {leaf!r}")
+                continue
+            model = leaf.get("model")
+            if not self._is_model_name(model):
+                failure_happened()
+                logger.error(
+                    f"Blaze release leaf {leaf.get('leaf')!r}: model {model!r} is neither an HF id (org/name) "
+                    "nor a bare name"
+                )
+                continue
+            counts = {
+                name: len(value) if isinstance(value, list) else 0
+                for name, value in (("deployments", leaf.get("deployments")), ("test_jobs", leaf.get("test_job_ids")))
+            }
+            try:
+                run = self._create_complete_benchmark_run(
+                    pipeline=pipeline,
+                    job=job,
+                    data=report_data,
+                    run_type=self.RUN_TYPE,
+                    measurements=self._create_measurements(job, self.RUN_TYPE, counts, list(counts)),
+                    device_info={"device_name": self.DEVICE_NAME, "roles": leaf.get("device")},
+                    model_name=model,
+                    model_type="LLM",
+                    config_params={"release": release, **{k: v for k, v in leaf.items() if k != "model"}},
+                )
+                runs.append(
+                    CompleteBenchmarkRun.model_validate(
+                        {
+                            **run.model_dump(),
+                            "run_start_ts": release["published_at"],
+                            "run_end_ts": release["published_at"],
+                            "git_commit_hash": release.get("commit") or pipeline.git_commit_hash,
+                        }
+                    )
+                )
+            except ValidationError as e:
+                failure_happened()
+                logger.error(f"Validation error for Blaze release leaf {leaf.get('leaf')!r}: {e}")
+        return runs
+
+
 _REPORT_TYPE_MAPPERS = {
+    ("tt-shield", "blaze_release"): BlazeReleaseDataMapper,
     ("tt-shield", "vllm_bench_serve"): VllmBenchmarkDataMapper,
     ("tt-inference-server", "vllm_bench_serve"): VllmBenchmarkDataMapper,
     ("tt-shield", "guidellm_benchmark"): GuideLLMBenchmarkDataMapper,
