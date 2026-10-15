@@ -193,14 +193,54 @@ def test_a_malformed_model_skips_its_leaf_and_is_flagged(pipeline, model):
     assert shared.is_failure()
 
 
+@pytest.mark.parametrize("bad_leaf", [None, "glm-5.3@quad+SC20", 42, ["zai-org/GLM-5.3"]])
+def test_a_leaf_that_is_not_an_object_is_skipped_and_flagged(pipeline, bad_leaf):
+    report = copy.deepcopy(REPORT)
+    report["leaves"].insert(0, bad_leaf)
+    assert [run.ml_model_name for run in mapped(pipeline, report)] == ["zai-org/GLM-5.3", "MiniMaxAI/MiniMax-M3"]
+    assert shared.is_failure()
+
+
+def test_a_malformed_leaf_does_not_stop_the_other_reports_of_the_run(pipeline, tmp_path):
+    artifacts = tmp_path / str(pipeline.github_pipeline_id) / "artifacts"
+    (artifacts / "a").mkdir(parents=True)
+    (artifacts / "a" / "report_blaze-release_7.json").write_text(json.dumps({**REPORT, "leaves": [None, MINIMAX]}))
+    (artifacts / "b").mkdir()
+    (artifacts / "b" / "report_blaze-release-again_7.json").write_text(json.dumps(REPORT))
+    runs = create_json_from_report(pipeline, str(tmp_path))
+    assert sorted(run.ml_model_name for run in runs) == [
+        "MiniMaxAI/MiniMax-M3",
+        "MiniMaxAI/MiniMax-M3",
+        "zai-org/GLM-5.3",
+    ]
+
+
+def test_counts_ignore_fields_that_are_not_lists(pipeline):
+    report = copy.deepcopy(REPORT)
+    report["leaves"][0]["deployments"] = 2
+    report["leaves"][0]["test_job_ids"] = "112348953986"
+    run = mapped(pipeline, report)[0]
+    assert {(m.name, m.value) for m in run.measurements} == {("deployments", 0.0), ("test_jobs", 0.0)}
+
+
 @pytest.mark.parametrize(
     "change",
     [
         lambda r: r.update(schema="tt-shield/blaze-release-db/2"),
         lambda r: r["release"].pop("published_at"),
         lambda r: r.update(leaves=[]),
+        lambda r: r.update(release="blaze-2026.10.1"),
+        lambda r: r.update(leaves={"leaf": "glm-5.3@quad+SC20"}),
+        lambda r: r.update(leaves="glm-5.3@quad+SC20"),
     ],
-    ids=["unknown schema", "no publication time", "no leaves"],
+    ids=[
+        "unknown schema",
+        "no publication time",
+        "no leaves",
+        "release not an object",
+        "leaves an object",
+        "leaves a string",
+    ],
 )
 def test_a_report_the_mapper_cannot_read_gives_no_runs_and_is_flagged(pipeline, change):
     report = copy.deepcopy(REPORT)

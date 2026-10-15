@@ -1422,21 +1422,28 @@ class BlazeReleaseDataMapper(_BenchmarkDataMapper):
         if job is None:
             return None
 
-        release = report_data.get("release") or {}
+        release = report_data.get("release")
+        leaves = report_data.get("leaves")
         problem = None
         if report_data.get("schema") != self.SCHEMA:
             problem = f"schema {report_data.get('schema')!r} is not {self.SCHEMA!r}"
+        elif not isinstance(release, dict):
+            problem = "release is not an object"
         elif not release.get("published_at"):
             problem = "release.published_at is missing"
-        elif not report_data.get("leaves"):
-            problem = "the report has no leaves"
+        elif not isinstance(leaves, list) or not leaves:
+            problem = "the report has no leaves list"
         if problem:
             failure_happened()
             logger.error(f"Blaze release report of job {job_id}: {problem}")
             return []
 
         runs = []
-        for leaf in report_data["leaves"]:
+        for index, leaf in enumerate(leaves):
+            if not isinstance(leaf, dict):
+                failure_happened()
+                logger.error(f"Blaze release report of job {job_id}: leaves[{index}] is not an object: {leaf!r}")
+                continue
             model = leaf.get("model")
             if not self._is_model_name(model):
                 failure_happened()
@@ -1446,8 +1453,8 @@ class BlazeReleaseDataMapper(_BenchmarkDataMapper):
                 )
                 continue
             counts = {
-                "deployments": len(leaf.get("deployments") or []),
-                "test_jobs": len(leaf.get("test_job_ids") or []),
+                name: len(value) if isinstance(value, list) else 0
+                for name, value in (("deployments", leaf.get("deployments")), ("test_jobs", leaf.get("test_job_ids")))
             }
             try:
                 run = self._create_complete_benchmark_run(
