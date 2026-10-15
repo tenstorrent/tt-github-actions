@@ -1401,7 +1401,7 @@ class BlazeReleaseDataMapper(_BenchmarkDataMapper):
 
     tt-shield's "Blaze release published" workflow writes report_blaze-release_<job_id>.json from the release's
     blaze_release.json (`blaze_release.py db-report`, schema tt-shield/blaze-release-db/1). A run is the leaf: its
-    HF id, run_type blaze_release, dated by the publication and the release commit (so a later re-collect or
+    HF id (a bare name, for a model without an HF org, as given), run_type blaze_release, dated by the publication and the release commit (so a later re-collect or
     backfill records the same release), with the release and the leaf (version, package, images, deployments,
     test_job_ids) in config_params. Its measurements count the leaf's deployments and test jobs.
     """
@@ -1409,6 +1409,11 @@ class BlazeReleaseDataMapper(_BenchmarkDataMapper):
     SCHEMA = "tt-shield/blaze-release-db/1"
     RUN_TYPE = "blaze_release"
     DEVICE_NAME = "SUPER_CLUSTER"
+
+    @staticmethod
+    def _is_model_name(model) -> bool:
+        """An HF id (org/name), or a bare name for a model without an HF org, which is stored as given."""
+        return isinstance(model, str) and bool(model) and all(model.split("/")) and model.count("/") <= 1
 
     def map_benchmark_data(
         self, pipeline, job_id, report_data, model_spec_data=None
@@ -1432,10 +1437,13 @@ class BlazeReleaseDataMapper(_BenchmarkDataMapper):
 
         runs = []
         for leaf in report_data["leaves"]:
-            model = leaf.get("model") or ""
-            if "/" not in model:
+            model = leaf.get("model")
+            if not self._is_model_name(model):
                 failure_happened()
-                logger.error(f"Blaze release leaf {leaf.get('leaf')!r}: model {model!r} is not an HF id (org/name)")
+                logger.error(
+                    f"Blaze release leaf {leaf.get('leaf')!r}: model {model!r} is neither an HF id (org/name) "
+                    "nor a bare name"
+                )
                 continue
             counts = {
                 "deployments": len(leaf.get("deployments") or []),

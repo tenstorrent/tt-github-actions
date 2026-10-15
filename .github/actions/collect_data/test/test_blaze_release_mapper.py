@@ -177,9 +177,18 @@ def test_without_a_release_commit_the_pipeline_commit_stays(pipeline):
     assert mapped(pipeline, report)[0].git_commit_hash == "a" * 40
 
 
-def test_a_leaf_without_an_hf_id_is_skipped_and_flagged(pipeline):
+def test_a_bare_model_name_without_an_hf_org_passes_through(pipeline):
+    # Some models have no HF org; the name is stored as given.
     report = copy.deepcopy(REPORT)
     report["leaves"][0]["model"] = "GLM-5.3"
+    assert [run.ml_model_name for run in mapped(pipeline, report)] == ["GLM-5.3", "MiniMaxAI/MiniMax-M3"]
+    assert not shared.is_failure()
+
+
+@pytest.mark.parametrize("model", [None, 42, "", "org/", "/name", "org/model/extra"])
+def test_a_malformed_model_skips_its_leaf_and_is_flagged(pipeline, model):
+    report = copy.deepcopy(REPORT)
+    report["leaves"][0]["model"] = model
     assert [run.ml_model_name for run in mapped(pipeline, report)] == ["MiniMaxAI/MiniMax-M3"]
     assert shared.is_failure()
 
