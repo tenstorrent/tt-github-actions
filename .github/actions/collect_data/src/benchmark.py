@@ -1096,6 +1096,12 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "tolerance",
                     "num_inference_steps",
                     "num_prompts",
+                    # LLM accuracy noise tolerance and sharded-eval sample counts
+                    "noise_n",
+                    "noise_se",
+                    "noise_z",
+                    "inference_error_samples",
+                    "samples_logged",
                     # Image quality (existing)
                     "average_clip",
                     "deviation_clip",
@@ -1113,6 +1119,8 @@ class ShieldBenchmarkDataMapper(_BenchmarkDataMapper):
                     "clip_standard_deviation",
                     "fvd",
                     "fvmd",
+                    "mean_concept_score",
+                    "min_concept_score",
                     # Audio
                     "latency_p50",
                     "latency_p90",
