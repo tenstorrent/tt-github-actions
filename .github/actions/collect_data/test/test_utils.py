@@ -92,7 +92,7 @@ def test_assert_workflow_completed_accepts_completed_and_overrides():
 
 
 def test_assert_workflow_completed_non_terminal_mismatch_message():
-    with pytest.raises(RuntimeError, match="Expected workflow status in \['in_progress'\], got 'queued'"):
+    with pytest.raises(RuntimeError, match=r"Expected workflow status in \['in_progress'\], got 'queued'"):
         assert_workflow_completed({"id": 99, "status": "queued"}, expected_status="in_progress")
 
 
