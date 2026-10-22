@@ -108,6 +108,11 @@ class Job(BaseModel):
     location: Optional[str] = Field(description="Where the host is located.")
     failure_signature: Optional[str] = Field(None, description="Failure signature.")
     failure_description: Optional[str] = Field(None, description="Failure description.")
+    tags: Optional[dict] = Field(
+        None,
+        description="Run configuration parameters (filters, environment variables, "
+        "input data types, compiler configurations, frontend selection, etc.).",
+    )
     tests: List[Test] = []
     steps: Optional[List[Step]] = Field(None, description="Steps of the job.")
 
