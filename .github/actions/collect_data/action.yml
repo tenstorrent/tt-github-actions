@@ -66,6 +66,7 @@ runs:
   - name: Create JSON
     env:
       PYTHONPATH: ${{ github.workspace }}
+      EXPECTED_WORKFLOW_STATUS: ${{ inputs.expected_workflow_status }}
     shell: bash
     run: |
       EXTRA_ARGS=""
@@ -75,7 +76,7 @@ runs:
       if [ "${{ inputs.skip_log_download }}" = "true" ]; then
         EXTRA_ARGS="$EXTRA_ARGS --skip-log-download"
       fi
-      python3 ${GITHUB_ACTION_PATH}/src/generate_data.py --run_id ${{ inputs.run_id }} --expected-workflow-status "${{ inputs.expected_workflow_status }}" $EXTRA_ARGS
+      python3 ${GITHUB_ACTION_PATH}/src/generate_data.py --run_id ${{ inputs.run_id }} --expected-workflow-status "${EXPECTED_WORKFLOW_STATUS}" $EXTRA_ARGS
       # Workaround: Copy file to avoid GH upload filename limitations
       mkdir -p reports_json && cp *.json* reports_json/ && zip -rq reports_json.zip reports_json || true
 

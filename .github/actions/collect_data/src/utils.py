@@ -91,9 +91,12 @@ def assert_workflow_completed(
     allowed = {s.strip() for s in expected_status.split(",") if s.strip()}
     if status not in allowed:
         pipeline_id = github_pipeline_json.get("id")
+        if allowed == {"completed"}:
+            guidance = "Collect data should only run on finished workflows unless expected_workflow_status is overridden."
+        else:
+            guidance = f"Expected workflow status in {sorted(allowed)!r}, got {status!r}."
         raise RuntimeError(
-            f"Workflow run {pipeline_id} is not {expected_status} (status={status!r}). "
-            "Collect data should only run on finished workflows."
+            f"Workflow run {pipeline_id} is not {expected_status} (status={status!r}). {guidance}"
         )
 
 
@@ -108,14 +111,18 @@ def get_pipeline_row_from_github_info(
     repository_url = github_pipeline_json["repository"]["html_url"]
 
     jobs = github_jobs_json["jobs"]
-    jobs_start_times = list(map(lambda job_: parse_timestamp(job_["started_at"]), jobs))
+    jobs_start_times = [
+        ts
+        for job_ in jobs
+        if (ts := parse_timestamp(job_.get("started_at"))) is not None
+    ]
+    submission_dt = parse_timestamp(pipeline_submission_ts)
     # We filter out jobs that started before because that means they're from a previous attempt for that pipeline
-    eligible_jobs_start_times = list(
-        filter(
-            lambda job_start_time_: job_start_time_ >= parse_timestamp(pipeline_submission_ts),
-            jobs_start_times,
-        )
-    )
+    eligible_jobs_start_times = [
+        job_start_time_
+        for job_start_time_ in jobs_start_times
+        if submission_dt is None or job_start_time_ >= submission_dt
+    ]
     sorted_jobs_start_times = sorted(eligible_jobs_start_times)
     assert (
         sorted_jobs_start_times

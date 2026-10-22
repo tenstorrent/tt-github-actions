@@ -44,6 +44,7 @@ Note: If `sftp_host` is empty, action will skip SFTP upload and it can be used f
 |-------|---------|-------------|
 | `skip_error_log_parsing` | `'false'` | Set to `'true'` to skip the per-line log scan that produces `failure_signature` and `failure_description` for failed jobs. Useful when a project's logs legitimately contain many "error"-like lines (e.g. tt-shield), where the scan produces misleading `failure_description` payloads and spams the collection step's stdout. Logs are still fetched — only the per-line scan and its `logger.info` emissions are skipped. |
 | `skip_log_download` | `'false'` | Set to `'true'` to skip the `gh api .../logs` fetch entirely. When this is on, `docker_image`, `job_matrix_config`, `failure_signature`, and `failure_description` cannot be populated from logs. Use when a project's logs are too large to fit in runner memory (e.g. tt-shield). |
+| `expected_workflow_status` | `'completed'` | Expected status of the workflow run (`'completed'`, `'in_progress'`, `'any'`, or comma-separated values like `'completed,in_progress'`). Override to `'in_progress'` or `'any'` when invoking `collect_data` synchronously from within an active workflow run. |
 
 Example usage with the flag enabled:
 
