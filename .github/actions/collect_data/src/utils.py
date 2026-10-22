@@ -80,13 +80,19 @@ def get_data_pipeline_datetime_from_datetime(requested_datetime: datetime) -> st
     return requested_datetime.strftime("%Y-%m-%dT%H:%M:%S.%f%z")
 
 
-def assert_workflow_completed(github_pipeline_json: Dict[str, Any]) -> None:
-    """Raise an error if the workflow run has not yet reached 'completed' status."""
+def assert_workflow_completed(
+    github_pipeline_json: Dict[str, Any],
+    expected_status: str = "completed",
+) -> None:
+    """Raise an error if the workflow run has not reached the expected status (default: 'completed')."""
+    if expected_status in ("any", "*"):
+        return
     status = github_pipeline_json.get("status")
-    if status != "completed":
+    allowed = {s.strip() for s in expected_status.split(",") if s.strip()}
+    if status not in allowed:
         pipeline_id = github_pipeline_json.get("id")
         raise RuntimeError(
-            f"Workflow run {pipeline_id} is not completed (status={status!r}). "
+            f"Workflow run {pipeline_id} is not {expected_status} (status={status!r}). "
             "Collect data should only run on finished workflows."
         )
 
