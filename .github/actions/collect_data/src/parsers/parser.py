@@ -2,13 +2,24 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from abc import ABC, abstractmethod
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import List, Optional, Union
+
+from pydantic_models import Test, OpTest
 
 
 class ParserError(Exception):
     """Custom exception for parser errors."""
 
     pass
+
+
+@dataclass
+class ParseResult:
+    """Everything extracted from a single report file."""
+
+    tests: List[Union[Test, OpTest]] = field(default_factory=list)
+    job_tags: Optional[dict] = None
 
 
 class Parser(ABC):
@@ -29,11 +40,11 @@ class Parser(ABC):
         filepath: str,
         project: Optional[str] = None,
         github_job_id: Optional[int] = None,
-    ) -> list:
+    ) -> ParseResult:
         """
-        Parse a file and return a list of tests.
+        Parse a file and return the tests and job-level tags found in it.
         :param filepath: Path to the file to parse.
-        :return: List of tests.
+        :return: ParseResult with the tests and job-level tags.
         :raises ParserError: If parsing fails.
         """
         pass

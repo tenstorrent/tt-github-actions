@@ -2,9 +2,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from loguru import logger
-from typing import List, Optional, Union
-from pydantic_models import Test, OpTest
+from typing import Optional
 
+from parsers.parser import ParseResult
 from parsers.python_unittest_parser import PythonUnittestParser
 from parsers.python_pytest_parser import PythonPytestParser
 from parsers.parameter_support_test_parser import ParameterSupportTestParser
@@ -20,12 +20,12 @@ def parse_file(
     filepath: str,
     project: Optional[str] = None,
     github_job_id: Optional[int] = None,
-) -> List[Union[Test, OpTest]]:
+) -> ParseResult:
     """
     Parse a file using the appropriate parser.
 
     :param filepath: Path to the file to parse.
-    :return: List of tests.
+    :return: ParseResult with the tests and job-level tags found in the file.
     """
     filepath = str(filepath)
     for parser in parsers:
@@ -37,7 +37,7 @@ def parse_file(
                 logger.error(f"Exception: {e}")
                 logger.error("Trying next parser")
     logger.error(f"No parser available for file: {filepath}")
-    return []
+    return ParseResult()
 
 
 if __name__ == "__main__":

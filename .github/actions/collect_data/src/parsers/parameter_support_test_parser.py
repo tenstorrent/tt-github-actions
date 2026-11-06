@@ -6,7 +6,7 @@ from dataclasses import dataclass, asdict
 from loguru import logger
 from pydantic_models import Test
 from typing import Optional, List, ClassVar
-from .parser import Parser
+from .parser import Parser, ParseResult
 from pydantic import ValidationError
 from shared import failure_happened
 import json
@@ -57,7 +57,7 @@ class ParameterSupportTestParser(Parser):
         filepath: str,
         project: Optional[str] = None,
         github_job_id: Optional[int] = None,
-    ) -> List[Test]:
+    ) -> ParseResult:
         logger.info(f"Parsing parameter support tests from {filepath}")
 
         try:
@@ -65,13 +65,13 @@ class ParameterSupportTestParser(Parser):
                 data = json.load(f)
         except (json.JSONDecodeError, IOError) as e:
             logger.error(f"Failed to load JSON from {filepath}: {e}")
-            return []
+            return ParseResult()
 
         metadata = data.get("metadata", {})
         param_support_tests = data.get("parameter_support_tests", {})
         if not param_support_tests or "results" not in param_support_tests:
             logger.warning(f"No parameter support test results found in {filepath}")
-            return []
+            return ParseResult()
         # Merge metadata into param_support_tests without allowing it to override the actual test results
         filtered_metadata = {k: v for k, v in metadata.items() if k != "results"}
         param_support_tests = {
@@ -91,7 +91,7 @@ class ParameterSupportTestParser(Parser):
                     tests.append(test)
 
         logger.info(f"Parsed {len(tests)} parameter support tests from {filepath}")
-        return tests
+        return ParseResult(tests=tests)
 
     def _create_test_from_case(
         self,

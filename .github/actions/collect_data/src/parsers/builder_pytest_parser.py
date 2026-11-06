@@ -7,7 +7,7 @@ from functools import partial
 from pydantic_models import OpTest, TensorDesc, TestStatus
 from datetime import datetime, timedelta
 from typing import Optional
-from .parser import Parser
+from .parser import Parser, ParseResult
 from . import junit_xml_utils
 from utils import parse_timestamp
 import ast
@@ -51,8 +51,8 @@ class BuilderPytestParser(Parser):
         filepath: str,
         project: Optional[str] = None,
         github_job_id: Optional[int] = None,
-    ) -> list:
-        return get_tests(filepath, project, github_job_id)
+    ) -> ParseResult:
+        return ParseResult(tests=get_tests(filepath, project, github_job_id))
 
 
 def get_tests(filepath, project: Optional[str] = None, github_job_id: Optional[int] = None):
