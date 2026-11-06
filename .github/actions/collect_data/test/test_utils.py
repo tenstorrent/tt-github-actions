@@ -4,7 +4,7 @@
 
 import pytest
 
-from utils import get_job_row_from_github_job
+from utils import assert_workflow_completed, get_job_row_from_github_job, get_pipeline_row_from_github_info
 
 
 @pytest.fixture
@@ -76,3 +76,51 @@ def test_skip_log_download_avoids_fetch(monkeypatch, failed_job):
     # than becoming an exception string from extract_error_lines_from_logs(None).
     assert row["failure_signature"] is None
     assert row["failure_description"] is None
+
+
+def test_assert_workflow_completed_default_rejects_in_progress():
+    with pytest.raises(RuntimeError, match="Collect data should only run on finished workflows"):
+        assert_workflow_completed({"id": 99, "status": "in_progress"})
+
+
+def test_assert_workflow_completed_accepts_completed_and_overrides():
+    assert_workflow_completed({"id": 99, "status": "completed"})
+    assert_workflow_completed({"id": 99, "status": "in_progress"}, expected_status="in_progress")
+    assert_workflow_completed({"id": 99, "status": "in_progress"}, expected_status="completed,in_progress")
+    assert_workflow_completed({"id": 99, "status": "queued"}, expected_status="any")
+    assert_workflow_completed({"id": 99, "status": "queued"}, expected_status="*")
+
+
+def test_assert_workflow_completed_non_terminal_mismatch_message():
+    with pytest.raises(RuntimeError, match=r"Expected workflow status in \['in_progress'\], got 'queued'"):
+        assert_workflow_completed({"id": 99, "status": "queued"}, expected_status="in_progress")
+
+
+def test_get_pipeline_row_skips_queued_jobs_with_null_started_at():
+    pipeline_json = {
+        "id": 1001,
+        "created_at": "2026-04-21T00:00:00Z",
+        "updated_at": "2026-04-21T00:05:00Z",
+        "name": "CI",
+        "head_branch": "main",
+        "head_sha": "abc1234",
+        "html_url": "https://github.com/tenstorrent/tt-github-actions/actions/runs/1001",
+        "repository": {
+            "name": "tt-github-actions",
+            "html_url": "https://github.com/tenstorrent/tt-github-actions",
+        },
+        "head_commit": {"author": {"name": "tester"}},
+    }
+    jobs_json = {
+        "jobs": [
+            {"id": 1, "started_at": None, "status": "queued"},
+            {"id": 2, "started_at": "2026-04-21T00:01:00Z", "status": "in_progress"},
+        ]
+    }
+    row = get_pipeline_row_from_github_info(
+        {"github_event_name": "workflow_dispatch"},
+        pipeline_json,
+        jobs_json,
+    )
+    assert row["github_pipeline_id"] == 1001
+    assert row["pipeline_start_ts"].startswith("2026-04-21T00:01:00")

@@ -19,6 +19,7 @@ def create_pipeline_json(
     workflow_outputs_dir,
     skip_error_log_parsing: bool = False,
     skip_log_download: bool = False,
+    expected_workflow_status: str = "completed",
 ):
 
     github_runner_environment = get_github_runner_environment()
@@ -29,6 +30,7 @@ def create_pipeline_json(
         jobs_filename,
         skip_error_log_parsing=skip_error_log_parsing,
         skip_log_download=skip_log_download,
+        expected_workflow_status=expected_workflow_status,
     )
 
     report_filename = get_cicd_json_filename(pipeline)
@@ -105,6 +107,12 @@ if __name__ == "__main__":
             "projects whose logs are too large to fit in runner memory."
         ),
     )
+    parser.add_argument(
+        "--expected-workflow-status",
+        type=str,
+        default="completed",
+        help="Expected workflow run status (default: 'completed'). Use 'in_progress' or 'any' when invoked synchronously.",
+    )
     args = parser.parse_args()
 
     logger.info(f"Creating pipeline JSON for workflow run ID {args.run_id}")
@@ -114,6 +122,7 @@ if __name__ == "__main__":
         workflow_outputs_dir=args.output_dir,
         skip_error_log_parsing=args.skip_error_log_parsing,
         skip_log_download=args.skip_log_download,
+        expected_workflow_status=args.expected_workflow_status,
     )
 
     logger.info(f"Creating benchmark JSON for workflow run ID {args.run_id}")

@@ -37,12 +37,13 @@ def create_cicd_json_for_data_analysis(
     github_jobs_json_filename,
     skip_error_log_parsing: bool = False,
     skip_log_download: bool = False,
+    expected_workflow_status: str = "completed",
 ):
     logger.info(f"Load pipeline info from: {github_pipeline_json_filename}")
     with open(github_pipeline_json_filename) as github_pipeline_json_file:
         github_pipeline_json = json.load(github_pipeline_json_file)
 
-    assert_workflow_completed(github_pipeline_json)
+    assert_workflow_completed(github_pipeline_json, expected_status=expected_workflow_status)
 
     logger.info(f"Load jobs info from: {github_jobs_json_filename}")
     with open(github_jobs_json_filename) as github_jobs_json_file:
