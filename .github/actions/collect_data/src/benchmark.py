@@ -1506,6 +1506,8 @@ _PROJECT_MAPPERS = {
     "tt-xla": ForgeBenchmarkDataMapper,
     "tt-forge": ForgeBenchmarkDataMapper,
     "tt-mlir": ForgeBenchmarkDataMapper,
+    # agentic-models writes Forge-shaped reports: run_type, model, config and a measurements list.
+    "agentic-models": ForgeBenchmarkDataMapper,
     "tt-shield": ShieldBenchmarkDataMapper,
 }
 
