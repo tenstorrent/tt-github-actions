@@ -3,9 +3,10 @@ name: "Community Issue Auto-Tagging"
 on:
   workflow_call:
     secrets:
+      # No longer used; kept so existing callers do not break.
       AUTOLABEL_COMMUNITY_ISSUES:
-        description: 'Token for checking organization membership and managing labels'
-        required: true
+        description: 'No longer used; kept so existing callers do not break'
+        required: false
 
 env:
   LABEL_NAME: "community"
@@ -18,7 +19,6 @@ jobs:
     permissions:
       issues: write
       pull-requests: write
-      contents: read
 
     steps:
       - name: Initialize workflow variables
@@ -64,80 +64,40 @@ jobs:
       - name: Check organization membership
         id: check_membership
         env:
-          GITHUB_TOKEN: ${{ secrets.AUTOLABEL_COMMUNITY_ISSUES }}
           USERNAME: ${{ steps.init.outputs.username }}
           ORG_NAME: ${{ steps.init.outputs.org_name }}
+          # author_association comes from the event payload, so no extra token is needed
+          AUTHOR_ASSOCIATION: ${{ github.event_name == 'issues' && github.event.issue.author_association || github.event.pull_request.author_association }}
         run: |
           set -e
 
           echo "🔍 Checking if user '${USERNAME}' is a member of organization '${ORG_NAME}'"
+          echo "author_association: ${AUTHOR_ASSOCIATION}"
 
-          # Check if user is a public or private member of the organization
-          # This will return 204 for members (including private members) and 404 for non-members
-          MEMBERSHIP_STATUS=$(curl -s -w "%{http_code}" -o /tmp/membership_response.json \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/orgs/${ORG_NAME}/members/${USERNAME}")
-
-          echo "API Response Status: ${MEMBERSHIP_STATUS}"
-
-          if [ -f /tmp/membership_response.json ]; then
-            echo "API Response Body:"
-            cat /tmp/membership_response.json
-            rm -f /tmp/membership_response.json
-          fi
-
-          case "${MEMBERSHIP_STATUS}" in
-            204)
+          # OWNER and MEMBER are organization members (public or private)
+          # COLLABORATOR is an outside collaborator; all other values are external users
+          case "${AUTHOR_ASSOCIATION}" in
+            OWNER|MEMBER)
               echo "✅ User is an organization member"
-              echo "is_member=true" >> $GITHUB_OUTPUT
-              echo "reason=organization_member" >> $GITHUB_OUTPUT
+              echo "is_member=true" >> "$GITHUB_OUTPUT"
+              echo "reason=organization_member" >> "$GITHUB_OUTPUT"
               ;;
-            404)
-              echo "❓ User is not an organization member, checking collaborator status..."
-
-              # Check if user is an external collaborator
-              COLLAB_STATUS=$(curl -s -w "%{http_code}" -o /tmp/collab_response.json \
-                -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-                -H "Accept: application/vnd.github.v3+json" \
-                "https://api.github.com/repos/${{ github.repository }}/collaborators/${USERNAME}")
-
-              echo "Collaborator API Response Status: ${COLLAB_STATUS}"
-
-              if [ -f /tmp/collab_response.json ]; then
-                echo "Collaborator API Response Body:"
-                cat /tmp/collab_response.json
-                rm -f /tmp/collab_response.json
-              fi
-
-              if [ "${COLLAB_STATUS}" = "204" ]; then
-                echo "🏷️ User is an external collaborator - should be labeled as community"
-                echo "is_member=false" >> $GITHUB_OUTPUT
-                echo "reason=external_collaborator" >> $GITHUB_OUTPUT
-              else
-                echo "🏷️ User is not a collaborator - should be labeled as community"
-                echo "is_member=false" >> $GITHUB_OUTPUT
-                echo "reason=external_user" >> $GITHUB_OUTPUT
-              fi
-              ;;
-            401)
-              echo "❌ ERROR: Authentication failed - check AUTOLABEL_COMMUNITY_ISSUES permissions"
-              exit 1
-              ;;
-            403)
-              echo "❌ ERROR: Forbidden - insufficient permissions to check membership"
-              exit 1
+            COLLABORATOR)
+              echo "🏷️ User is an external collaborator - should be labeled as community"
+              echo "is_member=false" >> "$GITHUB_OUTPUT"
+              echo "reason=external_collaborator" >> "$GITHUB_OUTPUT"
               ;;
             *)
-              echo "❌ ERROR: Unexpected API response: ${MEMBERSHIP_STATUS}"
-              exit 1
+              echo "🏷️ User is not a collaborator - should be labeled as community"
+              echo "is_member=false" >> "$GITHUB_OUTPUT"
+              echo "reason=external_user" >> "$GITHUB_OUTPUT"
               ;;
           esac
 
       - name: Ensure community label exists
         if: steps.check_membership.outputs.is_member == 'false'
         env:
-          GITHUB_TOKEN: ${{ secrets.AUTOLABEL_COMMUNITY_ISSUES }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -e
 
@@ -201,7 +161,7 @@ jobs:
       - name: Apply community label
         if: steps.check_membership.outputs.is_member == 'false'
         env:
-          GITHUB_TOKEN: ${{ secrets.AUTOLABEL_COMMUNITY_ISSUES }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -e
 
