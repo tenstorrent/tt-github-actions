@@ -15,6 +15,9 @@ jobs:
       - uses: actions/checkout@v5
       - name: Set up Python
         uses: actions/setup-python@v6
+        with:
+          # The pinned Black 22.3.0 hook is incompatible with Python 3.14.
+          python-version: '3.11'
       - name: Run pre-commit
         shell: bash
         run: |
