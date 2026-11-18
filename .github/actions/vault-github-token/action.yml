@@ -1,0 +1,68 @@
+# SPDX-FileCopyrightText: (c) 2026 Tenstorrent USA, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Vault GitHub token
+description: Get a masked GitHub token from Vault using GitHub OIDC on hosted or self-hosted Linux runners.
+inputs:
+  role:
+    description: Vault JWT role authorized for the calling repository and workflow.
+    required: true
+  token-name:
+    description: Token name beneath github/token/ (without the prefix).
+    required: true
+  vault-url:
+    description: Trusted HTTPS Vault address; also used as the GitHub OIDC audience.
+    default: https://vault-ospo.eng-svc.aws.tenstorrent.com
+  network-mode:
+    description: userspace (no TUN/NET_ADMIN), kernel, or existing (do not manage Tailscale).
+    default: userspace
+  proxy-url:
+    description: Optional HTTP proxy for existing mode. In userspace mode, defaults to http://127.0.0.1:1055 and must be a loopback HTTP address with a port.
+    default: ''
+  tailscale-oauth-client-id:
+    description: Tailscale OIDC federation client ID; required when joining the tailnet.
+    default: ''
+  tailscale-audience:
+    description: Tailscale OIDC audience; required when joining the tailnet.
+    default: ''
+  tailscale-tags:
+    description: Tags for the Tailscale connection created by this action.
+    default: tag:tt-gha-vault-ospo
+outputs:
+  token:
+    description: Masked GitHub token, for consumption in the same job.
+    value: ${{ steps.vault.outputs.token }}
+runs:
+  using: composite
+  steps:
+    - name: Validate configuration and inspect connection
+      id: config
+      shell: bash
+      env:
+        VAULT_ACTION_PATH: ${{ github.action_path }}
+        VAULT_URL: ${{ inputs.vault-url }}
+        VAULT_ROLE: ${{ inputs.role }}
+        VAULT_TOKEN_NAME: ${{ inputs.token-name }}
+        NETWORK_MODE: ${{ inputs.network-mode }}
+        PROXY_URL: ${{ inputs.proxy-url }}
+        TS_CLIENT_ID: ${{ inputs.tailscale-oauth-client-id }}
+        TS_AUDIENCE: ${{ inputs.tailscale-audience }}
+      run: bash "$VAULT_ACTION_PATH/scripts/validate.sh"
+    - name: Join Vault tailnet
+      if: steps.config.outputs.join == 'true'
+      uses: tailscale/github-action@064b10558093f38325e838ddea35486bdc6b1d5c # v4.4.0
+      with:
+        oauth-client-id: ${{ inputs.tailscale-oauth-client-id }}
+        audience: ${{ inputs.tailscale-audience }}
+        tags: ${{ inputs.tailscale-tags }}
+        tailscaled-args: ${{ steps.config.outputs.tailscaled-args }}
+    - name: Get GitHub token
+      id: vault
+      shell: bash
+      env:
+        VAULT_ACTION_PATH: ${{ github.action_path }}
+        VAULT_URL: ${{ steps.config.outputs.url }}
+        VAULT_PROXY: ${{ steps.config.outputs.proxy }}
+        VAULT_ROLE: ${{ inputs.role }}
+        VAULT_TOKEN_NAME: ${{ inputs.token-name }}
+      run: bash "$VAULT_ACTION_PATH/scripts/get-token.sh"
