@@ -38,7 +38,6 @@ env:
   LABEL_NAME: "community"
   LABEL_COLOR: "2DEB44"
   LABEL_DESCRIPTION: "External contributor issue/PR"
-  VAULT_URL: https://vault-ospo.eng-svc.aws.tenstorrent.com
 
 jobs:
   community-labeling:
@@ -128,49 +127,20 @@ jobs:
             echo "::warning::$msg"
           fi
 
-      - name: Join tailnet (OSPO Vault)
-        id: tailnet
-        if: steps.ready.outputs.ok == 'true'
-        continue-on-error: true
-        uses: tailscale/github-action@064b10558093f38325e838ddea35486bdc6b1d5c # v4.4.0
-        with:
-          oauth-client-id: ${{ vars.TS_VAULT_OSPO_CLIENT_ID }}
-          audience: ${{ vars.TS_VAULT_OSPO_AUDIENCE }}
-          tags: tag:tt-gha-vault-ospo
-
-      - name: Wait for Vault
-        id: wait
-        if: steps.tailnet.outcome == 'success'
-        continue-on-error: true
-        run: |
-          set -euo pipefail
-          for _ in 1 2 3 4 5 6; do
-            curl -fsS --max-time 5 "${VAULT_URL}/v1/sys/health?standbyok=true&uninitcode=204&sealedcode=204" >/dev/null && exit 0
-            sleep 2
-          done
-          echo "Vault ${VAULT_URL} did not become reachable over Tailscale" >&2
-          exit 1
-
       - name: Get a membership token
         id: vault
-        if: steps.wait.outcome == 'success'
+        if: steps.ready.outputs.ok == 'true'
         continue-on-error: true
-        uses: hashicorp/vault-action@892a26828f195e65540a40b4768ae4571f51ebfc # v4.0.0
+        uses: tenstorrent/.github/actions/vault-secrets@a697f1bb22ad8b488b0ac63f9a261e462179fe13 # vault-secrets-v1.0.0
         with:
-          url: ${{ env.VAULT_URL }}
-          method: jwt
-          path: jwt-github
           role: ${{ steps.init.outputs.role }}
-          jwtGithubAudience: ${{ env.VAULT_URL }}
-          exportEnv: false
-          secrets: |
-            github/token/${{ steps.init.outputs.role }} token | MEMBERS_TOKEN
+          github-token: ${{ steps.init.outputs.role }}
 
       - name: Check organization membership
         id: member
         if: steps.vault.outcome == 'success'
         env:
-          MEMBERS_TOKEN: ${{ steps.vault.outputs.MEMBERS_TOKEN }}
+          MEMBERS_TOKEN: ${{ steps.vault.outputs.token }}
           ORG: ${{ github.repository_owner }}
           AUTHOR: ${{ github.event.issue.user.login }}
         run: |
@@ -206,7 +176,7 @@ jobs:
 
       # Last use of the token is above. Leaving the tailnet cuts this job off from Vault.
       - name: Leave tailnet
-        if: always() && (steps.tailnet.outcome == 'success' || steps.tailnet.outcome == 'failure')
+        if: always() && (steps.vault.outcome == 'success' || steps.vault.outcome == 'failure')
         run: sudo tailscale logout || { echo "::warning::tailscale logout failed; taking the interface down"; sudo tailscale down || true; }
 
       - name: Membership check not available
