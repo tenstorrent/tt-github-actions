@@ -1,11 +1,38 @@
 name: "Community Issue Auto-Tagging"
 
+# Adds the label "community" to a new issue when its author is not a member of
+# the GitHub organization that owns the repository.
+#
+# How membership is decided:
+# - Author is a GitHub App (account type Bot, or a login that ends in "[bot]"):
+#   no label, and the run ends green with a notice. A bot is not a community
+#   member. Before this change such a run failed (the login broke the URL of
+#   the membership call) and added no label; now no label is the design.
+# - The event says the author is OWNER or MEMBER: no label.
+# - Otherwise, for issues only: a short-lived token from OSPO Vault with only
+#   organization "members: read" checks membership, so private members count too.
+#   This needs two things: the caller grants "id-token: write", and OSPO has set
+#   up the role tenstorrent--<repository name>--community-labeler for the calling
+#   repository. If either is missing, the job adds no label and ends with a warning.
+#   If the membership call itself fails, the job also adds no label and ends
+#   green with a warning.
+# - Pull requests: private membership is not checked, so no label is added.
+# The label is created and added with the job's own GITHUB_TOKEN (the caller
+# grants "issues: write").
+#
+# Anyone can open an issue in a public repository and so start this job.
+# Rules for every change to this file:
+# - Never check out or run code from the repository or from a pull request.
+# - Event data reaches a script only through env:, never as an expression inside run:.
+# - Never print whether an account is an organization member. Logs of public
+#   repositories are public.
+
 on:
   workflow_call:
     secrets:
       AUTOLABEL_COMMUNITY_ISSUES:
-        description: 'Token for checking organization membership and managing labels'
-        required: true
+        description: 'No longer used. Kept only so that callers which still pass it do not fail. Remove it from your caller.'
+        required: false
 
 env:
   LABEL_NAME: "community"
@@ -15,235 +42,172 @@ env:
 jobs:
   community-labeling:
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      pull-requests: write
-      contents: read
+    timeout-minutes: 10
+    # No permissions block on purpose: the job keeps what the caller grants.
+    # A block here can only take permissions away, and asking for
+    # id-token: write here would stop the whole run at start in every caller
+    # that does not grant it.
 
     steps:
-      - name: Initialize workflow variables
+      - name: Read the event
         id: init
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+          ISSUE_AUTHOR_TYPE: ${{ github.event.issue.user.type }}
+          ISSUE_ASSOCIATION: ${{ github.event.issue.author_association }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_AUTHOR_TYPE: ${{ github.event.pull_request.user.type }}
+          PR_ASSOCIATION: ${{ github.event.pull_request.author_association }}
         run: |
-          set -e
-
-          echo "🚀 Starting community labeling workflow"
-          echo "Repository: ${{ github.repository }}"
-          echo "Event: ${{ github.event_name }}"
-          echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-
-          # Extract organization name dynamically
-          ORG_NAME="${{ github.repository_owner }}"
-          echo "org_name=${ORG_NAME}" >> $GITHUB_OUTPUT
-          echo "Organization: ${ORG_NAME}"
-
-          # Set variables based on event type
-          if [ "${{ github.event_name }}" = "issues" ]; then
-            USERNAME="${{ github.event.issue.user.login }}"
-            NUMBER="${{ github.event.issue.number }}"
-            ITEM_TYPE="issue"
-            ITEM_URL="${{ github.event.issue.html_url }}"
-          elif [ "${{ github.event_name }}" = "pull_request" ]; then
-            USERNAME="${{ github.event.pull_request.user.login }}"
-            NUMBER="${{ github.event.pull_request.number }}"
-            ITEM_TYPE="pr"
-            ITEM_URL="${{ github.event.pull_request.html_url }}"
-          else
-            echo "❌ ERROR: Unsupported event type: ${{ github.event_name }}"
+          set -euo pipefail
+          case "$EVENT_NAME" in
+            issues)
+              kind=issue number=$ISSUE_NUMBER author=$ISSUE_AUTHOR
+              author_type=$ISSUE_AUTHOR_TYPE association=$ISSUE_ASSOCIATION ;;
+            pull_request | pull_request_target)
+              kind=pr number=$PR_NUMBER author=$PR_AUTHOR
+              author_type=$PR_AUTHOR_TYPE association=$PR_ASSOCIATION ;;
+            *)
+              echo "::warning::Event '$EVENT_NAME' is not supported. No label added."
+              echo "decision=none" >>"$GITHUB_OUTPUT"
+              exit 0 ;;
+          esac
+          if ! [[ "$number" =~ ^[0-9]+$ ]]; then
+            echo "::error::Unexpected item number in the event. No label added."
             exit 1
           fi
+          # Vault role and token name for this repository, lowercase:
+          # tenstorrent--<repository name>--community-labeler
+          role="$(printf '%s' "$REPO" | tr '[:upper:]' '[:lower:]' | sed 's#/#--#')--community-labeler"
+          if ! [[ "$role" =~ ^[a-z0-9._-]+$ ]]; then
+            echo "::error::Unexpected repository name. No label added."
+            exit 1
+          fi
+          # The login is only compared here, never printed and never put into a URL.
+          if [ "$author_type" = "Bot" ] || [[ "$author" == *"[bot]" ]]; then
+            # A GitHub App (bot) is not a community member: no label, green run.
+            decision=none
+            echo "::notice::No label added: the author is a GitHub App (bot), not a community member."
+          elif [ "$association" = "OWNER" ] || [ "$association" = "MEMBER" ]; then
+            decision=none
+          elif [ "$kind" = "issue" ]; then
+            if [[ "$author" =~ ^[A-Za-z0-9-]+$ ]]; then
+              decision=check
+            else
+              # Checked here, before any Vault step, so no token is ever made for it.
+              decision=none
+              echo "::warning::No label added: unexpected author name in the event."
+            fi
+          else
+            decision=pr-not-checked
+          fi
+          {
+            echo "kind=$kind"
+            echo "number=$number"
+            echo "role=$role"
+            echo "decision=$decision"
+          } >>"$GITHUB_OUTPUT"
+          echo "Item: $kind #$number"
 
-          echo "username=${USERNAME}" >> $GITHUB_OUTPUT
-          echo "number=${NUMBER}" >> $GITHUB_OUTPUT
-          echo "item_type=${ITEM_TYPE}" >> $GITHUB_OUTPUT
-          echo "item_url=${ITEM_URL}" >> $GITHUB_OUTPUT
+      - name: Check that this run can sign in
+        id: ready
+        if: steps.init.outputs.decision == 'check'
+        run: |
+          if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+            echo "ok=true" >>"$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >>"$GITHUB_OUTPUT"
+            msg="No label added: the calling workflow does not grant 'id-token: write',"
+            msg="$msg so private organization membership cannot be checked."
+            msg="$msg See the comments at the top of tenstorrent/tt-github-actions/.github/workflows/issues-community-autotag.yml."
+            echo "::warning::$msg"
+          fi
 
-          echo "User: ${USERNAME}"
-          echo "Item: ${ITEM_TYPE} #${NUMBER}"
-          echo "URL: ${ITEM_URL}"
+      - name: Get a membership token
+        id: vault
+        if: steps.ready.outputs.ok == 'true'
+        continue-on-error: true
+        uses: tenstorrent/.github/actions/vault-secrets@a697f1bb22ad8b488b0ac63f9a261e462179fe13 # vault-secrets-v1.0.0
+        with:
+          role: ${{ steps.init.outputs.role }}
+          github-token: ${{ steps.init.outputs.role }}
 
       - name: Check organization membership
-        id: check_membership
+        id: member
+        if: steps.vault.outcome == 'success'
         env:
-          GITHUB_TOKEN: ${{ secrets.AUTOLABEL_COMMUNITY_ISSUES }}
-          USERNAME: ${{ steps.init.outputs.username }}
-          ORG_NAME: ${{ steps.init.outputs.org_name }}
+          MEMBERS_TOKEN: ${{ steps.vault.outputs.token }}
+          ORG: ${{ github.repository_owner }}
+          AUTHOR: ${{ github.event.issue.user.login }}
         run: |
-          set -e
-
-          echo "🔍 Checking if user '${USERNAME}' is a member of organization '${ORG_NAME}'"
-
-          # Check if user is a public or private member of the organization
-          # This will return 204 for members (including private members) and 404 for non-members
-          MEMBERSHIP_STATUS=$(curl -s -w "%{http_code}" -o /tmp/membership_response.json \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/orgs/${ORG_NAME}/members/${USERNAME}")
-
-          echo "API Response Status: ${MEMBERSHIP_STATUS}"
-
-          if [ -f /tmp/membership_response.json ]; then
-            echo "API Response Body:"
-            cat /tmp/membership_response.json
-            rm -f /tmp/membership_response.json
+          set -uo pipefail
+          # "Read the event" checked the author name before any Vault step. This second
+          # check only guards the URL; on failure the token is still revoked below.
+          code=bad-author
+          if [[ "$AUTHOR" =~ ^[A-Za-z0-9-]+$ ]]; then
+            # The answer is never printed: logs of public repositories are public.
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 \
+              -H "Authorization: Bearer ${MEMBERS_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/orgs/${ORG}/members/${AUTHOR}") || code=000
           fi
-
-          case "${MEMBERSHIP_STATUS}" in
-            204)
-              echo "✅ User is an organization member"
-              echo "is_member=true" >> $GITHUB_OUTPUT
-              echo "reason=organization_member" >> $GITHUB_OUTPUT
-              ;;
-            404)
-              echo "❓ User is not an organization member, checking collaborator status..."
-
-              # Check if user is an external collaborator
-              COLLAB_STATUS=$(curl -s -w "%{http_code}" -o /tmp/collab_response.json \
-                -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-                -H "Accept: application/vnd.github.v3+json" \
-                "https://api.github.com/repos/${{ github.repository }}/collaborators/${USERNAME}")
-
-              echo "Collaborator API Response Status: ${COLLAB_STATUS}"
-
-              if [ -f /tmp/collab_response.json ]; then
-                echo "Collaborator API Response Body:"
-                cat /tmp/collab_response.json
-                rm -f /tmp/collab_response.json
-              fi
-
-              if [ "${COLLAB_STATUS}" = "204" ]; then
-                echo "🏷️ User is an external collaborator - should be labeled as community"
-                echo "is_member=false" >> $GITHUB_OUTPUT
-                echo "reason=external_collaborator" >> $GITHUB_OUTPUT
-              else
-                echo "🏷️ User is not a collaborator - should be labeled as community"
-                echo "is_member=false" >> $GITHUB_OUTPUT
-                echo "reason=external_user" >> $GITHUB_OUTPUT
-              fi
-              ;;
-            401)
-              echo "❌ ERROR: Authentication failed - check AUTOLABEL_COMMUNITY_ISSUES permissions"
-              exit 1
-              ;;
-            403)
-              echo "❌ ERROR: Forbidden - insufficient permissions to check membership"
-              exit 1
-              ;;
+          # The token is not needed any more. Revoke it now; else it expires within one hour.
+          curl -sS -o /dev/null --max-time 15 -X DELETE \
+            -H "Authorization: Bearer ${MEMBERS_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/installation/token" \
+            || echo "::warning::Could not revoke the membership token early. It expires on its own within one hour."
+          case "$code" in
+            204) echo "label=false" >>"$GITHUB_OUTPUT" ;;
+            404) echo "label=true" >>"$GITHUB_OUTPUT" ;;
             *)
-              echo "❌ ERROR: Unexpected API response: ${MEMBERSHIP_STATUS}"
-              exit 1
-              ;;
+              # GitHub API error (for example 403, 5xx, a redirect) or no answer:
+              # warn, add no label, end green. A red run is mailed to the issue author.
+              echo "::warning::No label added: the membership check failed (HTTP ${code})."
+              exit 0 ;;
           esac
+          echo "Membership checked."
 
-      - name: Ensure community label exists
-        if: steps.check_membership.outputs.is_member == 'false'
+      # Last use of the token is above. Leaving the tailnet cuts this job off from Vault.
+      - name: Leave tailnet
+        if: always() && (steps.vault.outcome == 'success' || steps.vault.outcome == 'failure')
+        run: sudo tailscale logout || { echo "::warning::tailscale logout failed; taking the interface down"; sudo tailscale down || true; }
+
+      - name: Membership check not available
+        if: steps.ready.outputs.ok == 'true' && steps.vault.outcome != 'success'
         env:
-          GITHUB_TOKEN: ${{ secrets.AUTOLABEL_COMMUNITY_ISSUES }}
+          ROLE: ${{ steps.init.outputs.role }}
         run: |
-          set -e
+          msg="No label added: the job could not get a membership token from OSPO Vault (role ${ROLE})."
+          msg="$msg The steps above show the error. If this repository was never set up for it, ask OSPO on a ticket."
+          echo "::warning::$msg"
 
-          echo "🏷️ Ensuring '${LABEL_NAME}' label exists in repository"
+      - name: Pull request not checked
+        if: steps.init.outputs.decision == 'pr-not-checked'
+        run: |
+          echo "::notice::No label added: private organization membership is checked for issues only, not for pull requests."
 
-          # Check if label exists
-          LABEL_CHECK=$(curl -s -w "%{http_code}" -o /tmp/label_check.json \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${{ github.repository }}/labels/${LABEL_NAME}")
-
-          echo "Label check status: ${LABEL_CHECK}"
-
-          if [ "${LABEL_CHECK}" = "200" ]; then
-            echo "✅ Label '${LABEL_NAME}' already exists"
-            if [ -f /tmp/label_check.json ]; then
-              echo "Existing label details:"
-              jq '.' /tmp/label_check.json
-            fi
-          elif [ "${LABEL_CHECK}" = "404" ]; then
-            echo "📝 Creating label '${LABEL_NAME}'"
-
-            CREATE_RESPONSE=$(curl -s -w "%{http_code}" -o /tmp/label_create.json \
-              -X POST \
-              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-              -H "Accept: application/vnd.github.v3+json" \
-              -H "Content-Type: application/json" \
-              "https://api.github.com/repos/${{ github.repository }}/labels" \
-              -d "{
-                \"name\": \"${LABEL_NAME}\",
-                \"color\": \"${LABEL_COLOR}\",
-                \"description\": \"${LABEL_DESCRIPTION}\"
-              }")
-
-            echo "Label creation status: ${CREATE_RESPONSE}"
-
-            if [ "${CREATE_RESPONSE}" = "201" ]; then
-              echo "✅ Successfully created label '${LABEL_NAME}'"
-              if [ -f /tmp/label_create.json ]; then
-                echo "Created label details:"
-                jq '.' /tmp/label_create.json
-              fi
-            else
-              echo "❌ ERROR: Failed to create label. Response:"
-              if [ -f /tmp/label_create.json ]; then
-                cat /tmp/label_create.json
-              fi
-              exit 1
-            fi
-          else
-            echo "❌ ERROR: Unexpected response when checking for label: ${LABEL_CHECK}"
-            if [ -f /tmp/label_check.json ]; then
-              cat /tmp/label_check.json
-            fi
-            exit 1
-          fi
-
-          # Clean up temp files
-          rm -f /tmp/label_check.json /tmp/label_create.json
-
-      - name: Apply community label
-        if: steps.check_membership.outputs.is_member == 'false'
+      - name: Add the community label
+        if: steps.member.outputs.label == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.AUTOLABEL_COMMUNITY_ISSUES }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ steps.init.outputs.number }}
+          KIND: ${{ steps.init.outputs.kind }}
         run: |
-          set -e
-
-          USERNAME="${{ steps.init.outputs.username }}"
-          NUMBER="${{ steps.init.outputs.number }}"
-          ITEM_TYPE="${{ steps.init.outputs.item_type }}"
-          ITEM_URL="${{ steps.init.outputs.item_url }}"
-          REASON="${{ steps.check_membership.outputs.reason }}"
-
-          echo "🏷️ Applying '${LABEL_NAME}' label to ${ITEM_TYPE} #${NUMBER}"
-          echo "User: ${USERNAME} (${REASON})"
-          echo "URL: ${ITEM_URL}"
-
-          # Apply label using GitHub CLI
-          if [ "${ITEM_TYPE}" = "issue" ]; then
-            gh issue edit "${NUMBER}" --add-label "${LABEL_NAME}" --repo "${{ github.repository }}"
-          elif [ "${ITEM_TYPE}" = "pr" ]; then
-            gh pr edit "${NUMBER}" --add-label "${LABEL_NAME}" --repo "${{ github.repository }}"
-          else
-            echo "❌ ERROR: Unknown item type: ${ITEM_TYPE}"
-            exit 1
+          set -euo pipefail
+          # Create the label once per repository. Another run can create it at the same moment.
+          if ! gh api "repos/${REPO}/labels/${LABEL_NAME}" --silent 2>/dev/null; then
+            gh api -X POST "repos/${REPO}/labels" -f name="${LABEL_NAME}" -f color="${LABEL_COLOR}" \
+              -f description="${LABEL_DESCRIPTION}" --silent \
+              || gh api "repos/${REPO}/labels/${LABEL_NAME}" --silent
           fi
-
-          echo "✅ Successfully applied '${LABEL_NAME}' label to ${ITEM_TYPE} #${NUMBER}"
-
-      - name: Workflow summary
-        if: always()
-        run: |
-          echo "📊 === Workflow Summary ==="
-          echo "Repository: ${{ github.repository }}"
-          echo "Organization: ${{ steps.init.outputs.org_name }}"
-          echo "Event: ${{ github.event_name }}"
-          echo "User: ${{ steps.init.outputs.username }}"
-          echo "Item: ${{ steps.init.outputs.item_type }} #${{ steps.init.outputs.number }}"
-          echo "URL: ${{ steps.init.outputs.item_url }}"
-          echo "Is Organization Member: ${{ steps.check_membership.outputs.is_member }}"
-          echo "Reason: ${{ steps.check_membership.outputs.reason }}"
-          echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-          echo "Job Status: ${{ job.status }}"
-
-          if [ "${{ steps.check_membership.outputs.is_member }}" = "false" ]; then
-            echo "🏷️ Applied '${LABEL_NAME}' label to external contributor's ${{ steps.init.outputs.item_type }}"
-          else
-            echo "✅ No action needed - user is an organization member"
-          fi
+          # The issues endpoint adds a label to an issue or a pull request.
+          gh api -X POST "repos/${REPO}/issues/${NUMBER}/labels" -f "labels[]=${LABEL_NAME}" --silent
+          echo "Added the label '${LABEL_NAME}' to ${KIND} #${NUMBER}."
