@@ -4,4 +4,5 @@ This repository contains a collection of GitHub Actions that can be shared acros
 
 ## Actions
 - [Collect Data Action](.github/actions/collect_data/Readme.md)
+- [Cachew Checkout](.github/actions/cachew-checkout/README.md)
 - [Copilot PR Type Labeler](.github/actions/copilot-pr-labeler/README.md)
