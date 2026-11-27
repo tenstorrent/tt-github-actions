@@ -1,0 +1,48 @@
+name: Lint actions
+
+# Static checks for the docker-publish and docker-bake-publish composite
+# actions. They do not build or publish anything.
+
+on:
+  pull_request:
+    paths:
+      - ".github/actions/docker-publish/**"
+      - ".github/actions/docker-bake-publish/**"
+      - ".github/actions/check-consistency.rb"
+      - ".github/actions/tool-images.json"
+      - ".github/actions/mirror-tool-images.sh"
+      - ".github/workflows/actions-lint.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".github/actions/docker-publish/**"
+      - ".github/actions/docker-bake-publish/**"
+      - ".github/actions/check-consistency.rb"
+      - ".github/actions/tool-images.json"
+      - ".github/actions/mirror-tool-images.sh"
+      - ".github/workflows/actions-lint.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Shell syntax
+        run: |
+          set -euo pipefail
+          while IFS= read -r f; do bash -n "$f"; done < <(git ls-files '.github/actions/docker-publish/*.sh' '.github/actions/docker-bake-publish/*.sh' .github/actions/mirror-tool-images.sh)
+
+      - name: shellcheck
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(git ls-files '.github/actions/docker-publish/*.sh' '.github/actions/docker-bake-publish/*.sh' .github/actions/mirror-tool-images.sh)
+          shellcheck -x -P SCRIPTDIR "${files[@]}"
+
+      - name: Shared inputs, gate env and pins agree
+        run: ruby .github/actions/check-consistency.rb
