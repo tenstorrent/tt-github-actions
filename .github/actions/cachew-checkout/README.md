@@ -21,7 +21,7 @@ Use this action in place of `actions/checkout` v7.0.1, retaining existing checko
 ```
 
 The remote reference works before the workspace exists. A local reference
-(`./actions/cachew-checkout`, only in this repository) requires a bootstrap
+(`./.github/actions/cachew-checkout`, only in this repository) requires a bootstrap
 checkout. Every input and the `ref` and `commit` outputs of the pinned
 `actions/checkout` v7.0.1 are forwarded, and the cachew path reads its inputs
 the same way. Existing checkout conditions, IDs, paths, and timeouts still apply.
