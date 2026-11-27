@@ -83,7 +83,9 @@ class BacktrackingTests(unittest.TestCase):
             "print(migrate.hidden_checkouts(migrate.rewrite(text, 'a' * 40)), migrate.flow_steps(text))\n"
         )
         try:
-            result = subprocess.run([sys.executable, "-c", script], input=text, capture_output=True, text=True, timeout=20)
+            result = subprocess.run(
+                [sys.executable, "-c", script], input=text, capture_output=True, text=True, timeout=20
+            )
         except subprocess.TimeoutExpired:
             self.fail("migrate.py did not finish on blank lines with trailing spaces after steps:")
         self.assertEqual(result.returncode, 0, result.stderr)

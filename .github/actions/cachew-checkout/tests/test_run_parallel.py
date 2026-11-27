@@ -58,7 +58,6 @@ class RunParallelTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("OK (failures=0", result.stdout)
 
-
     def test_an_expected_failure_is_not_counted_as_a_failure(self):
         # unittest reports it as `OK (expected failures=1)`.
         (self.directory / "test_sample.py").write_text(
@@ -77,7 +76,9 @@ class RunParallelTests(unittest.TestCase):
         )
         result = self.run_tests("-j", "1")
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
-        self.assertIn("FAILED (failures=0, errors=0, skipped=0, expected failures=0, unexpected successes=1", result.stdout)
+        self.assertIn(
+            "FAILED (failures=0, errors=0, skipped=0, expected failures=0, unexpected successes=1", result.stdout
+        )
 
 
 if __name__ == "__main__":

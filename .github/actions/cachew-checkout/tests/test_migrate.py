@@ -112,7 +112,10 @@ class RewriteTests(unittest.TestCase):
             f"          - steps: [{{uses: {checkout}}}]\n    steps:\n      - run: echo\n": (False, []),
             "jobs:\n  j:\n    runs-on: self-hosted\n    strategy:\n      matrix:\n        include:\n"
             f"          - steps:\n              - uses: {checkout}\n    steps:\n      - run: echo\n": (False, []),
-            f"jobs:\n  j:\n    runs-on: self-hosted\n    with:\n      steps:\n        - uses: {checkout}\n": (False, []),
+            f"jobs:\n  j:\n    runs-on: self-hosted\n    with:\n      steps:\n        - uses: {checkout}\n": (
+                False,
+                [],
+            ),
             f"steps:\n  - uses: {checkout}\n": (False, []),
             # A composite action's steps run.
             f"runs:\n  using: composite\n  steps:\n    - uses: {checkout}\n": (True, []),
@@ -134,7 +137,10 @@ class RewriteTests(unittest.TestCase):
         for text, (changed, left) in expected.items():
             with self.subTest(text=text):
                 after = migrate.rewrite(text, SHA)
-                self.assertEqual((after != text, sorted(set(migrate.flow_steps(text)) | set(migrate.hidden_checkouts(after)))), (changed, left))
+                self.assertEqual(
+                    (after != text, sorted(set(migrate.flow_steps(text)) | set(migrate.hidden_checkouts(after)))),
+                    (changed, left),
+                )
 
     def test_each_verify_pins_check_reports_what_only_it_sees(self):
         # --verify-pins layers several readers; each input here reaches one of
@@ -335,7 +341,7 @@ jobs:
         head = "jobs:\n  build:\n    runs-on: [self-hosted]\n    steps:\n"
         for text in (
             "      - run: |\n          cat > wf.yml <<'EOF'\n          - uses: '{pin}' # pinned\n          EOF\n",
-            '      - run: "cat > wf.yml <<EOF\n\n          uses: \'{pin}\'\n\n          EOF"\n',
+            "      - run: \"cat > wf.yml <<EOF\n\n          uses: '{pin}'\n\n          EOF\"\n",
             "      - run: 'cat > wf.yml <<EOF\n\n          uses: \"{pin}\" # kept\n\n          EOF'\n",
             '      - run: "cat > wf.yml <<EOF\n\n          uses: {pin}\n\n          EOF"\n',
         ):
@@ -438,13 +444,19 @@ jobs:
         self.assertEqual(migrate.rewrite(before, SHA), expected)
 
     def test_pins_to_the_old_dot_github_location_move_here(self):
-        before = JOB + f"      - uses: {DOT_GITHUB}\n      - uses: 'Tenstorrent/.GitHub/actions/cachew-checkout@{'2' * 40}'\n"
+        before = (
+            JOB
+            + f"      - uses: {DOT_GITHUB}\n      - uses: 'Tenstorrent/.GitHub/actions/cachew-checkout@{'2' * 40}'\n"
+        )
         expected = JOB + f"      - uses: {PINNED}\n      - uses: {PINNED}\n"
         self.assertEqual(migrate.rewrite(before, SHA), expected)
 
     def test_other_checkout_versions_are_left_alone(self):
         # Floating tags too: v7 may point past the v7.0.1 the action forwards to.
-        text = JOB + "      - uses: actions/checkout@v4\n      - uses: actions/checkout@main\n      - uses: actions/checkout@v7\n"
+        text = (
+            JOB
+            + "      - uses: actions/checkout@v4\n      - uses: actions/checkout@main\n      - uses: actions/checkout@v7\n"
+        )
         self.assertEqual(migrate.rewrite(text, SHA), text)
 
     def test_rewrite_refuses_a_short_sha(self):
@@ -549,7 +561,9 @@ class RepositoryTests(unittest.TestCase):
         # cachew reference --write leaves alone (a flow-style step, a ref that is
         # not a commit, the old tt-metal location) is reported, not skipped.
         workflow = self.root / ".github/workflows/ci.yml"
-        (self.root / ".github/actions/setup/action.yml").write_text(f"runs:\n  using: composite\n  steps:\n    - uses: {PINNED}\n")
+        (self.root / ".github/actions/setup/action.yml").write_text(
+            f"runs:\n  using: composite\n  steps:\n    - uses: {PINNED}\n"
+        )
         head = "jobs:\n  build:\n    runs-on: self-hosted\n    steps:\n"
         legacy = LEGACY.split(" #")[0]
         stale = STALE.split(" #")[0]
@@ -560,7 +574,7 @@ class RepositoryTests(unittest.TestCase):
             f"      - {{uses: {DOT_GITHUB.split(' #')[0]}}}\n",
             "      - uses: tenstorrent/.github/actions/cachew-checkout@main\n",
             "      - uses: tenstorrent/tt-github-actions/.github/actions/cachew-checkout@v1\n",
-            "      - uses: \"tenstorrent/tt-github-actions/.github/actions/cachew-checkout@main\" # pinned later\n",
+            '      - uses: "tenstorrent/tt-github-actions/.github/actions/cachew-checkout@main" # pinned later\n',
         ):
             with self.subTest(step=step):
                 workflow.write_text(head + step)
@@ -578,12 +592,20 @@ class RepositoryTests(unittest.TestCase):
         # Before the move, consumers ran the action from their own repository: a
         # local copy left there is never the pin, so every mode sees it.
         workflow = self.root / ".github/workflows/ci.yml"
-        (self.root / ".github/actions/setup/action.yml").write_text(f"runs:\n  using: composite\n  steps:\n    - uses: {PINNED}\n")
+        (self.root / ".github/actions/setup/action.yml").write_text(
+            f"runs:\n  using: composite\n  steps:\n    - uses: {PINNED}\n"
+        )
         head = "jobs:\n  build:\n    runs-on: {runner}\n    steps:\n"
-        for local in ("./.github/actions/cachew-checkout", "./.github/actions/cachew-checkout/", "'./.github/actions/cachew-checkout'"):
+        for local in (
+            "./.github/actions/cachew-checkout",
+            "./.github/actions/cachew-checkout/",
+            "'./.github/actions/cachew-checkout'",
+        ):
             for runner, expected in (("self-hosted", PINNED), ("ubuntu-latest", PLAIN)):
                 with self.subTest(local=local, runner=runner):
-                    workflow.write_text(head.format(runner=runner) + f"      - uses: {local}\n        with:\n          fetch-depth: 0\n")
+                    workflow.write_text(
+                        head.format(runner=runner) + f"      - uses: {local}\n        with:\n          fetch-depth: 0\n"
+                    )
                     for mode in ("--check", "--verify-pins"):
                         code, out = self.run_main(mode)
                         self.assertEqual(code, 1, out)
@@ -591,7 +613,8 @@ class RepositoryTests(unittest.TestCase):
                     self.assertEqual(self.run_main("--write")[0], 0)
                     self.assertEqual(
                         workflow.read_text(),
-                        head.format(runner=runner) + f"      - uses: {expected}\n        with:\n          fetch-depth: 0\n",
+                        head.format(runner=runner)
+                        + f"      - uses: {expected}\n        with:\n          fetch-depth: 0\n",
                     )
                     for mode in ("--check", "--verify-pins"):
                         code, out = self.run_main(mode)
@@ -626,7 +649,7 @@ class RepositoryTests(unittest.TestCase):
             # Not items of a steps: sequence, or not flow mappings at all.
             "jobs:\n  build:\n    runs-on: self-hosted\n    strategy:\n      matrix:\n        include:\n"
             f"          - {{uses: {checkout}}}\n    steps:\n      - run: echo\n",
-            head + f"      - run: echo \"{{uses: {checkout}}}\"\n",
+            head + f'      - run: echo "{{uses: {checkout}}}"\n',
             head + f"      - run: echo {{uses: {checkout}}}\n",
             head + f"      - {{run: echo, with: {{uses: {checkout}}}}}\n",
             head + f"      - {{run: 'echo {{uses: {checkout}}}'}}\n",
@@ -653,15 +676,35 @@ class RepositoryTests(unittest.TestCase):
             (head + f'      - uses: "{escaped}"\n', 5),
             (head + f"      - {{uses: !!str {checkout}}}\n", 5),
             ("jobs:\n  build:\n    runs-on: self-hosted\n" f"    steps: [{{uses: {checkout}}}]\n", 4),
-            ("jobs:\n  build:\n    runs-on: self-hosted\n" f"    steps:\n      [{{run: echo}},\n       {{uses: {checkout}}}]\n", 6),
+            (
+                "jobs:\n  build:\n    runs-on: self-hosted\n"
+                f"    steps:\n      [{{run: echo}},\n       {{uses: {checkout}}}]\n",
+                6,
+            ),
             ("jobs:\n  build:\n    runs-on: self-hosted\n" f"    steps: &s [{{uses: {checkout}}}]\n", 4),
             ("jobs:\n  build:\n    runs-on: self-hosted\n" f"    steps: !!seq [{{uses: {checkout}}}]\n", 4),
-            ("jobs:\n  build:\n    runs-on: self-hosted\n" f'    steps: [{{name: "Checkout [source", uses: {checkout}}}]\n', 4),
-            ("jobs:\n  build:\n    runs-on: self-hosted\n" f'    steps: [{{name: !!str "Checkout [source", uses: {checkout}}}]\n', 4),
-            ("jobs:\n  build:\n    runs-on: self-hosted\n" f'    steps: [{{name: &n "Checkout [source", uses: {checkout}}}]\n', 4),
+            (
+                "jobs:\n  build:\n    runs-on: self-hosted\n"
+                f'    steps: [{{name: "Checkout [source", uses: {checkout}}}]\n',
+                4,
+            ),
+            (
+                "jobs:\n  build:\n    runs-on: self-hosted\n"
+                f'    steps: [{{name: !!str "Checkout [source", uses: {checkout}}}]\n',
+                4,
+            ),
+            (
+                "jobs:\n  build:\n    runs-on: self-hosted\n"
+                f'    steps: [{{name: &n "Checkout [source", uses: {checkout}}}]\n',
+                4,
+            ),
             ("jobs:\n  build:\n    runs-on: self-hosted\n" f'    steps: [{{"uses":"{checkout}"}}]\n', 4),
             ("jobs:\n  build:\n    runs-on: self-hosted\n" f'    "steps": [{{"name":"x","uses":"{checkout}"}}]\n', 4),
-            ("jobs:\n  build:\n    runs-on: self-hosted\n" f"    steps:\n      !!seq\n      [{{uses: {checkout}}}]\n", 6),
+            (
+                "jobs:\n  build:\n    runs-on: self-hosted\n"
+                f"    steps:\n      !!seq\n      [{{uses: {checkout}}}]\n",
+                6,
+            ),
             (head + f'      - {{"uses":"{checkout}"}}\n', 5),
             (head + f"      - &a {{uses: {checkout}}}\n", 5),
             (head + f"      - !!map {{uses: !!str {checkout}}}\n", 5),
@@ -739,7 +782,8 @@ class RepositoryTests(unittest.TestCase):
             head + f"      - run: |\n          uses: !!str {checkout}\n",
             head + f"      - uses: ./local\n        with:\n          uses: !!str {checkout}\n",
             head + f"      - {{run: echo, with: {{uses: !!str {checkout}}}}}\n",
-            "jobs:\n  build:\n    runs-on: self-hosted\n" f"    env: [{{uses: {checkout}}}]\n    steps:\n      - run: echo\n",
+            "jobs:\n  build:\n    runs-on: self-hosted\n"
+            f"    env: [{{uses: {checkout}}}]\n    steps:\n      - run: echo\n",
             # Another version, a ref that only starts like this one, or the
             # checkout named only in a comment.
             head + f"      - uses: !!str {checkout.replace('3d3c42e5', '00000000')}\n",
@@ -859,15 +903,15 @@ class RepositoryTests(unittest.TestCase):
         line = f"- uses: {PINNED}"
         for bad in (
             f"- uses: {action}@{SHA}#x",
-            f"- uses: \"{action}@{SHA}#x\"",
-            f"- uses: \"{action}@{SHA}'x\"",
+            f'- uses: "{action}@{SHA}#x"',
+            f'- uses: "{action}@{SHA}\'x"',
             f"- uses: '{action}@{SHA}\"x'",
             f"- {{uses: {action}@main, with: {{a: b}}}}",
-            f"- uses: \"tenstorrent/tt-github-actions/.github/actions/cachew-checkou\\x74@main\"",
+            f'- uses: "tenstorrent/tt-github-actions/.github/actions/cachew-checkou\\x74@main"',
             f"- uses: >-\n          {action}@main",
             # Split, so that only the alias leads to it.
             "- name: &pin >-\n          tenstorrent/tt-github-actions/.github/actions/\n          cachew-checkout@main\n      - uses: *pin",
-            f"- uses: \"{action}@\\\n          main\"",
+            f'- uses: "{action}@\\\n          main"',
             # A plain scalar goes on over more deeply indented lines, blank lines
             # between them included; YAML joins them with a space.
             f"- uses: {action}@{SHA}\n          x",
@@ -952,7 +996,10 @@ class RepositoryTests(unittest.TestCase):
                 code, out = self.run_main("--verify-pins")
                 self.assertEqual(code, 1, out)
         # The same action at the pin passes, and so does another action of the repository.
-        for fine in (f"tenstorrent/tt-github-actions/.github//actions/cachew-checkout@{SHA}", "tenstorrent/tt-github-actions/.github/actions/other@main"):
+        for fine in (
+            f"tenstorrent/tt-github-actions/.github//actions/cachew-checkout@{SHA}",
+            "tenstorrent/tt-github-actions/.github/actions/other@main",
+        ):
             with self.subTest(fine=fine):
                 workflow.write_text(good.replace(line, f"- uses: {fine}"))
                 code, out = self.run_main("--verify-pins")
@@ -977,7 +1024,7 @@ class RepositoryTests(unittest.TestCase):
                 code, out = self.run_main("--verify-pins")
                 self.assertEqual(code, 1, out)
         # Escapes that spell nothing of the action are no concern of the gate.
-        workflow.write_text(good + '      - run: "printf \'a\\x41\\tb\'"\n')
+        workflow.write_text(good + "      - run: \"printf 'a\\x41\\tb'\"\n")
         code, out = self.run_main("--verify-pins")
         self.assertEqual(code, 0, out)
 
@@ -985,7 +1032,9 @@ class RepositoryTests(unittest.TestCase):
         self.run_main("--write")
         action = self.root / "tools/ci/action.yml"
         action.parent.mkdir(parents=True)
-        action.write_text("runs:\n  using: composite\n  steps:\n    - uses: tenstorrent/tt-github-actions/.github/actions/cachew-checkout@main\n")
+        action.write_text(
+            "runs:\n  using: composite\n  steps:\n    - uses: tenstorrent/tt-github-actions/.github/actions/cachew-checkout@main\n"
+        )
         subprocess.run(["git", "-C", str(self.root), "add", "-A"], check=True)
         code, out = self.run_main("--verify-pins")
         self.assertEqual(code, 1, out)
@@ -997,7 +1046,8 @@ class RepositoryTests(unittest.TestCase):
         workflow = self.root / ".github/workflows/ci.yml"
         workflow.write_text(
             workflow.read_text().replace(
-                f"tenstorrent/tt-github-actions/.github/actions/cachew-checkout@{SHA}", "Tenstorrent/tt-github-actions/.GitHub/actions/cachew-checkout@main"
+                f"tenstorrent/tt-github-actions/.github/actions/cachew-checkout@{SHA}",
+                "Tenstorrent/tt-github-actions/.GitHub/actions/cachew-checkout@main",
             )
         )
         code, out = self.run_main("--verify-pins")
@@ -1008,7 +1058,9 @@ class RepositoryTests(unittest.TestCase):
         # GitHub runs gh-aw lock files: --write leaves them to gh-aw, but a pin
         # in one is still checked, since it runs in this repository's jobs.
         lock = self.root / ".github/workflows/agent.lock.yml"
-        lock.write_text(lock.read_text().replace(PLAIN, f"tenstorrent/tt-github-actions/.github/actions/cachew-checkout@{'d' * 40}"))
+        lock.write_text(
+            lock.read_text().replace(PLAIN, f"tenstorrent/tt-github-actions/.github/actions/cachew-checkout@{'d' * 40}")
+        )
         self.assertEqual(self.run_main("--write", "--action-sha", "b" * 40)[0], 0)
         self.assertIn("@" + "d" * 40, lock.read_text())
         code, out = self.run_main("--verify-pins")
@@ -1021,14 +1073,20 @@ class RepositoryTests(unittest.TestCase):
 
     def test_an_excluded_prefix_is_not_held_to_the_pin(self):
         vendored = self.root / "vendored/.github/workflows/ci.yml"
-        vendored.write_text(vendored.read_text().replace(PLAIN, f"tenstorrent/tt-github-actions/.github/actions/cachew-checkout@{'d' * 40}"))
+        vendored.write_text(
+            vendored.read_text().replace(
+                PLAIN, f"tenstorrent/tt-github-actions/.github/actions/cachew-checkout@{'d' * 40}"
+            )
+        )
         self.assertEqual(self.run_main("--write")[0], 0)
         code, out = self.run_main("--verify-pins")
         self.assertEqual(code, 0, out)
 
     def test_verify_pins_reads_workflow_suffixes_in_any_case(self):
         upper = self.root / ".github/workflows/upper.YML"
-        upper.write_text(f"jobs:\n  a:\n    runs-on: self-hosted\n    steps:\n      - uses: tenstorrent/tt-github-actions/.github/actions/cachew-checkout@main\n")
+        upper.write_text(
+            f"jobs:\n  a:\n    runs-on: self-hosted\n    steps:\n      - uses: tenstorrent/tt-github-actions/.github/actions/cachew-checkout@main\n"
+        )
         subprocess.run(["git", "-C", str(self.root), "add", "-A"], check=True)
         self.run_main("--write")
         code, out = self.run_main("--verify-pins")
@@ -1061,7 +1119,10 @@ class RepositoryTests(unittest.TestCase):
         self.assertIn("aaa-binary.yml", out)
 
     def test_bad_config_is_reported(self):
-        for data, message in (({"action_sha": "main"}, "full 40-character"), ({"action_sha": SHA, "exclude": "x"}, "list of directories or files")):
+        for data, message in (
+            ({"action_sha": "main"}, "full 40-character"),
+            ({"action_sha": SHA, "exclude": "x"}, "list of directories or files"),
+        ):
             self.write_config(data)
             code, out = self.run_main("--check")
             self.assertEqual(code, 2)

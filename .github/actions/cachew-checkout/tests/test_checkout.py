@@ -781,7 +781,7 @@ class CheckoutTests(unittest.TestCase):
         transport = {"http.proxy": 'http://user:pa"ss@proxy.example:3128'}
         with patch.object(cachew_checkout.subprocess, "run", side_effect=run):
             self.assertEqual(cachew_checkout.liveness("https://cache.example", 5, {}, transport), "ok")
-        (command, given), = seen
+        ((command, given),) = seen
         self.assertNotIn("ss@", " ".join(command))
         self.assertEqual(command[command.index("--config") + 1], "-")
         self.assertEqual(given, b'proxy = "http://user:pa\\"ss@proxy.example:3128"\n')
@@ -1391,7 +1391,12 @@ class CheckoutTests(unittest.TestCase):
             ("pull_request_target", pull, {"CACHEW_REF": "refs/pull/1/merge"}, True),
             ("pull_request_target", pull, {"CACHEW_REF": self.sha.upper()}, True),
             ("pull_request_target", pull, {"CACHEW_REPOSITORY": "fork/main", "CACHEW_REF": "main"}, True),
-            ("pull_request_target", pull, {"CACHEW_REF": "refs/pull/1/merge", "CACHEW_ALLOW_UNSAFE_PR_CHECKOUT": " TRUE\n"}, False),
+            (
+                "pull_request_target",
+                pull,
+                {"CACHEW_REF": "refs/pull/1/merge", "CACHEW_ALLOW_UNSAFE_PR_CHECKOUT": " TRUE\n"},
+                False,
+            ),
             ("pull_request_target", pull, {"CACHEW_REF": "main"}, False),
             ("pull_request_target", pull, {"CACHEW_REF": ""}, False),
             ("pull_request_target", same, {"CACHEW_REF": "refs/pull/1/merge"}, False),
@@ -1423,7 +1428,12 @@ class CheckoutTests(unittest.TestCase):
                 # stopped once it is past that point (its fetch may retry for long).
                 try:
                     output = subprocess.run(
-                        ["node", CHECKOUT_JS], cwd=self.workspace, env=official, capture_output=True, text=True, timeout=10
+                        ["node", CHECKOUT_JS],
+                        cwd=self.workspace,
+                        env=official,
+                        capture_output=True,
+                        text=True,
+                        timeout=10,
                     ).stdout
                 except subprocess.TimeoutExpired as stopped:
                     output = stopped.stdout.decode() if isinstance(stopped.stdout, bytes) else stopped.stdout or ""
@@ -1629,7 +1639,12 @@ class CheckoutTests(unittest.TestCase):
             self.assertEqual(cachew_checkout.submodules_input({"CACHEW_SUBMODULES": value}), expected, repr(value))
 
     def test_boolean_inputs_parse_like_actions_checkout(self):
-        for value, default, expected in (("", "true", True), (" false\n", "true", False), ("True", "false", True), ("yes", "true", False)):
+        for value, default, expected in (
+            ("", "true", True),
+            (" false\n", "true", False),
+            ("True", "false", True),
+            ("yes", "true", False),
+        ):
             self.assertEqual(cachew_checkout.checkout_flag({"X": value}, "X", default), expected, repr(value))
 
     def test_production_rejects_plain_http_and_untrusted_cache_origins(self):
@@ -1696,7 +1711,10 @@ class ForkGuardPayloadTests(unittest.TestCase):
     SHA = "a1b2c3d4" * 5
     PAYLOAD = {
         "repository": {"id": 111},
-        "pull_request": {"title": "caf\u00e9 \u65e5\u672c", "head": {"repo": {"id": 222, "full_name": "fork/main"}, "sha": SHA}},
+        "pull_request": {
+            "title": "caf\u00e9 \u65e5\u672c",
+            "head": {"repo": {"id": 222, "full_name": "fork/main"}, "sha": SHA},
+        },
     }
 
     def setUp(self):
@@ -1735,7 +1753,14 @@ class ForkGuardPayloadTests(unittest.TestCase):
         )
         result = subprocess.run(
             [sys.executable, "-B", "-c", script, str(ACTION / "checkout.py"), self.SHA],
-            env={**os.environ, **self.environ, "LC_ALL": "C", "LANG": "C", "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"},
+            env={
+                **os.environ,
+                **self.environ,
+                "LC_ALL": "C",
+                "LANG": "C",
+                "PYTHONUTF8": "0",
+                "PYTHONCOERCECLOCALE": "0",
+            },
             text=True,
             capture_output=True,
         )

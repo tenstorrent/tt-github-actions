@@ -213,7 +213,7 @@ class SessionTests(unittest.TestCase):
         shutil.rmtree(self.fixture.target)
         self.assertEqual(self.flow(), (True, True))
         values = self.safe_directories()
-        effective = values[len(values) - values[::-1].index(""):]
+        effective = values[len(values) - values[::-1].index("") :]
         self.assertEqual([str(Path(value).resolve()) for value in effective], [str(self.fixture.target.resolve())])
         self.finish()
 
@@ -725,7 +725,14 @@ class SessionTests(unittest.TestCase):
         # Job-owned settings: a rewrite shaped like cachew's, its header, and an
         # inherited `safe.directory=*` the job reset afterwards.
         mirror = "https://mirror.example"
-        self.real_git("config", "--file", str(global_config), "--add", f"url.{mirror}/git/gitlab.com/.insteadOf", "https://gitlab.com/")
+        self.real_git(
+            "config",
+            "--file",
+            str(global_config),
+            "--add",
+            f"url.{mirror}/git/gitlab.com/.insteadOf",
+            "https://gitlab.com/",
+        )
         self.real_git("config", "--file", str(global_config), "--add", f"http.{mirror}/.extraheader", "X-Mirror: job")
         inherited = self.fixture.root / "inherited.gitconfig"
         inherited.write_text("[safe]\n\tdirectory = *\n")
@@ -758,7 +765,7 @@ class SessionTests(unittest.TestCase):
         self.assertNotIn(self.fixture.cache.url, global_config.read_text())
         # Only the checkout's own entry comes back, after the job's reset: not the inherited `*`.
         values = self.safe_directories(global_config)
-        effective = values[len(values) - values[::-1].index(""):]
+        effective = values[len(values) - values[::-1].index("") :]
         target = str((self.fixture.workspace / "second-checkout").resolve())
         self.assertEqual([str(Path(value).resolve()) for value in effective], [target])
         self.finish()
@@ -790,7 +797,9 @@ class SessionTests(unittest.TestCase):
         self.real_git("config", "--global", "--add", "include.path", str(included / "conditions.config"))
         self.prepare()
         for key in ("fixture.bypath", "fixture.bygitdir"):
-            self.assertEqual(self.real_git("-C", str(nested), "config", "--global", "--includes", "--get", key), "matched", key)
+            self.assertEqual(
+                self.real_git("-C", str(nested), "config", "--global", "--includes", "--get", key), "matched", key
+            )
         self.assertTrue(self.activate("true"))
         self.finish()
 
@@ -924,7 +933,15 @@ class SessionTests(unittest.TestCase):
         old_blob = self.real_git("-C", str(self.fixture.project_root / "org/main"), "rev-parse", "HEAD~1:content.txt")
         early = self.fixture.workspace / "early"
         cloned = subprocess.run(
-            ["git", "clone", "-q", "--filter=blob:none", "--no-checkout", f"{self.fixture.upstream.url}/org/main", str(early)],
+            [
+                "git",
+                "clone",
+                "-q",
+                "--filter=blob:none",
+                "--no-checkout",
+                f"{self.fixture.upstream.url}/org/main",
+                str(early),
+            ],
             env=self.env,
             capture_output=True,
             text=True,
@@ -1627,21 +1644,42 @@ class PromisorTests(unittest.TestCase):
             home.mkdir()
             global_config = root / "global.config"
             subprocess.run(
-                [real_git, "config", "--file", str(global_config), f"url.{cache}/git/github.com/.insteadOf", upstream + "/"],
+                [
+                    real_git,
+                    "config",
+                    "--file",
+                    str(global_config),
+                    f"url.{cache}/git/github.com/.insteadOf",
+                    upstream + "/",
+                ],
                 check=True,
             )
-            environ = {"PATH": os.environ["PATH"], "HOME": str(home), "GIT_CONFIG_GLOBAL": str(global_config), "GIT_CONFIG_NOSYSTEM": "1"}
+            environ = {
+                "PATH": os.environ["PATH"],
+                "HOME": str(home),
+                "GIT_CONFIG_GLOBAL": str(global_config),
+                "GIT_CONFIG_NOSYSTEM": "1",
+            }
             for index, name in enumerate(("my remote", "a.b", "tab\tname")):
                 with self.subTest(name=name):
                     work = root / f"repo-{index}"
                     subprocess.run([real_git, "init", "-q", str(work)], check=True, env=environ)
                     for key, value in (("url", upstream + "/org/main"), ("promisor", "true")):
-                        subprocess.run([real_git, "-C", str(work), "config", f"remote.{name}.{key}", value], check=True, env=environ)
+                        subprocess.run(
+                            [real_git, "-C", str(work), "config", f"remote.{name}.{key}", value],
+                            check=True,
+                            env=environ,
+                        )
                     session_dir = root / f"session-{index}"
                     session_dir.mkdir()
-                    self.assertTrue(session.pin_promisor_remotes(real_git, ["-C", str(work)], environ, cache, str(session_dir)))
+                    self.assertTrue(
+                        session.pin_promisor_remotes(real_git, ["-C", str(work)], environ, cache, str(session_dir))
+                    )
                     url = subprocess.run(
-                        [real_git, "-C", str(work), "ls-remote", "--get-url", name], env=environ, capture_output=True, text=True
+                        [real_git, "-C", str(work), "ls-remote", "--get-url", name],
+                        env=environ,
+                        capture_output=True,
+                        text=True,
                     ).stdout.strip()
                     self.assertEqual(url, upstream + "/org/main")
 
@@ -1656,23 +1694,54 @@ class PromisorTests(unittest.TestCase):
             home.mkdir()
             global_config = root / "global.config"
             subprocess.run(
-                [real_git, "config", "--file", str(global_config), f"url.{cache}/git/github.com/.insteadOf", upstream + "/"],
+                [
+                    real_git,
+                    "config",
+                    "--file",
+                    str(global_config),
+                    f"url.{cache}/git/github.com/.insteadOf",
+                    upstream + "/",
+                ],
                 check=True,
             )
-            environ = {"PATH": os.environ["PATH"], "HOME": str(home), "GIT_CONFIG_GLOBAL": str(global_config), "GIT_CONFIG_NOSYSTEM": "1"}
-            for value, pinned in (("true", True), ("yes", True), ("On", True), ("1", True), ("2", True), ("1k", True), (None, True), ("false", False), ("off", False), ("0", False)):
+            environ = {
+                "PATH": os.environ["PATH"],
+                "HOME": str(home),
+                "GIT_CONFIG_GLOBAL": str(global_config),
+                "GIT_CONFIG_NOSYSTEM": "1",
+            }
+            for value, pinned in (
+                ("true", True),
+                ("yes", True),
+                ("On", True),
+                ("1", True),
+                ("2", True),
+                ("1k", True),
+                (None, True),
+                ("false", False),
+                ("off", False),
+                ("0", False),
+            ):
                 with self.subTest(value=value):
                     work = root / f"repo-{value}"
                     subprocess.run([real_git, "init", "-q", str(work)], check=True, env=environ)
-                    subprocess.run([real_git, "-C", str(work), "remote", "add", "origin", upstream + "/org/main"], check=True, env=environ)
+                    subprocess.run(
+                        [real_git, "-C", str(work), "remote", "add", "origin", upstream + "/org/main"],
+                        check=True,
+                        env=environ,
+                    )
                     config = work / ".git/config"
                     with config.open("a") as stream:
                         stream.write('[remote "origin"]\n\tpromisor' + ("" if value is None else f" = {value}") + "\n")
                     session_dir = root / f"session-{value}"
                     session_dir.mkdir()
-                    self.assertTrue(session.pin_promisor_remotes(real_git, ["-C", str(work)], environ, cache, str(session_dir)))
+                    self.assertTrue(
+                        session.pin_promisor_remotes(real_git, ["-C", str(work)], environ, cache, str(session_dir))
+                    )
                     includes = subprocess.run(
                         [real_git, "-C", str(work), "config", "--local", "--get-all", "include.path"],
-                        env=environ, capture_output=True, text=True,
+                        env=environ,
+                        capture_output=True,
+                        text=True,
                     ).stdout
                     self.assertEqual(bool(includes), pinned)

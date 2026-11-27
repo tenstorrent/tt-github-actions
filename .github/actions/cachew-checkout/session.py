@@ -290,7 +290,10 @@ def load_state(session, environ):
         rewritten = subsection(key, "url.", ".insteadof")
         pushed = subsection(key, "url.", ".pushinsteadof")
         scoped = next(
-            filter(None, (subsection(key, "http.", suffix) for suffix in (".extraheader", ".sslverify", ".followredirects"))),
+            filter(
+                None,
+                (subsection(key, "http.", suffix) for suffix in (".extraheader", ".sslverify", ".followredirects")),
+            ),
             None,
         )
         if (

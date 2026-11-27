@@ -128,7 +128,9 @@ def loopback_http_allowed(environ):
 # A server origin ends up in Git configuration keys, cache URL paths and the
 # shell command of `git submodule foreach`, so its host is limited to DNS names
 # and IP literals: no quotes, spaces or shell metacharacters.
-HOST = re.compile(r"(?P<name>[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?|\[[0-9A-Fa-f:.]{2,45}\])(?::(?P<port>[0-9]{1,5}))?")
+HOST = re.compile(
+    r"(?P<name>[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?|\[[0-9A-Fa-f:.]{2,45}\])(?::(?P<port>[0-9]{1,5}))?"
+)
 # Never handed to child processes as such. Git still receives the token as an
 # Authorization header in command-scoped configuration (GIT_CONFIG_VALUE_n),
 # which every process Git starts inherits: the job's hooks, filter drivers and
@@ -228,7 +230,7 @@ def checkout_input(environ, name, default=""):
 
 
 def submodules_input(environ):
-    """"true", "recursive" or "false", folded as actions/checkout does: its
+    """ "true", "recursive" or "false", folded as actions/checkout does: its
     toUpperCase() maps characters such as U+0131 to ASCII, which lower() does not."""
     value = checkout_input(environ, "CACHEW_SUBMODULES", "false").upper()
     return {"TRUE": "true", "RECURSIVE": "recursive"}.get(value, "false")
@@ -348,12 +350,16 @@ def cache_candidates(value, upstream, environ):
         # only a fallback for a trusted cache; for any other HTTPS host it is still
         # an attempt to point the token elsewhere.
         if untrusted_https(value):
-            raise SecurityViolation("cachew-url is not a trusted cache origin and would have received the checkout token")
+            raise SecurityViolation(
+                "cachew-url is not a trusted cache origin and would have received the checkout token"
+            )
         raise
     # upstream is None when the server URL cannot be read: the refusal check then
     # only asks whether the cache could be the test fixture.
     loopback_fixture = (
-        loopback_http_allowed(environ) and (upstream is None or upstream.startswith("http://")) and cache.startswith("http://")
+        loopback_http_allowed(environ)
+        and (upstream is None or upstream.startswith("http://"))
+        and cache.startswith("http://")
     )
     if cache not in TRUSTED_CACHES and not loopback_fixture:
         raise SecurityViolation("cachew-url is not a trusted cache origin and would have received the checkout token")
@@ -611,7 +617,9 @@ def refuse_attack_inputs(environ):
         # Whatever the server URL: one cachew cannot use still leaves the cache
         # URL an attempt to send the token elsewhere, and must not skip this check.
         try:
-            upstream = origin(checkout_input(environ, "CACHEW_GITHUB_SERVER_URL") or environ["GITHUB_SERVER_URL"], environ)
+            upstream = origin(
+                checkout_input(environ, "CACHEW_GITHUB_SERVER_URL") or environ["GITHUB_SERVER_URL"], environ
+            )
         except SecurityViolation:
             raise
         except (Bypass, KeyError, ValueError):
@@ -657,7 +665,7 @@ class Checkout:
         # Seconds without progress before a cache transfer is abandoned.
         self.fetch_timeout = duration(environ["CACHEW_CACHEW_FETCH_TIMEOUT"], MAX_FETCH_TIMEOUT_SECONDS)
         self.deadline = deadline if deadline is not None else checkout_deadline(environ)
-        repository =checkout_input(environ, "CACHEW_REPOSITORY") or environ["GITHUB_REPOSITORY"]
+        repository = checkout_input(environ, "CACHEW_REPOSITORY") or environ["GITHUB_REPOSITORY"]
         repository_name(repository)
         self.url = f"{self.upstream}/{repository}"
         # The same ref and commit as actions/checkout's input helper.

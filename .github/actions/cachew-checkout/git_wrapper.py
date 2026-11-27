@@ -37,7 +37,14 @@ from checkout import (  # noqa: E402
     apply_git_config,
     transport_error,
 )
-from session import LEGACY_CONFIG, load_state, pin_promisor_remotes, remove_cache_keys, remove_managed, subsection  # noqa: E402
+from session import (
+    LEGACY_CONFIG,
+    load_state,
+    pin_promisor_remotes,
+    remove_cache_keys,
+    remove_managed,
+    subsection,
+)  # noqa: E402
 
 OPTIONS_WITH_VALUE = {
     "-C",
@@ -172,6 +179,7 @@ def resolve_alias(real_git, arguments, index, environ):
         if index is None:
             break
     return arguments, index
+
 
 # Variables that make Git act on a repository other than the one it is run in.
 REPOSITORY_ENVIRONMENT = ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY")
@@ -598,7 +606,9 @@ def submodule_git_dirs(real_git, location, environ):
                     # A Git directory holds its own submodules only under modules/:
                     # objects/, refs/ and the rest are never searched.
                     children[:] = [child for child in children if child == "modules"]
-                children[:] = [child for child in children if os.path.realpath(os.path.join(directory, child)) not in walked]
+                children[:] = [
+                    child for child in children if os.path.realpath(os.path.join(directory, child)) not in walked
+                ]
         top = ask(where, env, "--show-toplevel")
         if not top:
             continue
@@ -622,7 +632,6 @@ def weakened(real_git, arguments, index, environ, cache):
     recurse, the files of the repository's submodules). A request to the cache can
     carry a token, and Git applies the most specific http.<url>.* it finds, so
     cachew's own settings cannot outrank one the job scoped more narrowly."""
-
 
     def read(*options):
         listing = subprocess.run(
@@ -900,7 +909,10 @@ def run(arguments, environ):
         if not complete:
             # Its lazy fetches would follow the rewrite with no upstream retry:
             # removing the rewrite sends them upstream.
-            print("Cachew could not pin a partial clone to upstream; caching is off for the rest of the job.", file=sys.stderr)
+            print(
+                "Cachew could not pin a partial clone to upstream; caching is off for the rest of the job.",
+                file=sys.stderr,
+            )
             remove_cache_keys(real_git, session, load_state(session, environ), environ)
         return result
 
@@ -919,9 +931,7 @@ def run(arguments, environ):
         with UpstreamView(real_git, direct, session, state) as upstream:
             return subprocess.call([real_git, *arguments], env=upstream)
 
-    if command in NETWORK_COMMANDS and direct_network_operation(
-        real_git, arguments, index, environ
-    ):
+    if command in NETWORK_COMMANDS and direct_network_operation(real_git, arguments, index, environ):
         with UpstreamView(real_git, direct, session, state) as upstream:
             return done(subprocess.call([real_git, *arguments], env=upstream))
     if command not in ("clone", "fetch", "ls-remote"):

@@ -84,7 +84,11 @@ def mode(context):
     """The mode step's output, from running its script as the runner would."""
     step = next(step for step in steps() if step.get("id") == "mode")
     with tempfile.NamedTemporaryFile() as output:
-        env = {"PATH": os.environ["PATH"], "GITHUB_OUTPUT": output.name, "CACHEW_INPUT": context.get("inputs.cachew", "")}
+        env = {
+            "PATH": os.environ["PATH"],
+            "GITHUB_OUTPUT": output.name,
+            "CACHEW_INPUT": context.get("inputs.cachew", ""),
+        }
         if "env.CACHEW_CHECKOUT" in context:
             env["CACHEW_CHECKOUT"] = context["env.CACHEW_CHECKOUT"]
         subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", step["run"]], env=env, check=True)
@@ -143,7 +147,9 @@ class RunnerGateTests(unittest.TestCase):
         self.assertFalse(evaluate(stop["if"], runner("github-hosted")))
 
     def test_official_checkout_runs_only_when_cachew_did_not_check_out(self):
-        self.assertEqual(self.active_steps(runner("self-hosted"), cloned=True), ["mode", "session", "cachew", "configure"])
+        self.assertEqual(
+            self.active_steps(runner("self-hosted"), cloned=True), ["mode", "session", "cachew", "configure"]
+        )
 
     def test_opt_out_and_unsupported_platforms_are_no_ops(self):
         for context in (

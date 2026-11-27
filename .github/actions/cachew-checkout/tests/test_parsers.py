@@ -268,7 +268,11 @@ class InputTests(unittest.TestCase):
                 self.assertEqual(checkout.sha_ref(value), expected)
 
     def test_each_javascript_whitespace_character_is_trimmed(self):
-        spaces = "\t\n\v\f\r \u00a0\u1680" + "".join(map(chr, range(0x2000, 0x200B))) + "\u2028\u2029\u202f\u205f\u3000\ufeff"
+        spaces = (
+            "\t\n\v\f\r \u00a0\u1680"
+            + "".join(map(chr, range(0x2000, 0x200B)))
+            + "\u2028\u2029\u202f\u205f\u3000\ufeff"
+        )
         for space in spaces:
             with self.subTest(space=hex(ord(space))):
                 self.assertEqual(checkout.checkout_input({"X": f"{space}x{space}"}, "X"), "x")
@@ -447,7 +451,12 @@ class SessionParserTests(unittest.TestCase):
                 self.assertFalse(session.git_true(value))
 
     def test_conditional_includes(self):
-        for key in ("includeIf.gitdir:/x/.path", "INCLUDEIF.onbranch:main.path", "includeif..path", "includeif.a.b.path"):
+        for key in (
+            "includeIf.gitdir:/x/.path",
+            "INCLUDEIF.onbranch:main.path",
+            "includeif..path",
+            "includeif.a.b.path",
+        ):
             with self.subTest(key=key):
                 self.assertTrue(session.conditional_include(key))
         for key in ("include.path", "includeif.path", "includeif.x.pathx", "xincludeif.a.path", "includeifx.a.path"):

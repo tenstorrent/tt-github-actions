@@ -336,7 +336,9 @@ class DownstreamGitTests(unittest.TestCase):
         self.cache.fail_repo = "cmake-dependency"
         self.cache.fetch_delay = 6
         self.run_git("clone", "--bare", self.upstream.url + "/org/cmake-dependency", cwd=self.root)
-        self.assertEqual(self.run_git("-C", str(self.root / "cmake-dependency.git"), "rev-parse", "--is-bare-repository"), "true")
+        self.assertEqual(
+            self.run_git("-C", str(self.root / "cmake-dependency.git"), "rev-parse", "--is-bare-repository"), "true"
+        )
         self.assertFalse((self.root / "cmake-dependency").exists())
         self.assert_disabled()
 
@@ -409,7 +411,7 @@ class DownstreamGitTests(unittest.TestCase):
         killer.write_text(
             "#!/bin/sh\n"
             'case "$*" in *http.lowSpeedLimit=*) kill -9 $$ ;; esac\n'
-            f"exec {shlex.quote(self.real_git)} \"$@\"\n"
+            f'exec {shlex.quote(self.real_git)} "$@"\n'
         )
         killer.chmod(0o700)
         self.env["CACHEW_REAL_GIT"] = str(killer)
@@ -799,8 +801,23 @@ class DownstreamGitTests(unittest.TestCase):
         result = self.git_result("clone", "--recurse-submodules", self.upstream.url + "/org/top", str(recursive))
         self.assertEqual(result.returncode, 0, result.stderr)
         submodule = recursive / "deps/kid"
-        self.assertEqual(self.git_result("-C", str(submodule), "remote", "set-url", "origin", self.cache.url + "/git/" + self.upstream.url.split("://", 1)[1] + "/org/kid").returncode, 0)
-        self.assertEqual(self.git_result("-C", str(submodule), "config", f"http.{self.cache.url}/git/.sslVerify", "false").returncode, 0)
+        self.assertEqual(
+            self.git_result(
+                "-C",
+                str(submodule),
+                "remote",
+                "set-url",
+                "origin",
+                self.cache.url + "/git/" + self.upstream.url.split("://", 1)[1] + "/org/kid",
+            ).returncode,
+            0,
+        )
+        self.assertEqual(
+            self.git_result(
+                "-C", str(submodule), "config", f"http.{self.cache.url}/git/.sslVerify", "false"
+            ).returncode,
+            0,
+        )
         before = len(self.cache.requests)
         result = self.git_result("-C", str(recursive), "fetch", "--recurse-submodules=yes", "origin")
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -821,7 +838,9 @@ class DownstreamGitTests(unittest.TestCase):
         ):
             with self.subTest(command=name):
                 recursive = self.root / f"recursive-{name.replace(' ', '-')}"
-                result = self.git_result("clone", "--recurse-submodules", self.upstream.url + "/org/top", str(recursive))
+                result = self.git_result(
+                    "clone", "--recurse-submodules", self.upstream.url + "/org/top", str(recursive)
+                )
                 self.assertEqual(result.returncode, 0, result.stderr)
                 submodule = recursive / "deps/kid"
                 for arguments in (
@@ -840,7 +859,10 @@ class DownstreamGitTests(unittest.TestCase):
                 before = len(self.cache.requests)
                 # Whether the cache accepts it does not matter: no request may carry the token.
                 result = self.git_result("-C", str(recursive), *command)
-                self.assertTrue(len(self.cache.requests) > before, "the command did not reach the submodule's remote: " + result.stderr)
+                self.assertTrue(
+                    len(self.cache.requests) > before,
+                    "the command did not reach the submodule's remote: " + result.stderr,
+                )
                 self.assertEqual([auth for _, _, auth in self.cache.requests[before:] if auth], [])
 
     def test_a_weakening_setting_in_a_submodule_kept_outside_modules_is_read(self):
@@ -854,7 +876,9 @@ class DownstreamGitTests(unittest.TestCase):
         for layout in ("embedded", "linked", "conditional"):
             with self.subTest(layout=layout):
                 recursive = self.root / f"recursive-{layout}"
-                result = self.git_result("clone", "--recurse-submodules", self.upstream.url + "/org/top", str(recursive))
+                result = self.git_result(
+                    "clone", "--recurse-submodules", self.upstream.url + "/org/top", str(recursive)
+                )
                 self.assertEqual(result.returncode, 0, result.stderr)
                 submodule = recursive / "deps/kid"
                 modules = recursive / ".git/modules/kid-name"
@@ -867,7 +891,9 @@ class DownstreamGitTests(unittest.TestCase):
                     modules.rename(elsewhere)
                     modules.symlink_to(elsewhere)
                     # Its relative core.worktree would resolve from the link's target.
-                    result = self.git_result("config", "--file", str(elsewhere / "config"), "core.worktree", str(submodule))
+                    result = self.git_result(
+                        "config", "--file", str(elsewhere / "config"), "core.worktree", str(submodule)
+                    )
                 self.assertEqual(result.returncode, 0, result.stderr)
                 result = self.git_result("-C", str(submodule), "remote", "set-url", "origin", cache_kid)
                 self.assertEqual(result.returncode, 0, result.stderr)
@@ -876,7 +902,9 @@ class DownstreamGitTests(unittest.TestCase):
                     included = self.root / "weak.config"
                     result = self.git_result("config", "--file", str(included), weakening, "false")
                     self.assertEqual(result.returncode, 0, result.stderr)
-                    result = self.git_result("-C", str(submodule), "config", f"includeIf.gitdir:{modules.resolve()}.path", str(included))
+                    result = self.git_result(
+                        "-C", str(submodule), "config", f"includeIf.gitdir:{modules.resolve()}.path", str(included)
+                    )
                 else:
                     result = self.git_result("-C", str(submodule), "config", weakening, "false")
                 self.assertEqual(result.returncode, 0, result.stderr)
@@ -1070,9 +1098,7 @@ class DownstreamGitTests(unittest.TestCase):
         self.run_git("clone", self.upstream.url + "/org/cmake-dependency", str(self.root / "failed"))
         self.assert_disabled()
         late = dict(self.env, GIT_CONFIG_GLOBAL=str(before))
-        load_wrapper().pin_promisor_remotes(
-            self.real_git, ["-C", str(destination)], late, self.cache.url, self.session
-        )
+        load_wrapper().pin_promisor_remotes(self.real_git, ["-C", str(destination)], late, self.cache.url, self.session)
         listing = subprocess.run(
             [self.real_git, "-C", str(destination), "config", "--get-regexp", r"^url\..*\.insteadof$"],
             env=dict(self.env, GIT_CONFIG_GLOBAL=os.devnull),

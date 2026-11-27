@@ -130,7 +130,9 @@ def workflows():
         yield f"quoted steps key, {runner}", f"{job}    'steps':\n      - uses: {CHECKOUT}\n", False
         yield f"anchored steps, {runner}", f"{job}    steps: &x\n      - uses: {CHECKOUT}\n", False
         yield f"document start, {runner}", f"---\n{job}    steps:\n      - uses: {CHECKOUT}\n", False
-        yield f"commented runs-on before, {runner}", job.replace("    runs-on", "    # runs-on: ubuntu-latest\n    runs-on") + f"    steps:\n      - uses: {CHECKOUT}\n", False
+        yield f"commented runs-on before, {runner}", job.replace(
+            "    runs-on", "    # runs-on: ubuntu-latest\n    runs-on"
+        ) + f"    steps:\n      - uses: {CHECKOUT}\n", False
         yield (
             f"after a hosted job, {runner}",
             f"jobs:\n  h:\n    runs-on: ubuntu-latest\n    steps:\n      - run: x\n{job[6:]}    steps:\n      - uses: {CHECKOUT}\n",
@@ -177,7 +179,9 @@ def workflows():
             continue
         yield (
             f"flow job over lines, {runner}",
-            "jobs: {\n  a: {\n    runs-on: " + runs_on.replace("\n", " ").replace("- ", "[", 1).rstrip() + ("]" if "\n" in runs_on else "")
+            "jobs: {\n  a: {\n    runs-on: "
+            + runs_on.replace("\n", " ").replace("- ", "[", 1).rstrip()
+            + ("]" if "\n" in runs_on else "")
             + f", # c\n    steps: [\n      {{uses: {CHECKOUT}}}\n    ]\n  }}\n}}\n",
             False,
         )
@@ -222,14 +226,20 @@ def problems(text, kept):
     """What migrate.py gets wrong about one workflow, as migrate_file reads it."""
     try:
         before = yaml.safe_load(text)
-        steps = [(lines, value.value) for job_hosted, _, value, lines in checkout_steps(text) if not job_hosted and not kept]
+        steps = [
+            (lines, value.value) for job_hosted, _, value, lines in checkout_steps(text) if not job_hosted and not kept
+        ]
         expected = [lines for lines, value in steps if MIGRATABLE.fullmatch(value)]
         # A value that only contains a checkout (a block scalar with a leading
         # blank line, or a `# ...` line that is its text, not a comment) is not
         # one, but migrate.py reads no block scalar exactly, so it may report it.
         unreadable = [lines for lines, value in steps if migrate.MIGRATABLE.search(value)]
         # --write also moves any pin of this action (stale, legacy, any case) to the pin.
-        repinned = {key.start_mark.line + 1: job_hosted for job_hosted, key, value, _ in checkout_steps(text) if repins(value.value) and not kept}
+        repinned = {
+            key.start_mark.line + 1: job_hosted
+            for job_hosted, key, value, _ in checkout_steps(text)
+            if repins(value.value) and not kept
+        }
         # --write rewrites a value written on its key's line in block style, and
         # leaves the rest (and anchored or tagged values) for --verify-pins.
         rows = text.split("\n")
@@ -260,7 +270,9 @@ def problems(text, kept):
         if not lines & (migrated | reported):
             found.append(f"a checkout step at line {min(lines)} is neither migrated nor reported")
     found += [f"line {line} is reported but holds no checkout step" for line in sorted(reported - allowed)]
-    found += [f"line {line} is migrated but holds no checkout step" for line in sorted(migrated - allowed - set(repinned))]
+    found += [
+        f"line {line} is migrated but holds no checkout step" for line in sorted(migrated - allowed - set(repinned))
+    ]
     for line, job_hosted in sorted(repinned.items()):
         want = PLAIN if job_hosted else PIN
         if line in rewritable and line not in reported and uses_after.get(line) != want:
@@ -270,7 +282,12 @@ def problems(text, kept):
     def migrate_uses(old, new):
         if isinstance(old, dict) and isinstance(new, dict):
             for key in old:
-                if key == "uses" and isinstance(old[key], str) and (MIGRATABLE.fullmatch(old[key]) or repins(old[key])) and new.get(key) in (PIN, PLAIN):
+                if (
+                    key == "uses"
+                    and isinstance(old[key], str)
+                    and (MIGRATABLE.fullmatch(old[key]) or repins(old[key]))
+                    and new.get(key) in (PIN, PLAIN)
+                ):
                     old[key] = new[key]
                 elif key in new:
                     migrate_uses(old[key], new[key])
@@ -306,8 +323,16 @@ PIN_VALUES = (
     "./.GitHub/Actions/Cachew-Checkout",
 )
 PIN_FORMS = (
-    "- uses: {v}\n", "- uses: {v} # cachew checkout\n", "- uses: '{v}'\n", '- uses: "{v}"\n', "- uses:\n    {v}\n",
-    "- uses: >-\n    {v}\n", "- {{uses: {v}}}\n", "- name: x\n  uses: {v}\n", "- run: echo {v}\n", "- uses: &p {v}\n",
+    "- uses: {v}\n",
+    "- uses: {v} # cachew checkout\n",
+    "- uses: '{v}'\n",
+    '- uses: "{v}"\n',
+    "- uses:\n    {v}\n",
+    "- uses: >-\n    {v}\n",
+    "- {{uses: {v}}}\n",
+    "- name: x\n  uses: {v}\n",
+    "- run: echo {v}\n",
+    "- uses: &p {v}\n",
 )
 # Characters that change how YAML reads a line, for the edits below.
 EDITS = " \t\n-:#'\"!&*{}[],/.\\@?|>%"
@@ -350,7 +375,9 @@ def fuzzed_workflows(seed, count):
         # Filler between any two lines after the jobs key, at a random indentation.
         for _ in range(rng.randint(0, 4)):
             at = rng.randint(2, len(lines))
-            lines.insert(at, " " * rng.choice((0, 2, 4, 6)) + rng.choice(FILLER) if rng.random() < 0.5 else rng.choice(FILLER))
+            lines.insert(
+                at, " " * rng.choice((0, 2, 4, 6)) + rng.choice(FILLER) if rng.random() < 0.5 else rng.choice(FILLER)
+            )
         text = "\n".join(lines) + "\n"
         yield f"fuzz {seed}/{n}", perturbed(rng, text) if n % 4 == 3 else text
 

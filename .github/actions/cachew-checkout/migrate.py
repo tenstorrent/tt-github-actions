@@ -559,7 +559,11 @@ def steps_item(rows, at):
     dash = rows[at][2]
     # The sequence's key: the nearest earlier line that is not an item of it.
     parent = next(
-        (i for i in range(at - 1, -1, -1) if rows[i][2] < dash or (rows[i][2] == dash and not rows[i][1].lstrip().startswith("-"))),
+        (
+            i
+            for i in range(at - 1, -1, -1)
+            if rows[i][2] < dash or (rows[i][2] == dash and not rows[i][1].lstrip().startswith("-"))
+        ),
         None,
     )
     return parent is not None and bool(STEPS_KEY.fullmatch(rows[parent][1])) and steps_key(rows, parent)
@@ -673,7 +677,11 @@ def flow_step_keys(text, hosted=None):
     for index, (offset, line, indent) in enumerate(rows):
         # An item may carry a tag or anchor before its mapping: `- &a {...}`.
         entries = re.match(ENTRIES.pattern + PROPERTIES, line)[0]
-        if ENTRIES.match(line)[0].count("-") != 1 or not line[len(entries) :].startswith("{") or not steps_item(rows, index):
+        if (
+            ENTRIES.match(line)[0].count("-") != 1
+            or not line[len(entries) :].startswith("{")
+            or not steps_item(rows, index)
+        ):
             continue
         if any(start <= offset < end for start, end in hosted):
             continue
@@ -688,7 +696,10 @@ def flow_step_keys(text, hosted=None):
             name = FLOW_USES_KEY.match(text, key)
             if not name or not (name["q"] or re.match(r"[ \t\r\n]|$", text[name.end() : name.end() + 1])):
                 continue
-            if any(not problem and MIGRATABLE.fullmatch(value) for _, _, value, problem in uses_value(text, name, flow=True)):
+            if any(
+                not problem and MIGRATABLE.fullmatch(value)
+                for _, _, value, problem in uses_value(text, name, flow=True)
+            ):
                 found.append(key)
     return found
 
@@ -776,9 +787,15 @@ def hidden_checkout_keys(text, hosted=None, aliases=True):
             # `? uses` and its `: value` on the lines after it, up to the next
             # key of this mapping.
             column = len(ENTRIES.match(line)[0])
-            following = next((o for o, l, i in rows[index + 1 :] if i < column or (i == column and not l.lstrip().startswith(":"))), len(text))
+            following = next(
+                (o for o, l, i in rows[index + 1 :] if i < column or (i == column and not l.lstrip().startswith(":"))),
+                len(text),
+            )
             fragment = text[offset + len(line) : following]
-            if migratable(fragment + anchored(text, fragment.strip().lstrip(":").strip())) and "cachew: keep" not in fragment:
+            if (
+                migratable(fragment + anchored(text, fragment.strip().lstrip(":").strip()))
+                and "cachew: keep" not in fragment
+            ):
                 found.append(offset + line.index("?"))
         elif aliases and alias and "cachew: keep" not in line and (steps_key(rows, index) or steps_item(rows, index)):
             # A step, or all of a job's steps, another job anchors: an alias
@@ -807,16 +824,22 @@ def step_checkouts(text, steps):
     found = [
         match.start("value")
         for match in CHECKOUT.finditer(text)
-        if match.start() in steps and match["value"].lower().startswith("actions/checkout@") and "cachew: keep" not in match[0]
+        if match.start() in steps
+        and match["value"].lower().startswith("actions/checkout@")
+        and "cachew: keep" not in match[0]
     ]
     return set(found + flow_step_keys(text, hosted=[]) + hidden_checkout_keys(text, hosted=[], aliases=False))
 
 
 # An explicit `? uses` key, its value on a later `: ` line.
-EXPLICIT_USES = re.compile(r"""[ \t]*(?:-[ \t]+)?\?[ \t]+(?:[!&][^\s,\[\]{}]*[ \t]+)*(['"]?)uses\1[ \t]*(?:[ \t]#.*)?""")
+EXPLICIT_USES = re.compile(
+    r"""[ \t]*(?:-[ \t]+)?\?[ \t]+(?:[!&][^\s,\[\]{}]*[ \t]+)*(['"]?)uses\1[ \t]*(?:[ \t]#.*)?"""
+)
 # A sequence entry that is an alias, and a steps: key whose value is one.
 ALIAS_ITEM = re.compile(r"[ \t]*-[ \t]+(?P<alias>(?:![^\s]*[ \t]+)*\*[^\s,\[\]{}]+)[ \t]*(?:[ \t]#.*)?")
-STEPS_ALIAS = re.compile(r"""[ \t]*(?:-[ \t]+)?(['"]?)steps\1[ \t]*:[ \t]+(?P<alias>(?:![^\s]*[ \t]+)*\*[^\s,\[\]{}]+)[ \t]*(?:[ \t]#.*)?""")
+STEPS_ALIAS = re.compile(
+    r"""[ \t]*(?:-[ \t]+)?(['"]?)steps\1[ \t]*:[ \t]+(?P<alias>(?:![^\s]*[ \t]+)*\*[^\s,\[\]{}]+)[ \t]*(?:[ \t]#.*)?"""
+)
 
 
 # A block `steps:` key that starts its line, up to its colon.
@@ -909,7 +932,10 @@ def migrate_file(path, action_sha, write=False, root=None, exclude=()):
     # What --write leaves for --verify-pins to reject: a flow-style step, a ref
     # that is not a commit, a value it cannot read exactly.
     left = file_problems(
-        relative.as_posix(), after, action_sha, f"--write cannot change it; write uses: {ACTION_REPO}@<sha> on a block-style step"
+        relative.as_posix(),
+        after,
+        action_sha,
+        f"--write cannot change it; write uses: {ACTION_REPO}@<sha> on a block-style step",
     )
     left += [
         f"{relative.as_posix()}:{line}: a checkout step --write cannot rewrite in place; write its uses: as one plain"
@@ -1145,7 +1171,9 @@ def file_problems(path, text, action_sha, fix=None):
             problems.append(f"{path}:{line}: a uses: entry cannot be verified: {problem}; write it as one plain line")
             continue
         if LOCAL_COPY.fullmatch(value):
-            problems.append(f"{path}:{line} runs {value}, a copy of the action in this repository; {fix or 'run --write'}")
+            problems.append(
+                f"{path}:{line} runs {value}, a copy of the action in this repository; {fix or 'run --write'}"
+            )
             continue
         reference = action_reference(value)
         if not reference:
@@ -1155,12 +1183,18 @@ def file_problems(path, text, action_sha, fix=None):
         if problem:
             problems.append(f"{path}:{line} references {value}: {problem}; write {ACTION_REPO}@<sha>")
         elif legacy:
-            problems.append(f"{path}:{line} references {value}; the action moved to {ACTION_REPO} ({fix or 'run --write'})")
+            problems.append(
+                f"{path}:{line} references {value}; the action moved to {ACTION_REPO} ({fix or 'run --write'})"
+            )
         elif subdirectory:
             problems.append(f"{path}:{line} references {value}; reference the action itself, not a subdirectory")
         elif ref != action_sha:
             if not fix:
-                fix = "set the pin in its .md source and recompile it with gh aw compile" if generated(Path(path)) else "run --write"
+                fix = (
+                    "set the pin in its .md source and recompile it with gh aw compile"
+                    if generated(Path(path))
+                    else "run --write"
+                )
             problems.append(f"{path}:{line} pins {ref}, expected action_sha {action_sha}; {fix}")
     # A mention the uses: values above do not account for (a comment, an
     # anchor, a multi-line value) could still be what GitHub runs.
@@ -1201,7 +1235,9 @@ def main(argv=None):
     mode.add_argument("--write", action="store_true")
     mode.add_argument("--check", action="store_true")
     mode.add_argument("--verify-pins", action="store_true")
-    parser.add_argument("--root", type=Path, help="consumer repository (default: the Git repository containing the current directory)")
+    parser.add_argument(
+        "--root", type=Path, help="consumer repository (default: the Git repository containing the current directory)"
+    )
     parser.add_argument("--config", type=Path, help=f"config file (default: <root>/{CONFIG})")
     parser.add_argument("--action-sha", help="pin to use instead of the config's; saved to the config with --write")
     parser.add_argument("paths", nargs="*", type=Path)
@@ -1242,7 +1278,9 @@ def main(argv=None):
         print(f"{'Migrated' if args.write else 'Needs cachew migration:'} {path}")
     print(f"{len(changed)} file(s) {'updated' if args.write else 'need migration'}.")
     for place in flow:
-        print(f"{place}: a checkout step written as a flow mapping is not migrated; write it as a block mapping, or add # cachew: keep")
+        print(
+            f"{place}: a checkout step written as a flow mapping is not migrated; write it as a block mapping, or add # cachew: keep"
+        )
     for problem in left:
         print(problem)
     return 1 if failed or flow or left or (changed and args.check) else 0
