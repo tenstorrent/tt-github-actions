@@ -5,3 +5,4 @@ This repository contains a collection of GitHub Actions that can be shared acros
 ## Actions
 - [Collect Data Action](.github/actions/collect_data/Readme.md)
 - [Copilot PR Type Labeler](.github/actions/copilot-pr-labeler/README.md)
+- [Docker Publish and Docker Bake Publish](.github/actions/README.md)

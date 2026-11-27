@@ -1,0 +1,249 @@
+name: "Docker Bake Publish (SBOM + Trivy)"
+description: >-
+  Run `docker buildx bake` and publish every registry-pushed target with SLSA
+  provenance, an SBOM enriched from the image's OCI labels, and a Trivy
+  vulnerability gate. Pushed targets are built into local OCI layouts and
+  gated there; nothing reaches the registry until every target passes, and tags
+  are applied last. Bake variables come from the
+  environment: set them with `env:` on the step that uses this action.
+
+inputs:
+  bake-file:
+    description: >-
+      Bake file(s), newline or comma separated. Empty uses buildx's default
+      discovery (docker-bake.hcl, docker-compose.yaml, ... in the working directory).
+    required: false
+    default: ""
+  targets:
+    description: "Bake targets or groups to build (comma or newline separated)"
+    required: true
+  set-lines:
+    description: >-
+      Newline-delimited bake --set overrides. For targets that push to a
+      registry, `<target>.tags` and `<target>.output` are read to decide what
+      gets published, then replaced by a local OCI layout output that is
+      pushed only after the gate passes.
+    required: false
+    default: ""
+  labels:
+    description: >-
+      Newline-separated OCI labels as key=value (e.g. docker/metadata-action's
+      `labels` output), set on every image; they override LABEL in the
+      Dockerfile and labels in a bake file. Unless a line here sets them,
+      com.tenstorrent.git.ref (GITHUB_REF) and com.tenstorrent.git.branch (the
+      pull request's head branch, or the branch that ran the workflow) are
+      added, and a build of main (GITHUB_REF refs/heads/main) also gets
+      org.opencontainers.image.revision set to GITHUB_SHA.
+    required: false
+    default: ""
+  retries:
+    description: "Number of bake attempts before failing (or falling back, with harbor-prefix)"
+    required: false
+    default: "1"
+  retry-delay-seconds:
+    description: "Delay between retries"
+    required: false
+    default: "5"
+  use-default-builder:
+    description: >-
+      Select the buildx 'default' builder before invoking bake. Publishing
+      requires a BuildKit driver (docker-container, kubernetes, remote), so
+      this only makes sense for builds with no registry-pushed targets.
+    required: false
+    default: "false"
+  validate-images:
+    description: >-
+      Check that docker-loaded (type=docker) targets are inspectable after the
+      build. Pushed targets are always verified by digest.
+    required: false
+    default: "true"
+  enable-attestations:
+    description: >-
+      Attestations for targets that do NOT push to a registry. Pushed targets
+      always get max-mode provenance and an SBOM; "false" is ignored for them
+      with a warning. type=docker targets (load or archive) never get
+      attestations: buildx rejects them for that exporter unless the daemon
+      uses the containerd image store.
+    required: false
+    default: "true"
+  enrich-sbom:
+    description: >-
+      Accepted for compatibility with manual-docker-bake. SBOM enrichment is
+      mandatory for published images; "false" is ignored with a warning.
+    required: false
+    default: "true"
+  harbor-prefix:
+    description: >-
+      Harbor pull-through cache prefix (e.g. 'harbor.example.com/'), prepended
+      to ghcr.io references. Harbor answers only on-prem runners. If non-empty
+      and Harbor responds from this runner, Trivy pulls its vulnerability DB,
+      Java DB and checks bundle through it; otherwise from upstream, with a
+      warning. docker-bake-publish also retries a bake that fails
+      every attempt once more with the prefix stripped from all docker-image://
+      context URIs (GHCR direct fallback).
+    required: false
+    default: ""
+  syft-scanner-image:
+    description: >-
+      BuildKit SBOM scanner image, used exactly as given. It runs inside every
+      build with access to the image's filesystem, so it must be pinned by
+      digest (name@sha256:...); anything else is rejected. Empty uses the org
+      mirror of docker/buildkit-syft-scanner pinned in .github/actions/tool-images.json.
+    required: false
+    default: ""
+  required-labels:
+    description: >-
+      OCI label keys every platform image is expected to carry. A missing one
+      is a warning, not a gate failure. source and licenses feed the SBOM's
+      downloadLocation/licenseDeclared (NOASSERTION without them); revision
+      ties the image to a commit.
+    required: false
+    default: >-
+      org.opencontainers.image.source
+      org.opencontainers.image.revision
+      org.opencontainers.image.licenses
+  sbom-supplier:
+    description: "SPDX supplier recorded on the SBOM's describing package"
+    required: false
+    default: "Organization: Tenstorrent"
+  trivy-severity:
+    description: "Comma-separated severities Trivy reports; findings at them fail the gate (vulnerabilities only with trivy-fail-on-vulnerabilities)"
+    required: false
+    default: "CRITICAL,HIGH"
+  trivy-scanners:
+    description: >-
+      Comma-separated Trivy scanners (vuln, misconfig, secret, license, crypto).
+      crypto runs as a separate scan that writes a CycloneDX CBOM to the
+      uploaded report; a private key in it fails the gate unless
+      trivy-allowed-private-keys allows it, and weak keys get a warning.
+    required: false
+    default: "vuln,misconfig,secret,crypto"
+  trivy-ignore-unfixed:
+    description: "Ignore vulnerabilities that have no fixed version yet"
+    required: false
+    default: "false"
+  trivy-ignorefile:
+    description: >-
+      Path to a .trivyignore (or .trivyignore.yaml) listing reviewed exceptions.
+      Keep it in the calling repository so every exception is code-reviewed.
+    required: false
+    default: ""
+  trivy-allowed-private-keys:
+    description: >-
+      Private keys the gate accepts, one per line (# comments allowed). An
+      entry is a key fingerprint from the crypto CBOM, sha256:<hex>, which
+      allows that key at any path, or a glob matched against the file's path
+      in the image without a leading slash (* also matches /), e.g.
+      usr/lib/python3*/site-packages/*/tests/*. Any other private key the
+      crypto scanner finds fails the gate. Keep the list in the calling
+      workflow so every exception is reviewed.
+    required: false
+    default: ""
+  trivy-fail-on-vulnerabilities:
+    description: >-
+      Fail the gate on vulnerabilities at trivy-severity. When "false",
+      vulnerabilities are still scanned and reported (log, step summary, a
+      warning annotation and the uploaded report) but do not block the
+      publish. Secret, misconfiguration and license findings always fail it.
+    required: false
+    default: "false"
+  attest-sbom:
+    description: >-
+      Sign each platform's enriched SBOM with actions/attest and push it to the
+      registry as an OCI referrer of that platform image. `trivy --sbom-sources
+      oci` and `gh attestation verify` find it when given the platform digest
+      (repo@sha256:...); a tag resolves to the index, which carries a referrer
+      only for single-platform images. The predicate type is the unversioned
+      `https://spdx.dev/Document` that Trivy requires, not the
+      `https://spdx.dev/Document/v2.3` actions/attest's sbom-path would set, so
+      verify with `gh attestation verify --predicate-type
+      https://spdx.dev/Document`. Needs `permissions: id-token: write,
+      attestations: write`; private repositories need GitHub Enterprise Cloud.
+    required: false
+    default: "true"
+  attest-storage-record:
+    description: >-
+      Also create a GitHub artifact storage record for each attested image
+      (needs `permissions: artifact-metadata: write`)
+    required: false
+    default: "true"
+  github-token:
+    description: "Token actions/attest uses to call the GitHub attestations API"
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  images:
+    description: >-
+      JSON array, one entry per published target:
+      {name, repo, digest, build_digest, tags}. digest is the published
+      (enriched) index digest, identical for every tag of that target.
+    value: ${{ steps.gate.outputs.images || '[]' }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install syft, oras and trivy
+      shell: bash
+      env:
+        # Set, not inherited: published targets always need the pinned syft.
+        INSTALL_SYFT: "true"
+        INSTALL_ATTEST: ${{ inputs.attest-sbom }}
+      run: bash "${GITHUB_ACTION_PATH}/../docker-publish/scripts/install-tools.sh"
+
+    - name: Run docker buildx bake (local OCI layouts)
+      id: bake
+      shell: bash
+      env:
+        INPUT_BAKE_FILE: ${{ inputs.bake-file }}
+        INPUT_TARGETS: ${{ inputs.targets }}
+        INPUT_LABELS: ${{ inputs.labels }}
+        INPUT_SET_LINES: ${{ inputs.set-lines }}
+        INPUT_RETRIES: ${{ inputs.retries }}
+        INPUT_RETRY_DELAY_SECONDS: ${{ inputs.retry-delay-seconds }}
+        INPUT_USE_DEFAULT_BUILDER: ${{ inputs.use-default-builder }}
+        INPUT_VALIDATE_IMAGES: ${{ inputs.validate-images }}
+        INPUT_ENABLE_ATTESTATIONS: ${{ inputs.enable-attestations }}
+        INPUT_ENRICH_SBOM: ${{ inputs.enrich-sbom }}
+        INPUT_HARBOR_PREFIX: ${{ inputs.harbor-prefix }}
+        INPUT_SYFT_SCANNER_IMAGE: ${{ inputs.syft-scanner-image }}
+        ATTEST_SBOM: ${{ inputs.attest-sbom }}
+      run: |
+        set -euo pipefail
+        images="$(mktemp "${RUNNER_TEMP}/docker-bake-publish-images.XXXXXX")"
+        layouts="$(mktemp -d "${RUNNER_TEMP}/docker-bake-publish-layouts.XXXXXX")"
+        IMAGES_JSON="$images" LAYOUT_ROOT="$layouts" bash "${GITHUB_ACTION_PATH}/scripts/bake.sh"
+        echo "images-file=${images}" >> "$GITHUB_OUTPUT"
+        echo "report-id=$(jq -r '[.[].digest] | join(",")' "$images" | sha256sum | cut -c1-12)" >> "$GITHUB_OUTPUT"
+        echo "count=$(jq length "$images")" >> "$GITHUB_OUTPUT"
+
+    - name: Gate, push, enrich SBOMs and publish tags
+      id: gate
+      if: steps.bake.outputs.count != '0'
+      shell: bash
+      env:
+        INPUT_REQUIRED_LABELS: ${{ inputs.required-labels }}
+        INPUT_SEVERITY: ${{ inputs.trivy-severity }}
+        INPUT_SCANNERS: ${{ inputs.trivy-scanners }}
+        INPUT_IGNORE_UNFIXED: ${{ inputs.trivy-ignore-unfixed }}
+        INPUT_IGNOREFILE: ${{ inputs.trivy-ignorefile }}
+        INPUT_FAIL_ON_VULNS: ${{ inputs.trivy-fail-on-vulnerabilities }}
+        INPUT_ALLOWED_PRIVATE_KEYS: ${{ inputs.trivy-allowed-private-keys }}
+        INPUT_HARBOR_PREFIX: ${{ inputs.harbor-prefix }}
+        SBOM_SUPPLIER: ${{ inputs.sbom-supplier }}
+        # Always on: published bake targets must carry an SBOM, and a caller's
+        # env must not switch gate.sh's docker-publish-only opt-out on.
+        SBOM: "true"
+        ATTEST_SBOM: ${{ inputs.attest-sbom }}
+        ATTEST_CREATE_STORAGE_RECORD: ${{ inputs.attest-storage-record }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        REPORT_ROOT: ${{ runner.temp }}/docker-publish-trivy-${{ steps.bake.outputs.report-id }}
+      run: bash "${GITHUB_ACTION_PATH}/../docker-publish/scripts/gate.sh" "${{ steps.bake.outputs.images-file }}"
+
+    - name: Upload Trivy reports
+      if: always() && steps.bake.outputs.report-id != ''
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: trivy-${{ github.job }}-${{ steps.bake.outputs.report-id }}
+        path: ${{ runner.temp }}/docker-publish-trivy-${{ steps.bake.outputs.report-id }}
+        if-no-files-found: ignore

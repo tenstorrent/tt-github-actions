@@ -1,0 +1,81 @@
+name: Mirror tool images
+
+# Copies the images pinned in .github/actions/tool-images.json from upstream to
+# ghcr.io/tenstorrent, by digest, so org builds pull the SBOM scanner from one
+# place we manage instead of from upstream on every build.
+#
+# Runs on pull requests too: the copy is by digest and changes nothing that
+# is already in use, and it means the image is in the mirror before a pin
+# change merges and the actions start asking for it.
+
+on:
+  pull_request:
+    paths:
+      - ".github/actions/tool-images.json"
+      - ".github/actions/mirror-tool-images.sh"
+      - ".github/actions/docker-publish/scripts/install-tools.sh"
+      - ".github/actions/docker-publish/scripts/lib.sh"
+      - ".github/workflows/mirror-tool-images.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".github/actions/tool-images.json"
+      - ".github/actions/mirror-tool-images.sh"
+      - ".github/actions/docker-publish/scripts/install-tools.sh"
+      - ".github/actions/docker-publish/scripts/lib.sh"
+      - ".github/workflows/mirror-tool-images.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mirror-tool-images
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    # A fork's token cannot push packages.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install oras (sha256-pinned)
+        run: bash .github/actions/docker-publish/scripts/install-tools.sh
+
+      - name: Log in to ghcr.io
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: printf '%s' "$GITHUB_TOKEN" | oras login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Mirror pinned images
+        run: bash .github/actions/mirror-tool-images.sh
+
+      # Every repository's builds pull these without credentials for this
+      # package, so it has to be public. A new package starts private and its
+      # visibility can only be changed in the package settings.
+      - name: Check the mirror is publicly pullable
+        run: |
+          set -euo pipefail
+          failed=0
+          while IFS=$'\t' read -r mirror digest; do
+            repo="${mirror#ghcr.io/}"
+            token="$(curl -sSf "https://ghcr.io/token?scope=repository:${repo}:pull" | jq -r '.token // empty' || true)"
+            code="$(curl -sS -o /dev/null -w '%{http_code}' \
+              -H "Authorization: Bearer ${token}" \
+              -H 'Accept: application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.oci.image.manifest.v1+json' \
+              "https://ghcr.io/v2/${repo}/manifests/${digest}" || true)"
+            if [ "$code" = 200 ]; then
+              echo "${mirror}@${digest}: publicly pullable"
+            else
+              echo "::error::${mirror}@${digest} is not publicly pullable (HTTP ${code}). Set the package's visibility to Public in its settings: https://github.com/orgs/${GITHUB_REPOSITORY_OWNER}/packages/container/package/${repo#*/}"
+              failed=1
+            fi
+          done < <(jq -r '.[] | [.mirror, .digest] | @tsv' .github/actions/tool-images.json)
+          exit "$failed"
